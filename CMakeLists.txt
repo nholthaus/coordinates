@@ -30,7 +30,7 @@ include(FetchContent)
 FetchContent_Declare(
     units
     GIT_REPOSITORY https://github.com/nholthaus/units.git
-    GIT_TAG        v3.1.2
+    GIT_TAG        v3.2.0
 )
 FetchContent_MakeAvailable(units)
 
@@ -38,7 +38,6 @@ FetchContent_MakeAvailable(units)
 # (Exact target name depends on units' exported targets; common is "units" or "nholthaus::units")
 # We'll try the simplest first; if it differs, I’ll adapt once you show the units config you prefer.
 target_link_libraries(coord INTERFACE units)
-
 
 # ----------------------------
 # Tests

@@ -24,8 +24,9 @@ using interpolationMatrix = std::array<std::array<T, 4>, 4>;
  * @param[in]	x	x-value at which to interpolate, normalized to a 0-1 scale.
  * @returns		interpolated y-value at x, i.e. y = f(x).
  */
-template <typename T, class = typename std::enable_if<std::is_floating_point<T>::value>::type>
-const T cubicInterpolate(const interpolationVector<T>& p, const T x)
+template <typename T>
+requires std::is_floating_point_v<T>
+constexpr T cubicInterpolate(const interpolationVector<T>& p, const T x)
 {
     return p[1] + 0.5 * x*(p[2] - p[0] + x*(2.0*p[0] - 5.0*p[1] + 4.0*p[2] - p[3] + x*(3.0*(p[1] - p[2]) + p[3] - p[0])));
 }
@@ -43,8 +44,9 @@ const T cubicInterpolate(const interpolationVector<T>& p, const T x)
  * @param[in]	y	y-value at which to interpolate, normalized to a 0-1 scale.
  * @returns		interpolated z-value at (x,y), i.e. z = f(x, y).
  */
-template <typename T, class = typename std::enable_if<std::is_floating_point<T>::value>::type>
-const T bicubicInterpolate(const interpolationMatrix<T>& p, const T x, const T y)
+template <typename T>
+requires std::is_floating_point_v<T>
+constexpr T bicubicInterpolate(const interpolationMatrix<T>& p, const T x, const T y)
 {
     interpolationVector<T> arr;
     arr[0] = cubicInterpolate(p[0], y);
@@ -55,11 +57,3 @@ const T bicubicInterpolate(const interpolationMatrix<T>& p, const T x, const T y
 }
 
 #endif // interpolate_h__
-
-// For Emacs
-// Local Variables:
-// Mode: C++
-// c-basic-offset: 2
-// fill-column: 116
-// tab-width: 4
-// End:
