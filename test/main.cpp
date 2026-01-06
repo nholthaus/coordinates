@@ -4,8 +4,8 @@
  
 #include "ellipsoidTest.h"
 #include "geoidTest.h"
-//
-//#include "helmertTest.h"
+
+#include "helmertTest.h"
 //#include "topographyTest.h"
 //#include "horizontalDatumTest.h"
 //#include "verticalDatumTest.h"
