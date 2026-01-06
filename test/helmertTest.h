@@ -1,3 +1,32 @@
+//--------------------------------------------------------------------------------------------------
+//
+//	Coordinates: A compile-time c++23 coordinate conversion library based on `units`
+//
+//--------------------------------------------------------------------------------------------------
+//
+// The MIT License (MIT)
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+// and associated documentation files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+// BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+//--------------------------------------------------------------------------------------------------
+//
+// Copyright (c) 2016 Nic Holthaus
+//
+//--------------------------------------------------------------------------------------------------
+
 #ifndef helmertTest_h__
 #define helmertTest_h__
 
@@ -5,9 +34,15 @@
 //	INCLUDES
 //------------------------
 
-#include <coord/horizontalDatum.h>
-
+#include <initializer_list>
 #include <stdexcept>
+#include <type_traits>
+
+using namespace coord;
+using namespace units;
+using namespace units::length;
+using namespace units::angle;
+using namespace units::time;
 
 namespace
 {
@@ -47,46 +82,50 @@ protected:
     // Coefficients from example in EPSG guidance 7.2 section 2.4.4.1
     struct EPSG_GUIDANCE_7_2_SEC_24321
     {
+        using meter_t = units::length::meter_t;
+        using arcsec_t = units::unit_t<units::angle::arcseconds>;
+        using ppm_t = units::concentration::ppm_t;
+
         /// X-axis translation
-        static constexpr auto tx() -> meters<>
+        static constexpr auto tx() -> meter_t
         {
             return 0.000_m;
         }
 
         /// Y-axis translation
-        static constexpr auto ty() -> meters<>
+        static constexpr auto ty() -> meter_t
         {
             return 0.000_m;
         }
 
         /// Z-axis translation
-        static constexpr auto tz() -> meters<>
+        static constexpr auto tz() -> meter_t
         {
             return 4.500_m;
         }
 
         /// Rotation about the X-axis
-        static constexpr auto rx() -> arcseconds<>
+        static constexpr auto rx() -> arcsec_t
         {
-            return arcseconds(0.000);
+            return arcsec_t(0.000);
         }
 
         /// Rotation about the Y-axis
-        static constexpr auto ry() -> arcseconds<>
+        static constexpr auto ry() -> arcsec_t
         {
-            return arcseconds(0.000);
+            return arcsec_t(0.000);
         }
 
         /// Rotation about the Z-axis
-        static constexpr auto rz() -> arcseconds<>
+        static constexpr auto rz() -> arcsec_t
         {
-            return arcseconds(0.554);
+            return arcsec_t(0.554);
         }
 
         /// Scale factor
-        static constexpr auto s() -> parts_per_million<>
+        static constexpr auto s() -> ppm_t
         {
-            return parts_per_million(0.219);
+            return ppm_t(0.219);
         }
     };
 
@@ -279,18 +318,18 @@ TEST_F(HelmertTest, inverse)
 TEST_F(HelmertTest, 7ParamTransform)
 {
     // Source "EPSG Guidance 7.2, Section 2.4.3.2.1" example
-    using m = units::length::meters;
-	using ppms = units::concentration::ppms;
+    using m = units::length::meter_t;
+	using ppm_t = units::concentration::ppm_t;
 
     auto wgs72 = std::make_tuple(m(3657660.66), m(255768.55), m(5201382.11));
     auto wgs84 = coord::positionVectorTransform<EPSG_GUIDANCE_7_2_SEC_24321>(wgs72);
 
-    EXPECT_NEAR(0.0, meters(EPSG_GUIDANCE_7_2_SEC_24321::tx()).to<double>(), 5.0e-13);
-    EXPECT_NEAR(0.0, meters(EPSG_GUIDANCE_7_2_SEC_24321::ty()).to<double>(), 5.0e-13);
-    EXPECT_NEAR(4.5, meters(EPSG_GUIDANCE_7_2_SEC_24321::tz()).to<double>(), 5.0e-13);
-    EXPECT_NEAR(0.000000000000, radians(EPSG_GUIDANCE_7_2_SEC_24321::rx()).to<double>(), 5.0e-13);
-    EXPECT_NEAR(0.000000000000, radians(EPSG_GUIDANCE_7_2_SEC_24321::ry()).to<double>(), 5.0e-13);
-    EXPECT_NEAR(0.000002685868, radians(EPSG_GUIDANCE_7_2_SEC_24321::rz()).to<double>(), 5.0e-13);
+    EXPECT_NEAR(0.0, meter_t(EPSG_GUIDANCE_7_2_SEC_24321::tx()).to<double>(), 5.0e-13);
+    EXPECT_NEAR(0.0, meter_t(EPSG_GUIDANCE_7_2_SEC_24321::ty()).to<double>(), 5.0e-13);
+    EXPECT_NEAR(4.5, meter_t(EPSG_GUIDANCE_7_2_SEC_24321::tz()).to<double>(), 5.0e-13);
+    EXPECT_NEAR(0.000000000000, radian_t(EPSG_GUIDANCE_7_2_SEC_24321::rx()).to<double>(), 5.0e-13);
+    EXPECT_NEAR(0.000000000000, radian_t(EPSG_GUIDANCE_7_2_SEC_24321::ry()).to<double>(), 5.0e-13);
+    EXPECT_NEAR(0.000002685868, radian_t(EPSG_GUIDANCE_7_2_SEC_24321::rz()).to<double>(), 5.0e-13);
     EXPECT_NEAR(0.000000219, EPSG_GUIDANCE_7_2_SEC_24321::s().to<double>(), 5.0e-13);
 
     // 1 cm accuracy
@@ -308,9 +347,9 @@ TEST_F(HelmertTest, 7ParamTransform)
 TEST_F(HelmertTest, 14ParamTransform)
 {
     // Source "EPSG Guidance 7.2, Section 2.4.3.4" example
-    using m = units::length::meters;
-    using rad = units::angle::radians;
-    using ppm = units::concentration::ppms;
+    using m = units::length::meter_t;
+    using rad = units::angle::radian_t;
+    using ppm = units::concentration::ppm_t;
 
     auto itrf2008 = std::make_tuple(m(-3789470.710), m(4841770.404), m(-1690893.952));
     auto gda94 = coord::positionVectorTransform<horizontalDatums::GDA94>(itrf2008, 2013.90_yr);
@@ -335,8 +374,8 @@ TEST_F(HelmertTest, 14ParamTransform)
 
 	// source: http://webapp.geod.nrcan.gc.ca/geod/tools-outils/trx.php?locale=en
 	// with epoch transformation
-	std::tuple<meters, meters, meters> itrs2008_2014(1532138.956_m, -4464558.719_m, 4275244.397_m);
-	std::tuple<meters, meters, meters> itrf2000_2014_expected(1532138.959_m, -4464558.730_m, 4275244.372_m);
+	std::tuple<meter_t, meter_t, meter_t> itrs2008_2014(1532138.956_m, -4464558.719_m, 4275244.397_m);
+	std::tuple<meter_t, meter_t, meter_t> itrf2000_2014_expected(1532138.959_m, -4464558.730_m, 4275244.372_m);
 	auto itrf2000_2014_result = coord::positionVectorTransform<horizontalDatums::ITRF2000>(itrs2008_2014, 2014.0_yr);
 
 	EXPECT_NEAR(std::get<0>(itrf2000_2014_expected).to<double>(), std::get<0>(itrf2000_2014_result).to<double>(), 5.0e-4);
