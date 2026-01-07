@@ -43,7 +43,7 @@ include(FetchContent)
 fetchcontent_declare(
 		units
 		GIT_REPOSITORY https://github.com/nholthaus/units.git
-		GIT_TAG v3.2.0
+		GIT_TAG v3.3.0
 		)
 fetchcontent_makeavailable(units)
 

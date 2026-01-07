@@ -343,13 +343,18 @@ TEST_F(HelmertTest, 14ParamTransform)
     auto itrf2008 = std::make_tuple(meters(-3789470.710), meters(4841770.404), meters(-1690893.952));
     auto gda94 = coord::positionVectorTransform<horizontalDatums::GDA94>(itrf2008, 2013.90_yr);
 
+	EXPECT_DOUBLE_EQ(1e-6, ppm);
+	EXPECT_DOUBLE_EQ(1e-9, ppb);
+	EXPECT_DOUBLE_EQ(9.71e-9, horizontalDatums::GDA94::s());
+	EXPECT_EQ(0.109_ppb/yr, horizontalDatums::GDA94::ds());
+
 	EXPECT_NEAR(-0.056, meters(horizontalDatums::GDA94::tx() + horizontalDatums::GDA94::dtx()*(2013.9_yr - horizontalDatums::GDA94::epoch())).to<double>(), 5.0e-4);
 	EXPECT_NEAR(0.007, meters(horizontalDatums::GDA94::ty() + horizontalDatums::GDA94::dty()*(2013.9_yr - horizontalDatums::GDA94::epoch())).to<double>(), 5.0e-4);
 	EXPECT_NEAR(0.050, meters(horizontalDatums::GDA94::tz() + horizontalDatums::GDA94::dtz()*(2013.9_yr - horizontalDatums::GDA94::epoch())).to<double>(), 5.0e-4);
 	EXPECT_NEAR(-1.471021e-07, radians(horizontalDatums::GDA94::rx() + horizontalDatums::GDA94::drx()*(2013.9_yr - horizontalDatums::GDA94::epoch())).to<double>(), 5.0e-12);
 	EXPECT_NEAR(-1.249830e-07, radians(horizontalDatums::GDA94::ry() + horizontalDatums::GDA94::dry()*(2013.9_yr - horizontalDatums::GDA94::epoch())).to<double>(), 5.0e-12);
 	EXPECT_NEAR(-1.230844e-07, radians(horizontalDatums::GDA94::rz() + horizontalDatums::GDA94::drz()*(2013.9_yr - horizontalDatums::GDA94::epoch())).to<double>(), 5.0e-12);
-	EXPECT_NEAR(0.00000001188, parts_per_million(horizontalDatums::GDA94::s() + horizontalDatums::GDA94::ds()*(2013.9_yr - horizontalDatums::GDA94::epoch())).to<double>(), 5.0e-5);
+	EXPECT_NEAR(1.18791e-8, horizontalDatums::GDA94::s() + horizontalDatums::GDA94::ds()*(2013.9_yr - horizontalDatums::GDA94::epoch()), 5.0e-12);
 
     EXPECT_NEAR(-3789470.004, meters(std::get<0>(gda94)).to<double>(), 5.0e-4);
     EXPECT_NEAR( 4841770.686, meters(std::get<1>(gda94)).to<double>(), 5.0e-4);
