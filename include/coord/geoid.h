@@ -167,6 +167,7 @@ namespace coord
                 //---------------------------------------------------
 
                 const double precision = EGM96LUT_PRECISION_DEG;
+            	const double divisor = EGM96LUT_DIVISOR;
 
                 // round to nearest 0.25 towards +90.0 (index 0)
                 auto lat = ceil(latitude * dimensionless{1.0} / precision) / (dimensionless{1.0} / precision);
@@ -198,7 +199,7 @@ namespace coord
                     for (int j = 0; j < interpolationDimension; ++j)
                     {
                         const int col = wrap_periodic(lonIndex + (j - 1), period);
-                        surface[i][j] = EGM96LUT[row][col];
+                        surface[i][j] = EGM96LUT[row][col] / divisor;
                     }
                 }
 
@@ -263,6 +264,7 @@ namespace coord
                 //---------------------------------------------------
 
                 const degrees resolution(USGG2012LUT_PRECISION_DEG);
+            	const double divisor = USGG2012LUT_DIVISOR;
 
                 // get latitude index.toDouble()s (with decimals)
                 auto latX = (latitude - 24_deg) / resolution;
@@ -293,7 +295,7 @@ namespace coord
 
                         // query the LUT (cast to size_t to keep std::array indexing happy)
                         elevationSurface[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)] =
-                            USGG2012LUT[static_cast<std::size_t>(row)][static_cast<std::size_t>(column)];
+                            USGG2012LUT[static_cast<std::size_t>(row)][static_cast<std::size_t>(column)] / divisor;
                     }
                 }
 
@@ -359,6 +361,7 @@ namespace coord
                 //---------------------------------------------------
 
                 const degrees resolution(GEOID12ALUT_PRECISION_DEG);
+            	const double divisor = GEOID12ALUT_DIVISOR;
 
                 // get latitude index.toDouble()s (with decimals)
                 const auto latX = (latitude - 24.0_deg) / resolution;
@@ -386,7 +389,7 @@ namespace coord
                     for (int j = 0; j < interpolationDimension; ++j)
                     {
                         const int col = clamp_index(lonIndex + (j - 1), 0, numLongitudeLines - 1);
-                        elevationSurface[i][j] = GEOID12ALUT[row][col];
+                        elevationSurface[i][j] = GEOID12ALUT[row][col] / divisor;
                     }
                 }
 
