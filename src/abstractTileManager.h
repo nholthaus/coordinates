@@ -35,7 +35,7 @@
 //------------------------
 #include "abstractTile.h"
 
-namespace coord
+namespace coordinates
 {
 	/**
 	 * @brief		namespace for implementation details relating to topography

@@ -37,7 +37,7 @@
 #include "horizontalDatum.h"
 #include "verticalDatum.h"
 
-namespace coord
+namespace coordinates
 {
 	//	----------------------------------------------------------------------------
 	//	CLASS		Datum
@@ -47,7 +47,7 @@ namespace coord
 	/// @note		Inheritance from this class is not required to fulfill the datum
 	///				concept. See `is_datum` for the concept requirements.
 	//  ----------------------------------------------------------------------------
-	template<class Horizontal, class Vertical = typename coord::traits::horizontal_datum_traits<Horizontal>::reference_ellipsoid>
+	template<class Horizontal, class Vertical = typename coordinates::traits::horizontal_datum_traits<Horizontal>::reference_ellipsoid>
 	struct Datum : public Horizontal, public Vertical
 	{
 		static_assert(traits::is_horizontal_datum<Horizontal>::value, "Template parameter `Horizontal` must be a horizontal datum type.");
@@ -73,7 +73,7 @@ namespace coord
 		///	@details	
 		/// @note		Suitable for world-wide use.
 		//  ----------------------------------------------------------------------------
-		struct WGS84_G1674 : public Datum<coord::horizontalDatums::WGS84_G1674>{};
+		struct WGS84_G1674 : public Datum<coordinates::horizontalDatums::WGS84_G1674>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		WGS84_G1674_MSL
@@ -82,7 +82,7 @@ namespace coord
 		///	@details	
 		/// @note		Suitable for world-wide use.
 		//  ----------------------------------------------------------------------------
-		struct WGS84_G1674_MSL : public Datum<coord::horizontalDatums::WGS84_G1674, coord::geoids::EGM96>{};
+		struct WGS84_G1674_MSL : public Datum<coordinates::horizontalDatums::WGS84_G1674, coordinates::geoids::EGM96>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		NAD83
@@ -91,7 +91,7 @@ namespace coord
 		///	@details	
 		/// @note		Only suitable for use within CONUS (24-58N, 130-60W)
 		//  ----------------------------------------------------------------------------
-		struct NAD83 : public Datum<coord::horizontalDatums::NAD83>{};
+		struct NAD83 : public Datum<coordinates::horizontalDatums::NAD83>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		NAD83_NAVD88
@@ -100,7 +100,7 @@ namespace coord
 		///	@details
 		/// @note		Only suitable for use within CONUS (24-58N, 130-60W)
 		//  ----------------------------------------------------------------------------
-		struct NAD83_NAVD88 : public Datum<coord::horizontalDatums::NAD83, coord::geoids::GEOID12A>{};
+		struct NAD83_NAVD88 : public Datum<coordinates::horizontalDatums::NAD83, coordinates::geoids::GEOID12A>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		NAD83_MSL
@@ -109,7 +109,7 @@ namespace coord
 		///	@details	
 		/// @note		Only suitable for use within CONUS (24-58N, 130-60W)
 		//  ----------------------------------------------------------------------------
-		struct NAD83_MSL : public Datum<coord::horizontalDatums::NAD83, coord::geoids::USGG2012>{};
+		struct NAD83_MSL : public Datum<coordinates::horizontalDatums::NAD83, coordinates::geoids::USGG2012>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		IGS08
@@ -118,7 +118,7 @@ namespace coord
 		///	@details	
 		/// @note		Suitable for world-wide use.
 		//  ----------------------------------------------------------------------------
-		struct IGS08 : public Datum<coord::horizontalDatums::IGS08>{};
+		struct IGS08 : public Datum<coordinates::horizontalDatums::IGS08>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		IGS08_MSL
@@ -127,7 +127,7 @@ namespace coord
 		///	@details	
 		/// @note		Only suitable for use within CONUS (24-58N, 130-60W)
 		//  ----------------------------------------------------------------------------
-		struct IGS08_MSL : public Datum<coord::horizontalDatums::NAD83, coord::geoids::USGG2012>{};
+		struct IGS08_MSL : public Datum<coordinates::horizontalDatums::NAD83, coordinates::geoids::USGG2012>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		GDA94
@@ -136,7 +136,7 @@ namespace coord
 		///	@details	
 		/// @note		Only suitable for use in and about Australia
 		//  ----------------------------------------------------------------------------
-		struct GDA94 : public Datum<coord::horizontalDatums::GDA94>{};
+		struct GDA94 : public Datum<coordinates::horizontalDatums::GDA94>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		ETRS89
@@ -145,7 +145,7 @@ namespace coord
 		///	@details	
 		/// @note		Only suitable for use in and about Europe
 		//  ----------------------------------------------------------------------------
-		struct ETRS89 : public Datum<coord::horizontalDatums::ETRS89>{};
+		struct ETRS89 : public Datum<coordinates::horizontalDatums::ETRS89>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		ITRS2008
@@ -154,7 +154,7 @@ namespace coord
 		///	@details	
 		/// @note		Suitable for world-wide use.
 		//  ----------------------------------------------------------------------------
-		struct ITRS2008 : public Datum<coord::horizontalDatums::ITRS2008>{};
+		struct ITRS2008 : public Datum<coordinates::horizontalDatums::ITRS2008>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		ITRS2000
@@ -163,7 +163,7 @@ namespace coord
 		///	@details	
 		/// @note		Suitable for world-wide use.
 		//  ----------------------------------------------------------------------------
-		struct ITRS2000 : public Datum<coord::horizontalDatums::ITRS2000>{};
+		struct ITRS2000 : public Datum<coordinates::horizontalDatums::ITRS2000>{};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		ITRS88
@@ -172,7 +172,7 @@ namespace coord
 		///	@details	
 		/// @note		Suitable for world-wide use.
 		//  ----------------------------------------------------------------------------
-		struct ITRS88 : public Datum<coord::horizontalDatums::ITRS88>{};
+		struct ITRS88 : public Datum<coordinates::horizontalDatums::ITRS88>{};
 	}
 	
 	//----------------------------------
@@ -196,7 +196,7 @@ namespace coord
 		 * @brief		Traits class defining the properties of a datum.
 		 */
 		template<class T>
-		struct datum_traits<T, typename coord::traits::void_type<
+		struct datum_traits<T, typename coordinates::traits::void_type<
 			typename T::horizontal_datum,
 			typename T::vertical_datum,
 			typename T::reference_frame,
@@ -214,9 +214,9 @@ namespace coord
 		 */
 		template<typename T>
 		struct is_datum : std::integral_constant<bool,
-			coord::traits::is_horizontal_datum<typename coord::traits::datum_traits<T>::horizontal_datum>::value &&
-			coord::traits::is_vertical_datum<typename coord::traits::datum_traits<T>::vertical_datum>::value &&
-			coord::traits::is_ellipsoid<typename coord::traits::datum_traits<T>::reference_ellipsoid>::value
+			coordinates::traits::is_horizontal_datum<typename coordinates::traits::datum_traits<T>::horizontal_datum>::value &&
+			coordinates::traits::is_vertical_datum<typename coordinates::traits::datum_traits<T>::vertical_datum>::value &&
+			coordinates::traits::is_ellipsoid<typename coordinates::traits::datum_traits<T>::reference_ellipsoid>::value
 		>::type
 		{};
 	}

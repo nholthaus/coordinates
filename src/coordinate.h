@@ -55,17 +55,17 @@
 #include <positionAER.h>
 #include <positionXYZ.h>
 
-namespace coord
+namespace coordinates
 {
 	//----------------------------------
 	//	CONVENIENCE CLASSES
 	//----------------------------------
-	using ITRS = PositionECEF<coord::datums::ITRS2008>;
-	using ECEF = PositionECEF<coord::datums::WGS84_G1674>;
-	using LLA = PositionGeodetic<coord::datums::WGS84_G1674>;
-	using ENU = PositionENU<coord::datums::WGS84_G1674>;
-	using NED = PositionNED<coord::datums::WGS84_G1674>;
-	using AER = PositionAER<coord::datums::WGS84_G1674>;
+	using ITRS = PositionECEF<coordinates::datums::ITRS2008>;
+	using ECEF = PositionECEF<coordinates::datums::WGS84_G1674>;
+	using LLA = PositionGeodetic<coordinates::datums::WGS84_G1674>;
+	using ENU = PositionENU<coordinates::datums::WGS84_G1674>;
+	using NED = PositionNED<coordinates::datums::WGS84_G1674>;
+	using AER = PositionAER<coordinates::datums::WGS84_G1674>;
 }
 
 #endif // _h__

@@ -38,7 +38,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-using namespace coord;
+using namespace coordinates;
 using namespace units;
 
 namespace
@@ -90,12 +90,12 @@ namespace
 
 	};
 
-	struct TestPoint : public coord::Point<ENUFrame<horizontalDatums::ITRF2008>, coord::cartesianTuple, coord::FrameData>
+	struct TestPoint : public coordinates::Point<ENUFrame<horizontalDatums::ITRF2008>, coordinates::cartesianTuple, coordinates::FrameData>
 	{
 		TestPoint() {};
 
-		using coord::Point<ENUFrame<horizontalDatums::ITRF2008>, coord::cartesianTuple, coord::FrameData>::tuple_type;
-		using coord::Point<ENUFrame<horizontalDatums::ITRF2008>, coord::cartesianTuple, coord::FrameData>::frame_data_type;
+		using coordinates::Point<ENUFrame<horizontalDatums::ITRF2008>, coordinates::cartesianTuple, coordinates::FrameData>::tuple_type;
+		using coordinates::Point<ENUFrame<horizontalDatums::ITRF2008>, coordinates::cartesianTuple, coordinates::FrameData>::frame_data_type;
 
 		tuple_type point() const { return tuple_type(); }
 		void setPoint(const tuple_type& t) {}
@@ -106,13 +106,13 @@ namespace
 		void setFrameData(frame_data_type&& frameData) { return; }
 	};
 
-	struct TestSphericalPoint : public coord::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coord::sphericalTuple, coord::FrameData>
+	struct TestSphericalPoint : public coordinates::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coordinates::sphericalTuple, coordinates::FrameData>
 	{
 		TestSphericalPoint() {};
 
-		using coord::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coord::sphericalTuple, coord::FrameData>::tuple_type;
-		using coord::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coord::sphericalTuple, coord::FrameData>::frame_data_type;
-		using coord::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coord::sphericalTuple, coord::FrameData>::reference_frame;
+		using coordinates::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coordinates::sphericalTuple, coordinates::FrameData>::tuple_type;
+		using coordinates::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coordinates::sphericalTuple, coordinates::FrameData>::frame_data_type;
+		using coordinates::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coordinates::sphericalTuple, coordinates::FrameData>::reference_frame;
 
 		tuple_type point() const { return tuple_type(); }
 		void setPoint(const tuple_type& t) {}
@@ -132,75 +132,75 @@ namespace
 
 	TEST_F(PointTest, has_reference_frame)
 	{
-		EXPECT_FALSE((coord::traits::has_reference_frame<double>::value));
-		EXPECT_FALSE((coord::traits::has_reference_frame<NotAPoint>::value));
-		EXPECT_TRUE((coord::traits::has_reference_frame<TestPoint>::value));
+		EXPECT_FALSE((coordinates::traits::has_reference_frame<double>::value));
+		EXPECT_FALSE((coordinates::traits::has_reference_frame<NotAPoint>::value));
+		EXPECT_TRUE((coordinates::traits::has_reference_frame<TestPoint>::value));
 	}
 
 	TEST_F(PointTest, has_tuple_type)
 	{
-		EXPECT_FALSE((coord::traits::has_tuple_type<double, coord::traits::point_traits>::value));
-		EXPECT_FALSE((coord::traits::has_tuple_type<NotAPoint, coord::traits::point_traits>::value));
-		EXPECT_TRUE((coord::traits::has_tuple_type<TestPoint, coord::traits::point_traits>::value));
+		EXPECT_FALSE((coordinates::traits::has_tuple_type<double, coordinates::traits::point_traits>::value));
+		EXPECT_FALSE((coordinates::traits::has_tuple_type<NotAPoint, coordinates::traits::point_traits>::value));
+		EXPECT_TRUE((coordinates::traits::has_tuple_type<TestPoint, coordinates::traits::point_traits>::value));
 	}
 
 	TEST_F(PointTest, has_frame_data_type)
 	{
-		EXPECT_FALSE((coord::traits::has_frame_data_type<double>::value));
-		EXPECT_FALSE((coord::traits::has_frame_data_type<NotAPoint>::value));
-		EXPECT_TRUE((coord::traits::has_frame_data_type<TestPoint>::value));
+		EXPECT_FALSE((coordinates::traits::has_frame_data_type<double>::value));
+		EXPECT_FALSE((coordinates::traits::has_frame_data_type<NotAPoint>::value));
+		EXPECT_TRUE((coordinates::traits::has_frame_data_type<TestPoint>::value));
 	}
 
 	TEST_F(PointTest, has_point)
 	{
-		EXPECT_FALSE((coord::traits::has_point<double>::value));
-		EXPECT_FALSE((coord::traits::has_point<NotAPoint>::value));
-		EXPECT_TRUE((coord::traits::has_point<TestPoint>::value));
+		EXPECT_FALSE((coordinates::traits::has_point<double>::value));
+		EXPECT_FALSE((coordinates::traits::has_point<NotAPoint>::value));
+		EXPECT_TRUE((coordinates::traits::has_point<TestPoint>::value));
 	}
 
 	TEST_F(PointTest, has_setPoint)
 	{
-		EXPECT_FALSE((coord::traits::has_setPoint<double>::value));
-		EXPECT_FALSE((coord::traits::has_setPoint<NotAPoint>::value));
-		EXPECT_TRUE((coord::traits::has_setPoint<TestPoint>::value));
+		EXPECT_FALSE((coordinates::traits::has_setPoint<double>::value));
+		EXPECT_FALSE((coordinates::traits::has_setPoint<NotAPoint>::value));
+		EXPECT_TRUE((coordinates::traits::has_setPoint<TestPoint>::value));
 	}
 
 	TEST_F(PointTest, has_frameData)
 	{
-		EXPECT_FALSE((coord::traits::has_frameData<double>::value));
-		EXPECT_FALSE((coord::traits::has_frameData<NotAPoint>::value));
-		EXPECT_TRUE((coord::traits::has_frameData<TestPoint>::value));
+		EXPECT_FALSE((coordinates::traits::has_frameData<double>::value));
+		EXPECT_FALSE((coordinates::traits::has_frameData<NotAPoint>::value));
+		EXPECT_TRUE((coordinates::traits::has_frameData<TestPoint>::value));
 	}
 
 	TEST_F(PointTest, has_setFrameData)
 	{
-		EXPECT_FALSE((coord::traits::has_setFrameData<double>::value));
-		EXPECT_FALSE((coord::traits::has_setFrameData<NotAPoint>::value));
-		EXPECT_TRUE((coord::traits::has_setFrameData<TestPoint>::value));
+		EXPECT_FALSE((coordinates::traits::has_setFrameData<double>::value));
+		EXPECT_FALSE((coordinates::traits::has_setFrameData<NotAPoint>::value));
+		EXPECT_TRUE((coordinates::traits::has_setFrameData<TestPoint>::value));
 	}
 
 	TEST_F(PointTest, is_point)
 	{
-		EXPECT_FALSE((coord::traits::is_point<double>::value));
-		EXPECT_FALSE((coord::traits::is_point<NotAPoint>::value));
-		EXPECT_TRUE((coord::traits::is_point<TestPoint>::value));
-		EXPECT_TRUE((coord::traits::is_point<TestSphericalPoint>::value));
+		EXPECT_FALSE((coordinates::traits::is_point<double>::value));
+		EXPECT_FALSE((coordinates::traits::is_point<NotAPoint>::value));
+		EXPECT_TRUE((coordinates::traits::is_point<TestPoint>::value));
+		EXPECT_TRUE((coordinates::traits::is_point<TestSphericalPoint>::value));
 	}
 
 	TEST_F(PointTest, is_cartesian_point)
 	{
-		EXPECT_FALSE((coord::traits::is_cartesian_point<double>::value));
-		EXPECT_FALSE((coord::traits::is_cartesian_point<NotAPoint>::value));
-		EXPECT_TRUE((coord::traits::is_cartesian_point<TestPoint>::value));
-		EXPECT_FALSE((coord::traits::is_cartesian_point<TestSphericalPoint>::value));
+		EXPECT_FALSE((coordinates::traits::is_cartesian_point<double>::value));
+		EXPECT_FALSE((coordinates::traits::is_cartesian_point<NotAPoint>::value));
+		EXPECT_TRUE((coordinates::traits::is_cartesian_point<TestPoint>::value));
+		EXPECT_FALSE((coordinates::traits::is_cartesian_point<TestSphericalPoint>::value));
 	}
 
 	TEST_F(PointTest, is_convertible_point)
 	{
-		EXPECT_FALSE((coord::traits::is_convertible_point<double, ECEF>::value));
-		EXPECT_FALSE((coord::traits::is_convertible_point<NotAPoint, ECEF>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_point<TestPoint, ECEF>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_point<ECEF, ECEF>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_point<double, ECEF>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_point<NotAPoint, ECEF>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_point<TestPoint, ECEF>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_point<ECEF, ECEF>::value));
 	}
 
 	TEST_F(PointTest, equal)

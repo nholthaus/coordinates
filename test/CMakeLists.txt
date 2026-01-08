@@ -60,7 +60,7 @@ set_target_properties(coordTest PROPERTIES
 target_link_libraries(coordTest
         PRIVATE
         GTest::gtest_main
-        coord
+        coordinates
 )
 target_include_directories(coordTest
         PRIVATE

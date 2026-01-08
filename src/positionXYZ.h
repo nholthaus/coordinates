@@ -35,7 +35,7 @@
 //------------------------
 #include "point.h"
 
-namespace coord
+namespace coordinates
 {
 //	----------------------------------------------------------------------------
 //	CLASS		PointXYZ

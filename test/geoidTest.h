@@ -38,7 +38,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-using namespace coord;
+using namespace coordinates;
 using namespace units;
 using namespace units::length;
 using namespace units::angle;
@@ -82,10 +82,10 @@ protected:
 // TEST THE IS_GEOID CONCEPT CHECKER
 TEST_F(GeoidTest, is_geoid)
 {
-    EXPECT_TRUE(coord::traits::is_geoid<geoids::EGM96>);
-    EXPECT_TRUE(coord::traits::is_geoid<geoids::NULL_GEOID>);
-    EXPECT_TRUE(coord::traits::is_geoid<geoids::GEOID12A>);
-    EXPECT_FALSE(coord::traits::is_geoid<ellipsoids::WGS84>);
+    EXPECT_TRUE(coordinates::traits::is_geoid<geoids::EGM96>);
+    EXPECT_TRUE(coordinates::traits::is_geoid<geoids::NULL_GEOID>);
+    EXPECT_TRUE(coordinates::traits::is_geoid<geoids::GEOID12A>);
+    EXPECT_FALSE(coordinates::traits::is_geoid<ellipsoids::WGS84>);
 }
 
 TEST_F(GeoidTest, EGM96)

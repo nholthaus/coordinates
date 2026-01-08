@@ -44,14 +44,14 @@
 #include <QFile>
 #include <QDebug>
 
-using namespace coord;
+using namespace coordinates;
 using namespace units;
 using namespace units::length;
 using namespace units::angle;
 using namespace units::time;
 using namespace units::dimensionless;
 
-using namespace coord::topography;
+using namespace coordinates::topography;
 
 namespace
 {
@@ -108,7 +108,7 @@ namespace
 
 		}
 
-		class DTEDTileWrapper : public coord::topography::DTEDTile
+		class DTEDTileWrapper : public coordinates::topography::DTEDTile
 		{
 		public:
 
@@ -185,18 +185,18 @@ namespace
 
 	TEST_F(TopographyTest, has_orthometricHeight)
 	{
-		EXPECT_TRUE(coord::traits::has_orthometricHeight<topography::NULL_TOPOGRAPHY>::value);
-		EXPECT_TRUE(coord::traits::has_orthometricHeight<topography::DTED>::value);
-		EXPECT_FALSE(coord::traits::has_orthometricHeight<ellipsoids::GRS80>::value);
-		EXPECT_FALSE(coord::traits::has_orthometricHeight<double>::value);
+		EXPECT_TRUE(coordinates::traits::has_orthometricHeight<topography::NULL_TOPOGRAPHY>::value);
+		EXPECT_TRUE(coordinates::traits::has_orthometricHeight<topography::DTED>::value);
+		EXPECT_FALSE(coordinates::traits::has_orthometricHeight<ellipsoids::GRS80>::value);
+		EXPECT_FALSE(coordinates::traits::has_orthometricHeight<double>::value);
 	}
 
 	TEST_F(TopographyTest, is_topography)
 	{
-		EXPECT_TRUE(coord::traits::is_topography<topography::NULL_TOPOGRAPHY>::value);
-		EXPECT_TRUE(coord::traits::is_topography<topography::DTED>::value);
-		EXPECT_FALSE(coord::traits::is_topography<ellipsoids::GRS80>::value);
-		EXPECT_FALSE(coord::traits::is_topography<double>::value);
+		EXPECT_TRUE(coordinates::traits::is_topography<topography::NULL_TOPOGRAPHY>::value);
+		EXPECT_TRUE(coordinates::traits::is_topography<topography::DTED>::value);
+		EXPECT_FALSE(coordinates::traits::is_topography<ellipsoids::GRS80>::value);
+		EXPECT_FALSE(coordinates::traits::is_topography<double>::value);
 	}
 
 	TEST_F(TileTest, sizeofDt2File)
@@ -225,7 +225,7 @@ namespace
 	{
 		DTEDTile tFail;
 
-		EXPECT_THROW(tFail.load(), coord::topography::tile_invalid);
+		EXPECT_THROW(tFail.load(), coordinates::topography::tile_invalid);
 
 		DTEDTile t(":/e141_s13.dt1");
 		EXPECT_FALSE(t.isLoaded());
@@ -246,7 +246,7 @@ namespace
 	TEST_F(TileTest, metadata)
 	{
 		QFileInfo info(":/e141_s13.dt1");
-		std::unique_ptr<coord::topography::AbstractTile> tile = std::make_unique<coord::topography::DTEDTile>(info);
+		std::unique_ptr<coordinates::topography::AbstractTile> tile = std::make_unique<coordinates::topography::DTEDTile>(info);
 		EXPECT_FALSE(tile->isLoaded());
 		TileMetadata metadata = tile->metadata();
 		EXPECT_TRUE(tile->isLoaded());
@@ -261,8 +261,8 @@ namespace
 
 	TEST_F(TileTest, elevation)
 	{
-		coord::topography::DTEDTile tile(QFileInfo(":/e141_s13.dt1"));
-		EXPECT_THROW((tile.elevation(37.3363844298_deg, -116.603493024_deg)), coord::topography::tile_out_of_bounds);
+		coordinates::topography::DTEDTile tile(QFileInfo(":/e141_s13.dt1"));
+		EXPECT_THROW((tile.elevation(37.3363844298_deg, -116.603493024_deg)), coordinates::topography::tile_out_of_bounds);
 
 		// WHAT TO DO IF THIS TEST FAILS:
 		// This test tests that the elevation/interpolation of dted work by going through an entire
@@ -277,7 +277,7 @@ namespace
 		// - the resolution of the generated image: well that was dumb! Change it back or save a new golden 
 		// image.
 
-		auto data = coord::topography::image(&tile, angle::arcsecond_t(9.0));
+		auto data = coordinates::topography::image(&tile, angle::arcsecond_t(9.0));
 
 		// write the image to disc
 		QFile image("./e141_s13.pgm");
@@ -307,9 +307,9 @@ namespace
 
 	TEST_F(TileTest, hillshade)
 	{
-		coord::topography::DTEDTile tile(QFileInfo(":/e141_s13.dt1"));
+		coordinates::topography::DTEDTile tile(QFileInfo(":/e141_s13.dt1"));
 
-		auto data = coord::topography::hillshade(&tile, angle::arcsecond_t(9.0));
+		auto data = coordinates::topography::hillshade(&tile, angle::arcsecond_t(9.0));
 
 		// write the image to disc
 		QFile image("./e141_s13_shade.pgm");
@@ -357,7 +357,7 @@ namespace
 	TEST_F(TileManagerTest, elevation)
 	{
 		// we know tile elevation is correct from the image testing above, so use it as truth data
-		coord::topography::DTEDTile tile(QFileInfo(":/e141_s13.dt1"));
+		coordinates::topography::DTEDTile tile(QFileInfo(":/e141_s13.dt1"));
 
 		DTEDTileManager& TILE_MANAGER = DTEDTileManager::instance();
 		EXPECT_EQ(0_m, TILE_MANAGER.elevation(-60_deg, 0_deg));
@@ -375,7 +375,7 @@ namespace
 	{
 		DTEDTileManager& TILE_MANAGER = DTEDTileManager::instance();
 
-		coord::topography::AbstractTile* tile = new DTEDTile(QFileInfo(":/e141_s13.dt1"));
+		coordinates::topography::AbstractTile* tile = new DTEDTile(QFileInfo(":/e141_s13.dt1"));
 		auto tmTile = TILE_MANAGER.tile(-12.98_deg, 141.98_deg);
 
 		EXPECT_EQ(tile->elevation(-12.98_deg, 141.98_deg), tmTile->elevation(-12.98_deg, 141.98_deg));
@@ -385,7 +385,7 @@ namespace
 
 	TEST_F(TileManagerTest, tileLimit)
 	{
-		coord::topography::DTEDTile tile;
+		coordinates::topography::DTEDTile tile;
 
 		DTEDTileManager& TILE_MANAGER = DTEDTileManager::instance();
 		EXPECT_DOUBLE_EQ(TILE_MANAGER.maxNumTiles(), TILE_MANAGER.tileLimit());
@@ -393,7 +393,7 @@ namespace
 
 	TEST_F(TileManagerTest, setTileLimit)
 	{
-		coord::topography::DTEDTile tile;
+		coordinates::topography::DTEDTile tile;
 
 		DTEDTileManager& TILE_MANAGER = DTEDTileManager::instance();
 		EXPECT_DOUBLE_EQ(TILE_MANAGER.maxNumTiles(), TILE_MANAGER.tileLimit());

@@ -50,7 +50,7 @@
 #include "USGG2012LUT.h"
 #include "GEOID12ALUT.h"
 
-namespace coord
+namespace coordinates
 {
     using namespace units::literals;
 
@@ -460,7 +460,7 @@ namespace coord
             std::same_as<T, geoids::NULL_GEOID> ||
             (
                 has_undulation<T> &&
-                coord::traits::is_ellipsoid<geoid_reference_ellipsoid_t<T>> &&
+                coordinates::traits::is_ellipsoid<geoid_reference_ellipsoid_t<T>> &&
                 std::is_default_constructible_v<T>
             );
     }

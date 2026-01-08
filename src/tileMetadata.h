@@ -36,7 +36,7 @@
 #include <units.h>
 #include <string>
 
-namespace coord
+namespace coordinates
 {
 	namespace topography
 	{

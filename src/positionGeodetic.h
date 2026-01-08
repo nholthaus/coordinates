@@ -41,7 +41,7 @@
 #include "point.h"
 #include "algorithm.h"
 
-namespace coord
+namespace coordinates
 {
 	//	----------------------------------------------------------------------------
 	//	CLASS		PositionGeodetic
@@ -49,7 +49,7 @@ namespace coord
 	///	@brief		A 3D point in the Earth-centered, Earth-fixed frame of reference represented by
 	///				a latitude, longitude, and height.
 	///	@details	
-	/// @tparam		Datum		3-dimensional datum of the point. See coord::datums.
+	/// @tparam		Datum		3-dimensional datum of the point. See coordinates::datums.
 	/// @tparam		LatLonUnits	units of latitude/longitude. Should be a unit of angle, or a derivative
 	///							of a unit of angle.
 	/// @tparam		HeightUnits	units of altitude. Should be a unit of length, or a derivative of a unit
@@ -58,7 +58,7 @@ namespace coord
 	///							such as double.
 	//  ----------------------------------------------------------------------------
 	template<class Datum, class LatLonUnits = units::angle::degrees, class HeightUnits = units::length::meters, typename T = double>
-	class PositionGeodetic : public coord::Point<coord::coordinateFrames::Geodetic3DFrame<Datum>, coord::sphericalTuple, coord::FrameData>
+	class PositionGeodetic : public coordinates::Point<coordinates::coordinateFrames::Geodetic3DFrame<Datum>, coordinates::sphericalTuple, coordinates::FrameData>
 	{
 	public:
 
@@ -68,15 +68,15 @@ namespace coord
 
 		static_assert(units::traits::is_unit<LatLonUnits>::value, "Template parameter `LatLonUnits` template parameter must be a unit type.");
 		static_assert(units::traits::is_unit<HeightUnits>::value, "Template parameter `HeightUnits` template parameter must be a unit type.");
-		static_assert(coord::traits::is_datum<Datum>::value, "`Datum` template parameter does not satisfy the datum concept.");
+		static_assert(coordinates::traits::is_datum<Datum>::value, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(std::is_arithmetic<T>::value, "`T` template parameter must be an arithmetic type.");
 
 		//////////////////////////////////////////////////////////////////////////
 		//		PUBLIC TYPES
 		//////////////////////////////////////////////////////////////////////////
 
-		using tuple_type = typename coord::Point<coord::coordinateFrames::Geodetic3DFrame<Datum>, coord::sphericalTuple, coord::FrameData>::tuple_type;
-		using frame_data_type = typename coord::Point<coord::coordinateFrames::Geodetic3DFrame<Datum>, coord::sphericalTuple, coord::FrameData>::frame_data_type;
+		using tuple_type = typename coordinates::Point<coordinates::coordinateFrames::Geodetic3DFrame<Datum>, coordinates::sphericalTuple, coordinates::FrameData>::tuple_type;
+		using frame_data_type = typename coordinates::Point<coordinates::coordinateFrames::Geodetic3DFrame<Datum>, coordinates::sphericalTuple, coordinates::FrameData>::frame_data_type;
 
 		using datum_type = Datum;
 
@@ -154,11 +154,11 @@ namespace coord
 		*					if necessary. It is safe to omit if no datum conversion will be performed,
 		*					or if the time-dependent correction is undesirable.
 		*/
-		template<class P, class = typename std::enable_if<coord::traits::is_point<P>::value && !std::is_convertible<P, PositionGeodetic>::value>::type>
+		template<class P, class = typename std::enable_if<coordinates::traits::is_point<P>::value && !std::is_convertible<P, PositionGeodetic>::value>::type>
 		PositionGeodetic(const P& point) :
 			m_frameData(point.frameData())
 		{
-			coord::convert(point, *this);
+			coordinates::convert(point, *this);
 		}
 
 		/**
@@ -182,11 +182,11 @@ namespace coord
 		* @param[in]	point point to construct from
 		* @returns		copy of *this
 		*/
-		template<class Point, class = typename std::enable_if<coord::traits::is_point<Point>::value && !std::is_convertible<Point, PositionGeodetic>::value>::type>
+		template<class Point, class = typename std::enable_if<coordinates::traits::is_point<Point>::value && !std::is_convertible<Point, PositionGeodetic>::value>::type>
 		PositionGeodetic& operator=(const Point& point)
 		{
 			m_frameData = point.frameData();
-			coord::convert(point, *this);
+			coordinates::convert(point, *this);
 			return *this;
 		}
 
@@ -209,7 +209,7 @@ namespace coord
 		*/
 		bool isNull() const
 		{
-			return coord::isNull(*this);
+			return coordinates::isNull(*this);
 		}
 
 		/**
@@ -229,7 +229,7 @@ namespace coord
 		template<class Point>
 		bool isSame(const Point& p, height_unit_type tolerance = height_unit_type(0)) const
 		{
-			return coord::isSame<height_unit_type>(*this, p, tolerance);
+			return coordinates::isSame<height_unit_type>(*this, p, tolerance);
 		}
 
 		/**
@@ -247,10 +247,10 @@ namespace coord
 		*							units as this instance of the class.
 		* @returns		true if the values are equal within the tolerance, false otherwise.
 		*/
-		template<class Point, class PointTol, class = typename std::enable_if<coord::traits::is_point<PointTol>::value>::type>
+		template<class Point, class PointTol, class = typename std::enable_if<coordinates::traits::is_point<PointTol>::value>::type>
 		bool isSame(const Point& p, const PointTol& tolerance) const
 		{
-			return coord::isSame(*this, p, tolerance);
+			return coordinates::isSame(*this, p, tolerance);
 		}
 
 		/**
@@ -268,7 +268,7 @@ namespace coord
 		template<class Point, typename UnitType = height_unit_type>
 		UnitType distance(const Point& p) const
 		{
-			return coord::distance(*this, p);
+			return coordinates::distance(*this, p);
 		}
 
 		//////////////////////////////////////////////////////////////////////////

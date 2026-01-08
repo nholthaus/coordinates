@@ -38,7 +38,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-using namespace coord;
+using namespace coordinates;
 using namespace units;
 using namespace units::literals;
 using namespace units::length;
@@ -82,8 +82,8 @@ namespace
 	};
 	TEST_F(PositionECEFTest, is_point)
 	{
-		EXPECT_TRUE(coord::traits::is_point<ECEF>::value);
-		EXPECT_TRUE((coord::traits::is_point<PositionECEF<datums::ITRS2000, units::length::cubit, long double>>::value));
+		EXPECT_TRUE(coordinates::traits::is_point<ECEF>::value);
+		EXPECT_TRUE((coordinates::traits::is_point<PositionECEF<datums::ITRS2000, units::length::cubit, long double>>::value));
 	}
 
 	TEST_F(PositionECEFTest, defaultConstructor)
@@ -123,13 +123,13 @@ namespace
 		EXPECT_EQ(6_m, std::get<2>(ecef_m.point()));
 
 		// different storage units
-		PositionECEF<coord::datums::NAD83, units::length::kilometer> ecef_km(1_km, 2_km, 3_km);
+		PositionECEF<coordinates::datums::NAD83, units::length::kilometer> ecef_km(1_km, 2_km, 3_km);
 		EXPECT_EQ(1000_m, std::get<0>(ecef_km.point()));
 		EXPECT_EQ(2000_m, std::get<1>(ecef_km.point()));
 		EXPECT_EQ(3000_m, std::get<2>(ecef_km.point()));
 
 		// different input AND storage units
-		PositionECEF<coord::datums::NAD83, units::length::kilometer> ecef_km2(1_m, 2_m, 3_m);
+		PositionECEF<coordinates::datums::NAD83, units::length::kilometer> ecef_km2(1_m, 2_m, 3_m);
 		EXPECT_EQ(0.001_km, std::get<0>(ecef_km2.point()));
 		EXPECT_EQ(0.002_km, std::get<1>(ecef_km2.point()));
 		EXPECT_EQ(0.003_km, std::get<2>(ecef_km2.point()));
@@ -138,7 +138,7 @@ namespace
 	// TESTS THE  MEMBER
 	TEST_F(PositionECEFTest, tupleConstructor)
 	{
-		coord::cartesianTuple t(1_m, 2_m, 3_m);
+		coordinates::cartesianTuple t(1_m, 2_m, 3_m);
 		ECEF ecef(t);
 		EXPECT_EQ(1_m, std::get<0>(ecef.point()));
 		EXPECT_EQ(2_m, std::get<1>(ecef.point()));

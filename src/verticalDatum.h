@@ -41,7 +41,7 @@
 #include "geoid.h"
 #include "topography.h"
 
-namespace coord
+namespace coordinates
 {	
 	namespace traits
 	{
@@ -51,9 +51,9 @@ namespace coord
 		 */
 		template<typename T>
 		struct is_vertical_datum : std::integral_constant<bool,
-			coord::traits::is_ellipsoid<T>::value ||
-			coord::traits::is_geoid<T>::value ||
-			coord::traits::is_topography<T>::value>::type
+			coordinates::traits::is_ellipsoid<T>::value ||
+			coordinates::traits::is_geoid<T>::value ||
+			coordinates::traits::is_topography<T>::value>::type
 		{};		
 
 		/**
@@ -117,8 +117,8 @@ namespace coord
 		template<typename VerticalDatum, typename std::enable_if<!traits::is_ellipsoid<VerticalDatum>::value, int>::type = 0>
 		static units::length::meter_t convertToEllipsoidHeight(units::angle::degree_t latitude, units::angle::degree_t longitude, units::length::meter_t height)
 		{
-			return convertToEllipsoidHeight<typename coord::traits::vertical_datum_traits<VerticalDatum>::base_datum>(latitude, longitude, 
-				height + coord::traits::vertical_datum_traits<VerticalDatum>::correctionValue(latitude, longitude));
+			return convertToEllipsoidHeight<typename coordinates::traits::vertical_datum_traits<VerticalDatum>::base_datum>(latitude, longitude,
+				height + coordinates::traits::vertical_datum_traits<VerticalDatum>::correctionValue(latitude, longitude));
 		}
 
 		/// Overload for if the height is already in an ellipsoid datum
@@ -132,8 +132,8 @@ namespace coord
 		template<typename VerticalDatum, typename std::enable_if<!traits::is_ellipsoid<VerticalDatum>::value, int>::type = 0>
 		static units::length::meter_t convertFromEllipsoidHeight(units::angle::degree_t latitude, units::angle::degree_t longitude, units::length::meter_t height)
 		{
-			return convertFromEllipsoidHeight<typename coord::traits::vertical_datum_traits<VerticalDatum>::base_datum>(latitude, longitude,
-				height - coord::traits::vertical_datum_traits<VerticalDatum>::correctionValue(latitude, longitude));
+			return convertFromEllipsoidHeight<typename coordinates::traits::vertical_datum_traits<VerticalDatum>::base_datum>(latitude, longitude,
+				height - coordinates::traits::vertical_datum_traits<VerticalDatum>::correctionValue(latitude, longitude));
 		}
 	}
 

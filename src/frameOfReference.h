@@ -43,7 +43,7 @@
 #include "horizontalDatum.h"
 #include "coordinate_traits.h"
 
-namespace coord
+namespace coordinates
 {
 	//----------------------------------
 	//	BASE FRAME TYPE
@@ -159,12 +159,12 @@ namespace coord
 		template<class HorizontalDatum>
 		struct ECEFFrame : frameOfReference<
 			HorizontalDatum,
-			ECEFFrame<typename coord::traits::horizontal_datum_traits<HorizontalDatum>::reference_frame>,
+			ECEFFrame<typename coordinates::traits::horizontal_datum_traits<HorizontalDatum>::reference_frame>,
 			cartesianTuple
 		>
 		{
-			using tuple_type = typename frameOfReference<HorizontalDatum, ECEFFrame<typename coord::traits::horizontal_datum_traits<HorizontalDatum>::reference_frame>, cartesianTuple>::tuple_type;
-			using base_tuple_type = typename frameOfReference<HorizontalDatum, ECEFFrame<typename coord::traits::horizontal_datum_traits<HorizontalDatum>::reference_frame>, cartesianTuple>::base_frame_type::tuple_type;
+			using tuple_type = typename frameOfReference<HorizontalDatum, ECEFFrame<typename coordinates::traits::horizontal_datum_traits<HorizontalDatum>::reference_frame>, cartesianTuple>::tuple_type;
+			using base_tuple_type = typename frameOfReference<HorizontalDatum, ECEFFrame<typename coordinates::traits::horizontal_datum_traits<HorizontalDatum>::reference_frame>, cartesianTuple>::base_frame_type::tuple_type;
 			using meter_t = units::length::meter_t;
 			using year_t = units::time::year_t;
 
@@ -182,10 +182,10 @@ namespace coord
 			{
 				if (f.date != 0_yr)
 				{
-					return coord::inversePositionVectorTransform<HorizontalDatum>(p, f.date);
+					return coordinates::inversePositionVectorTransform<HorizontalDatum>(p, f.date);
 				}
 				else
-					return coord::inversePositionVectorTransform<HorizontalDatum>(p);
+					return coordinates::inversePositionVectorTransform<HorizontalDatum>(p);
 			}
 
 			/**
@@ -202,10 +202,10 @@ namespace coord
 			{
 				if (f.date != 0_yr)
 				{
-					return coord::positionVectorTransform<HorizontalDatum>(p, f.date);
+					return coordinates::positionVectorTransform<HorizontalDatum>(p, f.date);
 				}
 				else
-					return coord::positionVectorTransform<HorizontalDatum>(p);
+					return coordinates::positionVectorTransform<HorizontalDatum>(p);
 			}
 		};
 
@@ -247,8 +247,8 @@ namespace coord
 				radian_t lambda(std::get<1>(point));	// longitude
 				meter_t h(std::get<2>(point));			// height
 
-				meter_t a = coord::traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid::a();
-				scalar_t e2 = coord::traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid::e2();
+				meter_t a = coordinates::traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid::a();
+				scalar_t e2 = coordinates::traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid::e2();
 
 				meter_t x, y, z;
 
@@ -279,9 +279,9 @@ namespace coord
 				meter_t Y(std::get<1>(point));
 				meter_t Z(std::get<2>(point));
 
-				meter_t a = coord::traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid::a();
-				meter_t b = coord::traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid::b();
-				scalar_t e2 = coord::traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid::e2();
+				meter_t a = coordinates::traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid::a();
+				meter_t b = coordinates::traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid::b();
+				scalar_t e2 = coordinates::traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid::e2();
 
 				scalar_t epsilon = e2 / (1.0 - e2);
 				meter_t p = units::math::sqrt(units::math::cpow<2>(X) + units::math::cpow<2>(Y));
@@ -308,12 +308,12 @@ namespace coord
 		template<class Datum>
 		struct Geodetic3DFrame : frameOfReference<
 			Datum,
-			Geodetic2DFrame<typename coord::traits::datum_traits<Datum>::horizontal_datum>,
+			Geodetic2DFrame<typename coordinates::traits::datum_traits<Datum>::horizontal_datum>,
 			sphericalTuple
 		>
 		{
-			using tuple_type = typename frameOfReference<Datum,Geodetic2DFrame<typename coord::traits::datum_traits<Datum>::horizontal_datum>,sphericalTuple>::tuple_type;
-			using base_tuple_type = typename frameOfReference<Datum,Geodetic2DFrame<typename coord::traits::datum_traits<Datum>::horizontal_datum>,sphericalTuple>::base_frame_type::tuple_type;
+			using tuple_type = typename frameOfReference<Datum,Geodetic2DFrame<typename coordinates::traits::datum_traits<Datum>::horizontal_datum>,sphericalTuple>::tuple_type;
+			using base_tuple_type = typename frameOfReference<Datum,Geodetic2DFrame<typename coordinates::traits::datum_traits<Datum>::horizontal_datum>,sphericalTuple>::base_frame_type::tuple_type;
 			
 			using meter_t = units::length::meter_t;
 			using scalar_t = units::dimensionless::scalar_t;
@@ -327,7 +327,7 @@ namespace coord
 				radian_t lambda(std::get<1>(point));	// longitude
 				meter_t	h(std::get<2>(point));			// height
 
-				h = coord::convertToEllipsoidHeight<typename coord::traits::datum_traits<Datum>::vertical_datum>(phi, lambda, h);
+				h = coordinates::convertToEllipsoidHeight<typename coordinates::traits::datum_traits<Datum>::vertical_datum>(phi, lambda, h);
 
 				return base_tuple_type(phi, lambda, h);
 			}
@@ -339,7 +339,7 @@ namespace coord
 				radian_t lambda(std::get<1>(point));	// longitude
 				meter_t	h(std::get<2>(point));			// height
 
-				h = coord::convertFromEllipsoidHeight<typename coord::traits::datum_traits<Datum>::vertical_datum>(phi, lambda, h);
+				h = coordinates::convertFromEllipsoidHeight<typename coordinates::traits::datum_traits<Datum>::vertical_datum>(phi, lambda, h);
 
 				return tuple_type(phi, lambda, h);
 			}
@@ -599,7 +599,7 @@ namespace coord
 		 *				so that's the test we'll use.
 		 */
 		template <typename T, template<class> class Traits = frame_traits>
-		struct has_datum_type : coord::traits::is_horizontal_datum<typename Traits<T>::datum_type>::type {};
+		struct has_datum_type : coordinates::traits::is_horizontal_datum<typename Traits<T>::datum_type>::type {};
 	
 		/**
 		 * @brief		Trait which tests that a class has a `tuple_type` typedef which represents the type of data the frame converts from
@@ -612,7 +612,7 @@ namespace coord
 		struct has_convertToBaseFrame_impl
 		{
 			template<typename U>
-			static auto test(U* p) -> decltype(U::convertToBaseFrame(typename frame_traits<T>::tuple_type(), typename coord::FrameData()));
+			static auto test(U* p) -> decltype(U::convertToBaseFrame(typename frame_traits<T>::tuple_type(), typename coordinates::FrameData()));
 			template<typename U>
 			static std::false_type test(...);
 	
@@ -634,7 +634,7 @@ namespace coord
 		struct has_convertFromBaseFrame_impl
 		{
 			template<typename U>
-			static auto test(U* p) -> decltype(U::convertFromBaseFrame(typename frame_traits<typename frame_traits<T>::base_frame_type>::tuple_type(), typename coord::FrameData()));
+			static auto test(U* p) -> decltype(U::convertFromBaseFrame(typename frame_traits<typename frame_traits<T>::base_frame_type>::tuple_type(), typename coordinates::FrameData()));
 			template<typename U>
 			static std::false_type test(...);
 	
@@ -733,7 +733,7 @@ namespace coord
 		 * @details
 		 */
 		template<typename T>
-		struct is_cartesian_frame : std::is_same<coord::cartesianTuple, typename std::decay<typename coord::traits::frame_traits<T>::tuple_type>::type>::type {};
+		struct is_cartesian_frame : std::is_same<coordinates::cartesianTuple, typename std::decay<typename coordinates::traits::frame_traits<T>::tuple_type>::type>::type {};
 
 		namespace detail
 		{
@@ -817,7 +817,7 @@ namespace coord
 			typename std::enable_if<traits::is_same_frame<FrameFrom, FrameTo>::value, int>::type = 0>
 		typename traits::frame_traits<FrameTo>::tuple_type convertToBase(const typename traits::frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
 		{
-			return typename coord::traits::frame_traits<FrameTo>::tuple_type(std::get<0>(p), std::get<1>(p), std::get<2>(p));	// this should handle unit conversions if necessary
+			return typename coordinates::traits::frame_traits<FrameTo>::tuple_type(std::get<0>(p), std::get<1>(p), std::get<2>(p));	// this should handle unit conversions if necessary
 		};	
 
 		/**
@@ -828,7 +828,7 @@ namespace coord
 			typename std::enable_if<!traits::is_same_frame<FrameFrom, FrameTo>::value, int>::type = 0>
 		typename traits::frame_traits<FrameTo>::tuple_type convertToBase(const typename traits::frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
 		{
-			typedef typename coord::traits::frame_traits<FrameFrom>::base_frame_type NextFrameFrom;
+			typedef typename coordinates::traits::frame_traits<FrameFrom>::base_frame_type NextFrameFrom;
 			return convertToBase<NextFrameFrom, FrameTo>(FrameFrom::convertToBaseFrame(p, f), f);
 		};
 
@@ -840,7 +840,7 @@ namespace coord
 			typename std::enable_if<traits::is_same_frame<FrameFrom, FrameTo>::value, int>::type = 0>
 		typename traits::frame_traits<FrameTo>::tuple_type convertFromBase(const typename traits::frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
 		{
-			return typename coord::traits::frame_traits<FrameTo>::tuple_type(std::get<0>(p), std::get<1>(p), std::get<2>(p));	// this should handle unit conversions if necessary
+			return typename coordinates::traits::frame_traits<FrameTo>::tuple_type(std::get<0>(p), std::get<1>(p), std::get<2>(p));	// this should handle unit conversions if necessary
 		};
 
 		/**
@@ -851,7 +851,7 @@ namespace coord
 			typename std::enable_if<!traits::is_same_frame<FrameFrom, FrameTo>::value, int>::type = 0>
 		typename traits::frame_traits<FrameTo>::tuple_type convertFromBase(const typename traits::frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
 		{
-			typedef typename coord::traits::frame_traits<FrameTo>::base_frame_type NextFrameTo;
+			typedef typename coordinates::traits::frame_traits<FrameTo>::base_frame_type NextFrameTo;
 			return FrameTo::convertFromBaseFrame(convertFromBase<FrameFrom, NextFrameTo>(p, f), f);
 		};
 	}
@@ -874,7 +874,7 @@ namespace coord
 	typename traits::frame_traits<FrameTo>::tuple_type convert(
 	const typename traits::frame_traits<FrameFrom>::tuple_type& p, const FrameDataFrom& frameDataFrom = FrameDataFrom(), const FrameDataTo& frameDataTo = FrameDataTo())
 	{		
-		typedef typename coord::traits::least_common_ancestor<FrameFrom, FrameTo>::type IntermediateFrame;
+		typedef typename coordinates::traits::least_common_ancestor<FrameFrom, FrameTo>::type IntermediateFrame;
 
 		return detail::convertFromBase<IntermediateFrame, FrameTo>(detail::convertToBase<FrameFrom, IntermediateFrame>(p, frameDataFrom), frameDataTo);
 	};

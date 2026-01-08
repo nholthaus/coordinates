@@ -38,7 +38,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-using namespace coord;
+using namespace coordinates;
 using namespace units;
 using namespace units::length;
 using namespace units::angle;
@@ -82,7 +82,7 @@ namespace
 
 	TEST_F(PositionGeodeticTest, is_point)
 	{
-		EXPECT_TRUE(coord::traits::is_point<LLA>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<LLA>::value);
 	}
 
 	TEST_F(PositionGeodeticTest, defaultConstructor)
@@ -118,7 +118,7 @@ namespace
 	// TESTS THE  MEMBER
 	TEST_F(PositionGeodeticTest, tupleConstructor)
 	{
-		coord::sphericalTuple t(1_deg, 2_deg, 3_m);
+		coordinates::sphericalTuple t(1_deg, 2_deg, 3_m);
 		LLA lla(t);
 		EXPECT_EQ(1_deg, std::get<0>(lla.point()));
 		EXPECT_EQ(2_deg, std::get<1>(lla.point()));

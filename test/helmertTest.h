@@ -38,7 +38,7 @@
 
 #include <stdexcept>
 
-using namespace coord;
+using namespace coordinates;
 using namespace units;
 using namespace units::length;
 using namespace units::angle;
@@ -130,177 +130,177 @@ protected:
 
 TEST_F(HelmertTest, hasTx)
 {
-    EXPECT_TRUE(coord::traits::has_tx<horizontalDatums::WGS84_G1674>);
-    EXPECT_TRUE(coord::traits::has_tx<horizontalDatums::NAD83>);
-    EXPECT_TRUE(coord::traits::has_tx<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_tx<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_tx<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_tx<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE(coordinates::traits::has_tx<horizontalDatums::WGS84_G1674>);
+    EXPECT_TRUE(coordinates::traits::has_tx<horizontalDatums::NAD83>);
+    EXPECT_TRUE(coordinates::traits::has_tx<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_tx<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_tx<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_tx<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasTy)
 {
-    EXPECT_TRUE(coord::traits::has_ty<horizontalDatums::WGS84_G1674>);
-	EXPECT_TRUE(coord::traits::has_ty<horizontalDatums::NAD83>);
-    EXPECT_TRUE(coord::traits::has_ty<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_ty<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_ty<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_ty<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE(coordinates::traits::has_ty<horizontalDatums::WGS84_G1674>);
+	EXPECT_TRUE(coordinates::traits::has_ty<horizontalDatums::NAD83>);
+    EXPECT_TRUE(coordinates::traits::has_ty<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_ty<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_ty<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_ty<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasTz)
 {
-    EXPECT_TRUE( coord::traits::has_tz<horizontalDatums::WGS84_G1674>);
-	EXPECT_TRUE(coord::traits::has_tz<horizontalDatums::NAD83>);
-    EXPECT_TRUE( coord::traits::has_tz<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_tz<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_tz<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_tz<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE( coordinates::traits::has_tz<horizontalDatums::WGS84_G1674>);
+	EXPECT_TRUE(coordinates::traits::has_tz<horizontalDatums::NAD83>);
+    EXPECT_TRUE( coordinates::traits::has_tz<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_tz<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_tz<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_tz<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasS)
 {
-    EXPECT_TRUE( coord::traits::has_s<horizontalDatums::WGS84_G1674>);
-	EXPECT_TRUE(coord::traits::has_s<horizontalDatums::NAD83>);
-    EXPECT_TRUE( coord::traits::has_s<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_s<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_s<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_s<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE( coordinates::traits::has_s<horizontalDatums::WGS84_G1674>);
+	EXPECT_TRUE(coordinates::traits::has_s<horizontalDatums::NAD83>);
+    EXPECT_TRUE( coordinates::traits::has_s<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_s<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_s<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_s<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasRx)
 {
-    EXPECT_TRUE( coord::traits::has_rx<horizontalDatums::WGS84_G1674>);
-	EXPECT_TRUE(coord::traits::has_rx<horizontalDatums::NAD83>);
-    EXPECT_TRUE( coord::traits::has_rx<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_rx<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_rx<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_rx<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE( coordinates::traits::has_rx<horizontalDatums::WGS84_G1674>);
+	EXPECT_TRUE(coordinates::traits::has_rx<horizontalDatums::NAD83>);
+    EXPECT_TRUE( coordinates::traits::has_rx<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_rx<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_rx<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_rx<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasRy)
 {
-    EXPECT_TRUE( coord::traits::has_ry<horizontalDatums::WGS84_G1674>);
-	EXPECT_TRUE(coord::traits::has_ry<horizontalDatums::NAD83>);
-    EXPECT_TRUE( coord::traits::has_ry<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_ry<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_ry<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_ry<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE( coordinates::traits::has_ry<horizontalDatums::WGS84_G1674>);
+	EXPECT_TRUE(coordinates::traits::has_ry<horizontalDatums::NAD83>);
+    EXPECT_TRUE( coordinates::traits::has_ry<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_ry<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_ry<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_ry<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasRz)
 {
-    EXPECT_TRUE( coord::traits::has_rz<horizontalDatums::WGS84_G1674>);
-	EXPECT_TRUE(coord::traits::has_rz<horizontalDatums::NAD83>);
-    EXPECT_TRUE( coord::traits::has_rz<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_rz<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_rz<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_rz<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE( coordinates::traits::has_rz<horizontalDatums::WGS84_G1674>);
+	EXPECT_TRUE(coordinates::traits::has_rz<horizontalDatums::NAD83>);
+    EXPECT_TRUE( coordinates::traits::has_rz<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_rz<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_rz<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_rz<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, isHelmert7param)
 {
-    EXPECT_TRUE(coord::traits::is_helmert_7param_coefficients<horizontalDatums::WGS84_G1674>::value);
-	EXPECT_TRUE(coord::traits::is_helmert_7param_coefficients<horizontalDatums::NAD83>::value);
-    EXPECT_TRUE(coord::traits::is_helmert_7param_coefficients<EPSG_GUIDANCE_7_2_SEC_24321>::value);
-    EXPECT_TRUE(coord::traits::is_helmert_7param_coefficients<horizontalDatums::GDA94>::value);
-    EXPECT_FALSE(coord::traits::is_helmert_7param_coefficients<notHelmert>::value);
-	EXPECT_TRUE(coord::traits::is_helmert_7param_coefficients<inverse_coefficients<horizontalDatums::GDA94>>::value);
+    EXPECT_TRUE(coordinates::traits::is_helmert_7param_coefficients<horizontalDatums::WGS84_G1674>::value);
+	EXPECT_TRUE(coordinates::traits::is_helmert_7param_coefficients<horizontalDatums::NAD83>::value);
+    EXPECT_TRUE(coordinates::traits::is_helmert_7param_coefficients<EPSG_GUIDANCE_7_2_SEC_24321>::value);
+    EXPECT_TRUE(coordinates::traits::is_helmert_7param_coefficients<horizontalDatums::GDA94>::value);
+    EXPECT_FALSE(coordinates::traits::is_helmert_7param_coefficients<notHelmert>::value);
+	EXPECT_TRUE(coordinates::traits::is_helmert_7param_coefficients<inverse_coefficients<horizontalDatums::GDA94>>::value);
 }
 
 TEST_F(HelmertTest, hasDtx)
 {
-    EXPECT_TRUE(coord::traits::has_dtx<horizontalDatums::WGS84_G1674>);
-    EXPECT_TRUE(coord::traits::has_dtx<horizontalDatums::NAD83>);
-    EXPECT_FALSE(coord::traits::has_dtx<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_dtx<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_dtx<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_dtx<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE(coordinates::traits::has_dtx<horizontalDatums::WGS84_G1674>);
+    EXPECT_TRUE(coordinates::traits::has_dtx<horizontalDatums::NAD83>);
+    EXPECT_FALSE(coordinates::traits::has_dtx<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_dtx<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_dtx<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_dtx<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasDty)
 {
-    EXPECT_TRUE(coord::traits::has_dty<horizontalDatums::WGS84_G1674>);
-    EXPECT_TRUE(coord::traits::has_dty<horizontalDatums::NAD83>);
-    EXPECT_FALSE(coord::traits::has_dty<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_dty<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_dty<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_dty<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE(coordinates::traits::has_dty<horizontalDatums::WGS84_G1674>);
+    EXPECT_TRUE(coordinates::traits::has_dty<horizontalDatums::NAD83>);
+    EXPECT_FALSE(coordinates::traits::has_dty<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_dty<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_dty<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_dty<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasDtz)
 {
-    EXPECT_TRUE(coord::traits::has_dtz<horizontalDatums::WGS84_G1674>);
-    EXPECT_TRUE(coord::traits::has_dtz<horizontalDatums::NAD83>);
-    EXPECT_FALSE(coord::traits::has_dtz<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_dtz<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_dtz<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_dtz<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE(coordinates::traits::has_dtz<horizontalDatums::WGS84_G1674>);
+    EXPECT_TRUE(coordinates::traits::has_dtz<horizontalDatums::NAD83>);
+    EXPECT_FALSE(coordinates::traits::has_dtz<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_dtz<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_dtz<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_dtz<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasDs)
 {
-    EXPECT_TRUE(coord::traits::has_ds<horizontalDatums::WGS84_G1674>);
-    EXPECT_TRUE(coord::traits::has_ds<horizontalDatums::NAD83>);
-    EXPECT_FALSE(coord::traits::has_ds<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_ds<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_ds<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_ds<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE(coordinates::traits::has_ds<horizontalDatums::WGS84_G1674>);
+    EXPECT_TRUE(coordinates::traits::has_ds<horizontalDatums::NAD83>);
+    EXPECT_FALSE(coordinates::traits::has_ds<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_ds<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_ds<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_ds<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasDrx)
 {
-    EXPECT_TRUE(coord::traits::has_drx<horizontalDatums::WGS84_G1674>);
-    EXPECT_TRUE(coord::traits::has_drx<horizontalDatums::NAD83>);
-    EXPECT_FALSE(coord::traits::has_drx<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_drx<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_drx<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_drx<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE(coordinates::traits::has_drx<horizontalDatums::WGS84_G1674>);
+    EXPECT_TRUE(coordinates::traits::has_drx<horizontalDatums::NAD83>);
+    EXPECT_FALSE(coordinates::traits::has_drx<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_drx<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_drx<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_drx<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasDry)
 {
-    EXPECT_TRUE(coord::traits::has_dry<horizontalDatums::WGS84_G1674>);
-    EXPECT_TRUE(coord::traits::has_dry<horizontalDatums::NAD83>);
-    EXPECT_FALSE(coord::traits::has_dry<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_dry<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_dry<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_dry<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE(coordinates::traits::has_dry<horizontalDatums::WGS84_G1674>);
+    EXPECT_TRUE(coordinates::traits::has_dry<horizontalDatums::NAD83>);
+    EXPECT_FALSE(coordinates::traits::has_dry<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_dry<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_dry<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_dry<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasDrz)
 {
-    EXPECT_TRUE(coord::traits::has_drz<horizontalDatums::WGS84_G1674>);
-    EXPECT_TRUE(coord::traits::has_drz<horizontalDatums::NAD83>);
-    EXPECT_FALSE(coord::traits::has_drz<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_drz<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_drz<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_drz<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE(coordinates::traits::has_drz<horizontalDatums::WGS84_G1674>);
+    EXPECT_TRUE(coordinates::traits::has_drz<horizontalDatums::NAD83>);
+    EXPECT_FALSE(coordinates::traits::has_drz<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_drz<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_drz<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_drz<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, hasEpoch)
 {
-    EXPECT_TRUE(coord::traits::has_epoch<horizontalDatums::WGS84_G1674>);
-    EXPECT_TRUE(coord::traits::has_epoch<horizontalDatums::NAD83>);
-    EXPECT_FALSE(coord::traits::has_epoch<EPSG_GUIDANCE_7_2_SEC_24321>);
-    EXPECT_TRUE(coord::traits::has_epoch<horizontalDatums::GDA94>);
-    EXPECT_FALSE(coord::traits::has_epoch<notHelmert>);
-	EXPECT_TRUE(coord::traits::has_epoch<inverse_coefficients<horizontalDatums::GDA94>>);
+    EXPECT_TRUE(coordinates::traits::has_epoch<horizontalDatums::WGS84_G1674>);
+    EXPECT_TRUE(coordinates::traits::has_epoch<horizontalDatums::NAD83>);
+    EXPECT_FALSE(coordinates::traits::has_epoch<EPSG_GUIDANCE_7_2_SEC_24321>);
+    EXPECT_TRUE(coordinates::traits::has_epoch<horizontalDatums::GDA94>);
+    EXPECT_FALSE(coordinates::traits::has_epoch<notHelmert>);
+	EXPECT_TRUE(coordinates::traits::has_epoch<inverse_coefficients<horizontalDatums::GDA94>>);
 }
 
 TEST_F(HelmertTest, isHelmert14param)
 {
-    EXPECT_TRUE(coord::traits::is_helmert_14param_coefficients<horizontalDatums::WGS84_G1674>::value);
-    EXPECT_TRUE(coord::traits::is_helmert_14param_coefficients<horizontalDatums::NAD83>::value);
-    EXPECT_FALSE(coord::traits::is_helmert_14param_coefficients<EPSG_GUIDANCE_7_2_SEC_24321>::value);
-    EXPECT_TRUE(coord::traits::is_helmert_14param_coefficients<horizontalDatums::GDA94>::value);
-    EXPECT_FALSE(coord::traits::is_helmert_14param_coefficients<notHelmert>::value);
-    EXPECT_TRUE(coord::traits::is_helmert_14param_coefficients<inverse_coefficients<horizontalDatums::GDA94>>::value);
+    EXPECT_TRUE(coordinates::traits::is_helmert_14param_coefficients<horizontalDatums::WGS84_G1674>::value);
+    EXPECT_TRUE(coordinates::traits::is_helmert_14param_coefficients<horizontalDatums::NAD83>::value);
+    EXPECT_FALSE(coordinates::traits::is_helmert_14param_coefficients<EPSG_GUIDANCE_7_2_SEC_24321>::value);
+    EXPECT_TRUE(coordinates::traits::is_helmert_14param_coefficients<horizontalDatums::GDA94>::value);
+    EXPECT_FALSE(coordinates::traits::is_helmert_14param_coefficients<notHelmert>::value);
+    EXPECT_TRUE(coordinates::traits::is_helmert_14param_coefficients<inverse_coefficients<horizontalDatums::GDA94>>::value);
 }
 
 TEST_F(HelmertTest, inverse)
 {
-    using inv = coord::inverse_coefficients<horizontalDatums::NAD83>;
+    using inv = coordinates::inverse_coefficients<horizontalDatums::NAD83>;
 
     EXPECT_NEAR(-0.99343, inv::tx().to<double>(), 1e-6);
 	EXPECT_NEAR(1.90331, inv::ty().to<double>(), 1e-6);
@@ -315,7 +315,7 @@ TEST_F(HelmertTest, 7ParamTransform)
 {
     // Source "EPSG Guidance 7.2, Section 2.4.3.2.1" example
     auto wgs72 = std::make_tuple(3657660.66_m, 255768.55_m, 5201382.11_m);
-    auto wgs84 = coord::positionVectorTransform<EPSG_GUIDANCE_7_2_SEC_24321>(wgs72);
+    auto wgs84 = coordinates::positionVectorTransform<EPSG_GUIDANCE_7_2_SEC_24321>(wgs72);
 
     EXPECT_NEAR(0.0, meters(EPSG_GUIDANCE_7_2_SEC_24321::tx()).to<double>(), 5.0e-13);
     EXPECT_NEAR(0.0, meters(EPSG_GUIDANCE_7_2_SEC_24321::ty()).to<double>(), 5.0e-13);
@@ -330,7 +330,7 @@ TEST_F(HelmertTest, 7ParamTransform)
     EXPECT_NEAR(255778.43, std::get<1>(wgs84).to<double>(), 1.0e-2);
     EXPECT_NEAR(5201387.75, std::get<2>(wgs84).to<double>(), 1.0e-2);
 
-    auto wgs72result = coord::inversePositionVectorTransform<EPSG_GUIDANCE_7_2_SEC_24321>(wgs84);
+    auto wgs72result = coordinates::inversePositionVectorTransform<EPSG_GUIDANCE_7_2_SEC_24321>(wgs84);
 
     EXPECT_NEAR(meters(std::get<0>(wgs72)).to<double>(), meters(std::get<0>(wgs72result)).to<double>(), 5.0e-4);
     EXPECT_NEAR(meters(std::get<1>(wgs72)).to<double>(), meters(std::get<1>(wgs72result)).to<double>(), 5.0e-4);
@@ -341,7 +341,7 @@ TEST_F(HelmertTest, 14ParamTransform)
 {
     // Source "EPSG Guidance 7.2, Section 2.4.3.4" example
     auto itrf2008 = std::make_tuple(meters(-3789470.710), meters(4841770.404), meters(-1690893.952));
-    auto gda94 = coord::positionVectorTransform<horizontalDatums::GDA94>(itrf2008, 2013.90_yr);
+    auto gda94 = coordinates::positionVectorTransform<horizontalDatums::GDA94>(itrf2008, 2013.90_yr);
 
 	EXPECT_DOUBLE_EQ(1e-6, ppm);
 	EXPECT_DOUBLE_EQ(1e-9, ppb);
@@ -360,7 +360,7 @@ TEST_F(HelmertTest, 14ParamTransform)
     EXPECT_NEAR( 4841770.686, meters(std::get<1>(gda94)).to<double>(), 5.0e-4);
     EXPECT_NEAR(-1690895.108, meters(std::get<2>(gda94)).to<double>(), 5.0e-4);
 
-	auto itrf2008result = coord::inversePositionVectorTransform<horizontalDatums::GDA94>(gda94, 2013.90_yr);
+	auto itrf2008result = coordinates::inversePositionVectorTransform<horizontalDatums::GDA94>(gda94, 2013.90_yr);
 
     EXPECT_NEAR(meters(std::get<0>(itrf2008)).to<double>(), meters(std::get<0>(itrf2008result)).to<double>(), 5.0e-4);
     EXPECT_NEAR(meters(std::get<1>(itrf2008)).to<double>(), meters(std::get<1>(itrf2008result)).to<double>(), 5.0e-4);
@@ -370,7 +370,7 @@ TEST_F(HelmertTest, 14ParamTransform)
 	// with epoch transformation
 	std::tuple itrs2008_2014(1532138.956_m, -4464558.719_m, 4275244.397_m);
 	std::tuple itrf2000_2014_expected(1532138.959_m, -4464558.730_m, 4275244.372_m);
-	auto itrf2000_2014_result = coord::positionVectorTransform<horizontalDatums::ITRF2000>(itrs2008_2014, 2014.0_yr);
+	auto itrf2000_2014_result = coordinates::positionVectorTransform<horizontalDatums::ITRF2000>(itrs2008_2014, 2014.0_yr);
 
 	EXPECT_NEAR(std::get<0>(itrf2000_2014_expected).to<double>(), std::get<0>(itrf2000_2014_result).to<double>(), 5.0e-4);
 	EXPECT_NEAR(std::get<1>(itrf2000_2014_expected).to<double>(), std::get<1>(itrf2000_2014_result).to<double>(), 5.0e-4);

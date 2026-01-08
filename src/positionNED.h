@@ -38,7 +38,7 @@
 #include "point.h"
 #include "positionGeodetic.h"
 
-namespace coord
+namespace coordinates
 {
 	//	----------------------------------------------------------------------------
 	//	CLASS		PositionNED
@@ -55,13 +55,13 @@ namespace coord
 	///				positions to a known location.
 	///
 	/// @sa			https://en.wikipedia.org/wiki/Axes_conventions#Ground_reference_frames:_NED_and_NED
-	/// @tparam		Datum	Datum this point is represented in. See coord::datums.
+	/// @tparam		Datum	Datum this point is represented in. See coordinates::datums.
 	/// @tparam		Units	Units of the position vector. Defaults to meters. May be possible to
 	///						substitute this with m/s to attain a velocity vector.
 	/// @tparam		T		underlying storage type of the point vector. Defaults to double.
 	//  ----------------------------------------------------------------------------
 	template<class Datum, class Units = units::length::meter, typename T = double>
-	class PositionNED : public coord::Point<coord::coordinateFrames::NEDFrame<Datum>, coord::cartesianTuple, coord::FrameData>
+	class PositionNED : public coordinates::Point<coordinates::coordinateFrames::NEDFrame<Datum>, coordinates::cartesianTuple, coordinates::FrameData>
 	{
 	public:
 
@@ -70,7 +70,7 @@ namespace coord
 		//////////////////////////////////////////////////////////////////////////
 
 		static_assert(units::traits::is_unit<Units>::value, "Template parameter `Units` template parameter must be a unit type.");
-		static_assert(coord::traits::is_datum<Datum>::value, "`Datum` template parameter does not satisfy the datum concept.");
+		static_assert(coordinates::traits::is_datum<Datum>::value, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(std::is_arithmetic<T>::value, "`T` template parameter must be an arithmetic type.");
 
 		//////////////////////////////////////////////////////////////////////////
@@ -81,10 +81,10 @@ namespace coord
 		using degree_t = units::angle::degree_t;
 		using year_t = units::time::year_t;
 
-		using origin_type = coord::PositionGeodetic<Datum>;
-		using tuple_type = typename coord::Point<coord::coordinateFrames::NEDFrame<Datum>, coord::cartesianTuple, coord::FrameData>::tuple_type;
-		using frame_data_type = typename coord::Point<coord::coordinateFrames::NEDFrame<Datum>, coord::cartesianTuple, coord::FrameData>::frame_data_type;
-		using reference_frame = typename coord::Point<coord::coordinateFrames::NEDFrame<Datum>, coord::cartesianTuple, coord::FrameData>::reference_frame;
+		using origin_type = coordinates::PositionGeodetic<Datum>;
+		using tuple_type = typename coordinates::Point<coordinates::coordinateFrames::NEDFrame<Datum>, coordinates::cartesianTuple, coordinates::FrameData>::tuple_type;
+		using frame_data_type = typename coordinates::Point<coordinates::coordinateFrames::NEDFrame<Datum>, coordinates::cartesianTuple, coordinates::FrameData>::frame_data_type;
+		using reference_frame = typename coordinates::Point<coordinates::coordinateFrames::NEDFrame<Datum>, coordinates::cartesianTuple, coordinates::FrameData>::reference_frame;
 
 		using datum_type = Datum;
 
@@ -122,7 +122,7 @@ namespace coord
 			m_north(north),
 			m_east(east),
 			m_down(down),
-			m_frameData(coord::sphericalTuple(latitude0, longitude0, altitude0), dateOfObservation)
+			m_frameData(coordinates::sphericalTuple(latitude0, longitude0, altitude0), dateOfObservation)
 		{
 
 		}
@@ -219,7 +219,7 @@ namespace coord
 		*									if necessary. It is safe to omit if no datum conversion will be performed,
 		*									or if the time-dependent correction is undesirable.
 		*/
-		template<class P, class = typename std::enable_if<coord::traits::is_point<P>::value>::type>
+		template<class P, class = typename std::enable_if<coordinates::traits::is_point<P>::value>::type>
 		PositionNED(const P& point, const origin_type& origin, year_t dateOfObservation = Datum::epoch())
 			:
 			m_frameData(origin.point(), dateOfObservation)
@@ -229,8 +229,8 @@ namespace coord
 			origin_type intermediate;
 			intermediate.setFrameData(dateOfObservation);
 
-			coord::convert(point, intermediate);
-			coord::convert(intermediate, *this);
+			coordinates::convert(point, intermediate);
+			coordinates::convert(intermediate, *this);
 		}
 
 		/**
@@ -258,8 +258,8 @@ namespace coord
 				origin_type intermediate;
 				intermediate.setFrameData(m_frameData.date);
 
-				coord::convert(other, intermediate);
-				coord::convert(intermediate, *this);
+				coordinates::convert(other, intermediate);
+				coordinates::convert(intermediate, *this);
 			}
 
 			return *this;
@@ -272,7 +272,7 @@ namespace coord
 		* @param[in]	point point to construct from
 		* @returns		copy of *this
 		*/
-		template<class Point/*, class = typename std::enable_if<coord::traits::is_point<Point>::value && !std::is_convertible<Point, PositionNED>::value>::type*/>
+		template<class Point/*, class = typename std::enable_if<coordinates::traits::is_point<Point>::value && !std::is_convertible<Point, PositionNED>::value>::type*/>
 		PositionNED& operator=(const Point& point)
 		{
 			// take the date of observation, but DON'T blow away the origin unless this is a null value.
@@ -290,8 +290,8 @@ namespace coord
 			origin_type intermediate;
 			intermediate.setFrameData(m_frameData.date);
 
-			coord::convert(point, intermediate);
-			coord::convert(intermediate, *this);
+			coordinates::convert(point, intermediate);
+			coordinates::convert(intermediate, *this);
 
 			return *this;
 		}
@@ -315,7 +315,7 @@ namespace coord
 		*/
 		bool isNull() const
 		{
-			return coord::isNull(*this);
+			return coordinates::isNull(*this);
 		}
 
 		/**
@@ -335,7 +335,7 @@ namespace coord
 		template<class Point>
 		bool isSame(const Point& p, unit_type tolerance = unit_type(0)) const
 		{
-			return coord::isSame<unit_type>(*this, p, tolerance);
+			return coordinates::isSame<unit_type>(*this, p, tolerance);
 		}
 
 		/**
@@ -353,10 +353,10 @@ namespace coord
 		*							units as this instance of the class.
 		* @returns		true if the values are equal within the tolerance, false otherwise.
 		*/
-		template<class Point, class PointTol, class = typename std::enable_if<coord::traits::is_point<PointTol>::value>::type>
+		template<class Point, class PointTol, class = typename std::enable_if<coordinates::traits::is_point<PointTol>::value>::type>
 		bool isSame(const Point& p, const PointTol& tolerance) const
 		{
-			return coord::isSame(*this, p, tolerance);
+			return coordinates::isSame(*this, p, tolerance);
 		}
 
 		/**
@@ -374,7 +374,7 @@ namespace coord
 		template<class Point, typename UnitType = unit_type>
 		UnitType distance(const Point& p) const
 		{
-			return coord::distance(*this, p);
+			return coordinates::distance(*this, p);
 		}
 
 		/**
@@ -386,7 +386,7 @@ namespace coord
 		template<class Point>
 		auto dotProduct(const Point& p) const -> decltype(units::math::pow<2>(unit_type()))
 		{
-			return coord::dotProduct(*this, p);
+			return coordinates::dotProduct(*this, p);
 		}
 
 		/**
@@ -397,7 +397,7 @@ namespace coord
 		*/
 		unit_type magnitude() const
 		{
-			return coord::magnitude(*this);
+			return coordinates::magnitude(*this);
 		}
 
 		//////////////////////////////////////////////////////////////////////////
@@ -451,9 +451,9 @@ namespace coord
 			origin_type intermediate;
 			intermediate.setFrameData(this->m_frameData);
 
-			coord::convert(*this, intermediate);
+			coordinates::convert(*this, intermediate);
 			this->m_frameData.origin = origin.point();
-			coord::convert(intermediate, *this);
+			coordinates::convert(intermediate, *this);
 		}
 
 		/**
@@ -564,9 +564,9 @@ namespace coord
 				PositionECEF<Datum, Units, T> temp;
 				temp.setFrameData(m_frameData.date);
 
-				coord::convert(p, temp);
+				coordinates::convert(p, temp);
 				p.setFrameData(m_frameData);
-				coord::convert(temp, p);
+				coordinates::convert(temp, p);
 			}
 
 			m_north = m_north + p.north();
@@ -593,9 +593,9 @@ namespace coord
 				PositionECEF<Datum, Units, T> temp;
 				temp.setFrameData(m_frameData.date);
 
-				coord::convert(p, temp);
+				coordinates::convert(p, temp);
 				p.setFrameData(m_frameData);
-				coord::convert(temp, p);
+				coordinates::convert(temp, p);
 			}
 
 			m_north = m_north - p.north();

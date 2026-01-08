@@ -41,7 +41,7 @@
 #include "point.h"
 #include "algorithm.h"
 
-namespace coord
+namespace coordinates
 {
 	//	----------------------------------------------------------------------------
 	//	CLASS		PositionECEF
@@ -70,7 +70,7 @@ namespace coord
 	///				intermediate step in converting velocities to the North East Down coordinate system.
 	//  ----------------------------------------------------------------------------
 	template<class Datum, class Units = units::length::meter, typename T = double>
-	class PositionECEF : public coord::Point<coord::coordinateFrames::ECEFFrame<typename coord::traits::datum_traits<Datum>::horizontal_datum>, coord::cartesianTuple, coord::FrameData>
+	class PositionECEF : public coordinates::Point<coordinates::coordinateFrames::ECEFFrame<typename coordinates::traits::datum_traits<Datum>::horizontal_datum>, coordinates::cartesianTuple, coordinates::FrameData>
 	{
 	public:
 
@@ -79,7 +79,7 @@ namespace coord
 		//////////////////////////////////////////////////////////////////////////
 		
 		static_assert(units::traits::is_unit<Units>::value, "Template parameter `Units` template parameter must be a unit type.");
-		static_assert(coord::traits::is_datum<Datum>::value, "`Datum` template parameter does not satisfy the datum concept.");
+		static_assert(coordinates::traits::is_datum<Datum>::value, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(std::is_arithmetic<T>::value, "`T` template parameter must be an arithmetic type.");
 
 		//////////////////////////////////////////////////////////////////////////
@@ -89,9 +89,9 @@ namespace coord
 		using unit_type = units::unit_t<Units, T>;
 		using year_t = units::time::year_t;
 		
-		using tuple_type = typename coord::Point<coord::coordinateFrames::ECEFFrame<typename coord::traits::datum_traits<Datum>::horizontal_datum>, coord::cartesianTuple, coord::FrameData>::tuple_type;
-		using frame_data_type = typename coord::Point<coord::coordinateFrames::ECEFFrame<typename coord::traits::datum_traits<Datum>::horizontal_datum>, coord::cartesianTuple, coord::FrameData>::frame_data_type;
-		using reference_frame = typename coord::Point<coord::coordinateFrames::ECEFFrame<typename coord::traits::datum_traits<Datum>::horizontal_datum>, coord::cartesianTuple, coord::FrameData>::reference_frame;
+		using tuple_type = typename coordinates::Point<coordinates::coordinateFrames::ECEFFrame<typename coordinates::traits::datum_traits<Datum>::horizontal_datum>, coordinates::cartesianTuple, coordinates::FrameData>::tuple_type;
+		using frame_data_type = typename coordinates::Point<coordinates::coordinateFrames::ECEFFrame<typename coordinates::traits::datum_traits<Datum>::horizontal_datum>, coordinates::cartesianTuple, coordinates::FrameData>::frame_data_type;
+		using reference_frame = typename coordinates::Point<coordinates::coordinateFrames::ECEFFrame<typename coordinates::traits::datum_traits<Datum>::horizontal_datum>, coordinates::cartesianTuple, coordinates::FrameData>::reference_frame;
 		
 		using datum_type = Datum;
 
@@ -167,11 +167,11 @@ namespace coord
 		 *					if necessary. It is safe to omit if no datum conversion will be performed,
 		 *					or if the time-dependent correction is undesirable.
 		 */
-		template<class P, class = typename std::enable_if<coord::traits::is_point<P>::value && !std::is_convertible<P, PositionECEF>::value>::type>
+		template<class P, class = typename std::enable_if<coordinates::traits::is_point<P>::value && !std::is_convertible<P, PositionECEF>::value>::type>
 		PositionECEF(const P& point) :
 			m_frameData(point.frameData())
 		{
-			coord::convert(point, *this);
+			coordinates::convert(point, *this);
 		}
 
 		/**
@@ -195,11 +195,11 @@ namespace coord
 		 * @param[in]	point point to construct from
 		 * @returns		copy of *this
 		 */
-		template<class Point, class = typename std::enable_if<coord::traits::is_point<Point>::value && !std::is_convertible<Point, PositionECEF>::value>::type>
+		template<class Point, class = typename std::enable_if<coordinates::traits::is_point<Point>::value && !std::is_convertible<Point, PositionECEF>::value>::type>
 		PositionECEF& operator=(const Point& point)
 		{
 			m_frameData = point.frameData();
-			coord::convert(point, *this);
+			coordinates::convert(point, *this);
 			return *this;
 		}
 
@@ -222,7 +222,7 @@ namespace coord
 		 */
 		bool isNull() const
 		{
-			return coord::isNull(*this);
+			return coordinates::isNull(*this);
 		}
 
 		/**
@@ -242,7 +242,7 @@ namespace coord
 		template<class Point>
 		bool isSame(const Point& p, unit_type tolerance = unit_type(0)) const
 		{
-			return coord::isSame<unit_type>(*this, p, tolerance);
+			return coordinates::isSame<unit_type>(*this, p, tolerance);
 		}
 
 		/**
@@ -260,10 +260,10 @@ namespace coord
 		 *							units as this instance of the class.
 		 * @returns		true if the values are equal within the tolerance, false otherwise.
 		 */
-		template<class Point, class PointTol, class = typename std::enable_if<coord::traits::is_point<PointTol>::value>::type>
+		template<class Point, class PointTol, class = typename std::enable_if<coordinates::traits::is_point<PointTol>::value>::type>
 		bool isSame(const Point& p, const PointTol& tolerance) const
 		{
-			return coord::isSame(*this, p, tolerance);
+			return coordinates::isSame(*this, p, tolerance);
 		}
 
 		/**
@@ -281,7 +281,7 @@ namespace coord
 		template<class Point, typename UnitType = unit_type>
 		UnitType distance(const Point& p) const
 		{
-			return coord::distance(*this, p);
+			return coordinates::distance(*this, p);
 		}
 
 		/**
@@ -293,7 +293,7 @@ namespace coord
 		template<class Point>
 		auto dotProduct(const Point& p) const -> decltype(units::math::pow<2>(unit_type()))
 		{
-			return coord::dotProduct(*this, p);
+			return coordinates::dotProduct(*this, p);
 		}
 
 		/**
@@ -304,7 +304,7 @@ namespace coord
 		 */
 		unit_type magnitude() const
 		{
-			return coord::magnitude(*this);
+			return coordinates::magnitude(*this);
 		}
 
 		//////////////////////////////////////////////////////////////////////////

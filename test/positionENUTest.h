@@ -38,7 +38,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-using namespace coord;
+using namespace coordinates;
 using namespace units;
 using namespace units::length;
 using namespace units::area;
@@ -100,7 +100,7 @@ namespace
 
 	TEST_F(PositionENUTest, is_point)
 	{
-		EXPECT_TRUE(coord::traits::is_point<ENU>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<ENU>::value);
 	}
 	
 	TEST_F(PositionENUTest, defaultConstructor)
@@ -144,7 +144,7 @@ namespace
 	TEST_F(PositionENUTest, tupleConstructor)
 	{
 		// no date
-		ENU enu(coord::cartesianTuple(1_m, 2_m, 3_m), Boston);
+		ENU enu(coordinates::cartesianTuple(1_m, 2_m, 3_m), Boston);
 		EXPECT_EQ(1_m, std::get<0>(enu.point()));
 		EXPECT_EQ(2_m, std::get<1>(enu.point()));
 		EXPECT_EQ(3_m, std::get<2>(enu.point()));
@@ -152,7 +152,7 @@ namespace
 		EXPECT_EQ(2005_yr, enu.frameData().date);
 
 		// date
-		ENU enu2(coord::cartesianTuple(4_m, 5_m, 6_m), Boston, 2016_yr);
+		ENU enu2(coordinates::cartesianTuple(4_m, 5_m, 6_m), Boston, 2016_yr);
 		EXPECT_EQ(4_m, std::get<0>(enu2.point()));
 		EXPECT_EQ(5_m, std::get<1>(enu2.point()));
 		EXPECT_EQ(6_m, std::get<2>(enu2.point()));
@@ -160,14 +160,14 @@ namespace
 		EXPECT_EQ(2016_yr, enu2.frameData().date);
 
 		// different units
-		ENU enu3(coord::cartesianTuple(4_km, 5_km, 6_km), Boston);
+		ENU enu3(coordinates::cartesianTuple(4_km, 5_km, 6_km), Boston);
 		EXPECT_EQ(4000_m, std::get<0>(enu3.point()));
 		EXPECT_EQ(5000_m, std::get<1>(enu3.point()));
 		EXPECT_EQ(6000_m, std::get<2>(enu3.point()));
 		EXPECT_EQ(Boston.point(), enu3.frameData().origin);
 
 		// origin with different frame of reference
-		ENU enu4(coord::cartesianTuple(7_m, 8_m, 9_m), Boston_ecef);
+		ENU enu4(coordinates::cartesianTuple(7_m, 8_m, 9_m), Boston_ecef);
 		EXPECT_EQ(7_m, std::get<0>(enu4.point()));
 		EXPECT_EQ(8_m, std::get<1>(enu4.point()));
 		EXPECT_EQ(9_m, std::get<2>(enu4.point()));
@@ -201,8 +201,8 @@ namespace
 		EXPECT_NEAR(13.751962531646313, std::get<2>(llab.point()).to<double>(), 5.0e-9);
 
 		ENU llab2(llab);
-		EXPECT_TRUE(coord::traits::is_point<decltype(llab)>::value);
-		EXPECT_TRUE(coord::traits::is_point<decltype(llab2)>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<decltype(llab)>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<decltype(llab2)>::value);
 		EXPECT_TRUE(llab == llab2);
 	}
 
@@ -268,8 +268,8 @@ namespace
 		EXPECT_NEAR(13.751962531646313, std::get<2>(llab.point()).to<double>(), 5.0e-9);
 
 		ENU llab2 = llab;
-		EXPECT_TRUE(coord::traits::is_point<decltype(llab)>::value);
-		EXPECT_TRUE(coord::traits::is_point<decltype(llab2)>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<decltype(llab)>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<decltype(llab2)>::value);
 		EXPECT_TRUE(llab == llab2);
 	}
 

@@ -39,7 +39,7 @@
 #include <type_traits>
 #include <iostream>
 
-using namespace coord;
+using namespace coordinates;
 using namespace units;
 using namespace units::length;
 using namespace units::area;
@@ -109,7 +109,7 @@ namespace
 
 	TEST_F(PositionAERTest, is_point)
 	{
-		EXPECT_TRUE(coord::traits::is_point<AER>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<AER>::value);
 	}
 
 	TEST_F(PositionAERTest, defaultConstructor)
@@ -152,7 +152,7 @@ namespace
 
 	TEST_F(PositionAERTest, tupleConstructor)
 	{
-		coord::sphericalTuple tup(5_deg, 10_deg, 15_km);
+		coordinates::sphericalTuple tup(5_deg, 10_deg, 15_km);
 
 		// no date
 		AER aer(tup, Boston);
@@ -212,8 +212,8 @@ namespace
 		EXPECT_EQ(3_m, std::get<2>(aer.point()));
 
 		AER aer2(aer);
-		EXPECT_TRUE(coord::traits::is_point<decltype(aer)>::value);
-		EXPECT_TRUE(coord::traits::is_point<decltype(aer2)>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<decltype(aer)>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<decltype(aer2)>::value);
 		EXPECT_TRUE(aer == aer2);
 	}
 
@@ -332,8 +332,8 @@ namespace
 		EXPECT_EQ(3_m, std::get<2>(aer.point()));
 
 		AER aer2 = aer;
-		EXPECT_TRUE(coord::traits::is_point<decltype(aer)>::value);
-		EXPECT_TRUE(coord::traits::is_point<decltype(aer2)>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<decltype(aer)>::value);
+		EXPECT_TRUE(coordinates::traits::is_point<decltype(aer2)>::value);
 		EXPECT_TRUE(aer == aer2);
 	}
 

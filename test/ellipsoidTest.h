@@ -39,7 +39,7 @@
 
 #include "gtest_units.h"
 
-using namespace coord;
+using namespace coordinates;
 using namespace units;
 using namespace units::length;
 using namespace units::angle;
@@ -155,15 +155,15 @@ template <auto> struct RequireConstexpr {};
 // TEST THAT THE ELLIPSOID CONCEPT CHECKERS DO THEIR JOB
 TEST_F(EllipsoidTest, is_ellipsoid)
 {
-    EXPECT_TRUE(coord::traits::is_ellipsoid<WGS84>);
-    EXPECT_TRUE(coord::traits::is_ellipsoid<AnEllipsoid>);
-    EXPECT_FALSE(coord::traits::is_ellipsoid<WrongReturnTypes>);
-    EXPECT_FALSE(coord::traits::is_ellipsoid<MissingMembers>);
+    EXPECT_TRUE(coordinates::traits::is_ellipsoid<WGS84>);
+    EXPECT_TRUE(coordinates::traits::is_ellipsoid<AnEllipsoid>);
+    EXPECT_FALSE(coordinates::traits::is_ellipsoid<WrongReturnTypes>);
+    EXPECT_FALSE(coordinates::traits::is_ellipsoid<MissingMembers>);
 }
 
 TEST_F(EllipsoidTest, constexpr)
 {
-    static_assert(coord::traits::is_ellipsoid<WGS84>);
+    static_assert(coordinates::traits::is_ellipsoid<WGS84>);
 
     using _a = RequireConstexpr<WGS84::a()>;
     using _b = RequireConstexpr<WGS84::b()>;

@@ -37,7 +37,7 @@
 
 #include "geoid.h"
 
-namespace coord
+namespace coordinates
 {
 	using namespace units::literals;
 
@@ -60,7 +60,7 @@ namespace coord
 		///	@details	Useful for datums in which no topographical data exists or the
 		///				topography is unimplemented.
 		//  ----------------------------------------------------------------------------
-		class NULL_TOPOGRAPHY : public Topography<coord::geoids::NULL_GEOID>
+		class NULL_TOPOGRAPHY : public Topography<coordinates::geoids::NULL_GEOID>
 		{
 		public:
 
@@ -101,7 +101,7 @@ namespace coord
 		* @brief		Traits class defining the properties of a geoid.
 		*/
 		template<class T>
-		struct topography_traits<T, typename coord::traits::void_type<
+		struct topography_traits<T, typename coordinates::traits::void_type<
 			typename T::reference_geoid >::type>
 		{
 			typedef typename T::reference_geoid reference_geoid;									///< Geoid that the topographic model is referenced to.
@@ -152,7 +152,7 @@ namespace coord
 			std::integral_constant<bool,
 			std::is_same<T, topography::NULL_TOPOGRAPHY>::value ||
 			(has_orthometricHeight<T>::value &&
-			coord::traits::is_geoid<typename topography_traits<T>::reference_geoid>::value &&
+			coordinates::traits::is_geoid<typename topography_traits<T>::reference_geoid>::value &&
 			std::is_default_constructible<T>::value)>
 		{};
 	}

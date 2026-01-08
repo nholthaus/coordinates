@@ -61,7 +61,7 @@ namespace units
 	}
 }
 
-inline namespace coord
+inline namespace coordinates
 {
 	//----------------------------------
 	//	CONCEPTS
@@ -377,12 +377,12 @@ inline namespace coord
 	//----------------------------------
 
 	template<class Coefficients>
-		requires coord::traits::Helmert7Coefficients<Coefficients>
+		requires coordinates::traits::Helmert7Coefficients<Coefficients>
 	struct inverse_coefficients
 	{
 		/// epoch
 		template<typename C = Coefficients>
-			requires coord::traits::has_epoch<C>
+			requires coordinates::traits::has_epoch<C>
 		static constexpr auto epoch() -> decltype(C::epoch())
 		{
 			return C::epoch();
@@ -432,7 +432,7 @@ inline namespace coord
 
 		/// Rate of change of Inverse X-axis translation
 		template<typename C = Coefficients>
-			requires coord::traits::has_dtx<C>
+			requires coordinates::traits::has_dtx<C>
 		static constexpr auto dtx() -> decltype(C::dtx())
 		{
 			return -C::dtx();
@@ -440,7 +440,7 @@ inline namespace coord
 
 		/// Rate of change of Inverse Y-axis translation
 		template<typename C = Coefficients>
-			requires coord::traits::has_dty<C>
+			requires coordinates::traits::has_dty<C>
 		static constexpr auto dty() -> decltype(C::dty())
 		{
 			return -C::dty();
@@ -448,7 +448,7 @@ inline namespace coord
 
 		/// Rate of change of Inverse Z-axis translation
 		template<typename C = Coefficients>
-			requires coord::traits::has_dtz<C>
+			requires coordinates::traits::has_dtz<C>
 		static constexpr auto dtz() -> decltype(C::dtz())
 		{
 			return -C::dtz();
@@ -456,7 +456,7 @@ inline namespace coord
 
 		/// Rate of change of Inverse Scale factor
 		template<typename C = Coefficients>
-			requires coord::traits::has_ds<C>
+			requires coordinates::traits::has_ds<C>
 		static constexpr auto ds() -> decltype(C::ds())
 		{
 			return -C::ds();
@@ -464,7 +464,7 @@ inline namespace coord
 
 		/// Rate of change of Inverse Rotation about the X-axis
 		template<typename C = Coefficients>
-			requires coord::traits::has_drx<C>
+			requires coordinates::traits::has_drx<C>
 		static constexpr auto drx() -> decltype(C::drx())
 		{
 			return -C::drx();
@@ -472,7 +472,7 @@ inline namespace coord
 
 		/// Rate of change of Inverse Rotation about the Y-axis
 		template<typename C = Coefficients>
-			requires coord::traits::has_dry<C>
+			requires coordinates::traits::has_dry<C>
 		static constexpr auto dry() -> decltype(C::dry())
 		{
 			return -C::dry();
@@ -480,7 +480,7 @@ inline namespace coord
 
 		/// Rate of change of Inverse Rotation about the Z-axis
 		template<typename C = Coefficients>
-			requires coord::traits::has_drz<C>
+			requires coordinates::traits::has_drz<C>
 		static constexpr auto drz() -> decltype(C::drz())
 		{
 			return -C::drz();
@@ -518,7 +518,7 @@ inline namespace coord
 	* @returns		tuple of (X,Y,Z) in the resulting 'to' datum in units of DistanceUnitsTo
 	*/
 	template<class Coefficients, class LengthUnits>
-		requires (coord::traits::Helmert7Coefficients<Coefficients> && !coord::traits::Helmert14Coefficients<
+		requires (coordinates::traits::Helmert7Coefficients<Coefficients> && !coordinates::traits::Helmert14Coefficients<
 			          Coefficients>)
 	std::tuple<meters<>, meters<>, meters<>>
 	positionVectorTransform(const unit<LengthUnits>& x,
@@ -557,7 +557,7 @@ inline namespace coord
 	}
 
 	template<class Coefficients, class LengthUnits>
-		requires coord::traits::Helmert14Coefficients<Coefficients>
+		requires coordinates::traits::Helmert14Coefficients<Coefficients>
 	std::tuple<meters<>, meters<>, meters<>>
 	positionVectorTransform(const unit<LengthUnits>& x,
 	                        const unit<LengthUnits>& y,
@@ -603,7 +603,7 @@ inline namespace coord
 	}
 
 	template<class Coefficients, class LengthUnits>
-		requires (coord::traits::Helmert7Coefficients<Coefficients> && !coord::traits::Helmert14Coefficients<
+		requires (coordinates::traits::Helmert7Coefficients<Coefficients> && !coordinates::traits::Helmert14Coefficients<
 			          Coefficients>)
 	std::tuple<meters<>, meters<>, meters<>>
 	positionVectorTransform(
@@ -613,7 +613,7 @@ inline namespace coord
 	}
 
 	template<class Coefficients, class LengthUnits>
-		requires (coord::traits::Helmert7Coefficients<Coefficients> && !coord::traits::Helmert14Coefficients<
+		requires (coordinates::traits::Helmert7Coefficients<Coefficients> && !coordinates::traits::Helmert14Coefficients<
 			          Coefficients>)
 	std::tuple<meters<>, meters<>, meters<>>
 	inversePositionVectorTransform(const unit<LengthUnits>& x,
@@ -624,7 +624,7 @@ inline namespace coord
 	}
 
 	template<class Coefficients, class LengthUnits>
-		requires (coord::traits::Helmert7Coefficients<Coefficients> && !coord::traits::Helmert14Coefficients<
+		requires (coordinates::traits::Helmert7Coefficients<Coefficients> && !coordinates::traits::Helmert14Coefficients<
 			          Coefficients>)
 	std::tuple<meters<>, meters<>, meters<>>
 	inversePositionVectorTransform(
@@ -634,7 +634,7 @@ inline namespace coord
 	}
 
 	template<class Coefficients, class LengthUnits>
-		requires coord::traits::Helmert14Coefficients<Coefficients>
+		requires coordinates::traits::Helmert14Coefficients<Coefficients>
 	std::tuple<meters<>, meters<>, meters<>>
 	positionVectorTransform(
 			std::tuple<unit<LengthUnits>, unit<LengthUnits>, unit<LengthUnits>> input,
@@ -644,7 +644,7 @@ inline namespace coord
 	}
 
 	template<class Coefficients, class LengthUnits>
-		requires coord::traits::Helmert14Coefficients<Coefficients>
+		requires coordinates::traits::Helmert14Coefficients<Coefficients>
 	std::tuple<meters<>, meters<>, meters<>>
 	inversePositionVectorTransform(const unit<LengthUnits>& x,
 	                               const unit<LengthUnits>& y,
@@ -655,7 +655,7 @@ inline namespace coord
 	}
 
 	template<class Coefficients, class LengthUnits>
-		requires coord::traits::Helmert14Coefficients<Coefficients>
+		requires coordinates::traits::Helmert14Coefficients<Coefficients>
 	std::tuple<meters<>, meters<>, meters<>>
 	inversePositionVectorTransform(
 			std::tuple<unit<LengthUnits>, unit<LengthUnits>, unit<LengthUnits>> input,
@@ -666,6 +666,6 @@ inline namespace coord
 		                                                                                std::get<2>(input),
 		                                                                                dateOfMeasurement);
 	}
-} // end namespace coord
+} // end namespace coordinates
 
 #endif // helmert_h__

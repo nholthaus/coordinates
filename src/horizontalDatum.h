@@ -8,7 +8,7 @@
 #include "helmert.h"
 #include "ellipsoid.h"
 
-inline namespace coord
+inline namespace coordinates
 {
 	//	----------------------------------------------------------------------------
 	//	CLASS		HorizontalDatum
@@ -46,14 +46,14 @@ inline namespace coord
 	};
 }
 
-inline namespace coord
+inline namespace coordinates
 {
 	//----------------------------------
 	//	ITRF TRANSFORMATIONS
 	//----------------------------------
 
 	//**************************************************************************************************
-	//	NOTE:	ITRF2008 is used as the basis-realization for the coord library, however, derived
+	//	NOTE:	ITRF2008 is used as the basis-realization for the coordinates library, however, derived
 	//			vertical datums can be specified in terms of any of the included ITRF realizations.
 	//**************************************************************************************************
 
@@ -794,7 +794,7 @@ inline namespace coord
 		//-------------------------------------------------------------------------
 		template<typename T>
 		concept itrf =
-				std::is_base_of_v<coord::horizontalDatums::detail::_ITRF_t, T> &&
+				std::is_base_of_v<coordinates::horizontalDatums::detail::_ITRF_t, T> &&
 				helmert_coefficients<T> &&
 				has_horizontal_datum_typedefs<T>;
 

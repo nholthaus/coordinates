@@ -1,4 +1,4 @@
-project(coord VERSION 0.1.0 LANGUAGES CXX)
+project(coordinates VERSION 0.1.0 LANGUAGES CXX)
 
 add_library(${PROJECT_NAME} STATIC
         EGM96LUT.h

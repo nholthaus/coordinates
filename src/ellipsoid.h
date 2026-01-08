@@ -44,9 +44,9 @@
 #include <units/length.h>
 
 //------------------------
-//	NAMESPACE: COORD
+//	NAMESPACE: coordinates
 //------------------------
-inline namespace coord
+inline namespace coordinates
 {
     //------------------------
     //	USING

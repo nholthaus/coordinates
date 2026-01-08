@@ -41,7 +41,7 @@
 #include <units.h>
 #include <type_traits>
 
-inline namespace coord
+inline namespace coordinates
 {
     namespace traits
     {

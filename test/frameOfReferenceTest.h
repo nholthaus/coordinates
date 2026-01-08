@@ -38,7 +38,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-using namespace coord::coordinateFrames;
+using namespace coordinates::coordinateFrames;
 
 namespace
 {
@@ -93,185 +93,185 @@ namespace
 
 	TEST_F(FrameOfReferenceTest, has_base_frame_type)
 	{
-		EXPECT_TRUE(coord::traits::has_base_frame_type<ECEFFrame<horizontalDatums::ITRF2008>>::value);
-		EXPECT_TRUE(coord::traits::has_base_frame_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_base_frame_type<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_base_frame_type<Geodetic3DFrame<datums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_base_frame_type<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_base_frame_type<ECEFFrame<horizontalDatums::ITRF2008>>::value);
+		EXPECT_TRUE(coordinates::traits::has_base_frame_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_base_frame_type<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_base_frame_type<Geodetic3DFrame<datums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_base_frame_type<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
 
-		EXPECT_FALSE(coord::traits::has_base_frame_type<double>::value);
-		EXPECT_FALSE(coord::traits::has_base_frame_type<ellipsoids::GRS80>::value);
-		EXPECT_FALSE(coord::traits::has_base_frame_type<NotAFrame>::value);
+		EXPECT_FALSE(coordinates::traits::has_base_frame_type<double>::value);
+		EXPECT_FALSE(coordinates::traits::has_base_frame_type<ellipsoids::GRS80>::value);
+		EXPECT_FALSE(coordinates::traits::has_base_frame_type<NotAFrame>::value);
 	}
 
 	TEST_F(FrameOfReferenceTest, has_datum_type)
 	{
-		EXPECT_TRUE(coord::traits::has_datum_type<ECEFFrame<horizontalDatums::ITRF2008>>::value);
-		EXPECT_TRUE(coord::traits::has_datum_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_datum_type<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_datum_type<Geodetic3DFrame<datums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_datum_type<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_datum_type<ECEFFrame<horizontalDatums::ITRF2008>>::value);
+		EXPECT_TRUE(coordinates::traits::has_datum_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_datum_type<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_datum_type<Geodetic3DFrame<datums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_datum_type<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
 
-		EXPECT_FALSE(coord::traits::has_datum_type<double>::value);
-		EXPECT_FALSE(coord::traits::has_datum_type<ellipsoids::GRS80>::value);
-		EXPECT_FALSE(coord::traits::has_datum_type<NotAFrame>::value);
+		EXPECT_FALSE(coordinates::traits::has_datum_type<double>::value);
+		EXPECT_FALSE(coordinates::traits::has_datum_type<ellipsoids::GRS80>::value);
+		EXPECT_FALSE(coordinates::traits::has_datum_type<NotAFrame>::value);
 	}
 
 	TEST_F(FrameOfReferenceTest, has_tuple_type)
 	{
-		EXPECT_TRUE(coord::traits::has_tuple_type<ECEFFrame<horizontalDatums::ITRF2008>>::value);
-		EXPECT_TRUE(coord::traits::has_base_frame_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_tuple_type<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_tuple_type<Geodetic3DFrame<datums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_tuple_type<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_tuple_type<ECEFFrame<horizontalDatums::ITRF2008>>::value);
+		EXPECT_TRUE(coordinates::traits::has_base_frame_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_tuple_type<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_tuple_type<Geodetic3DFrame<datums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_tuple_type<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
 
-		EXPECT_FALSE(coord::traits::has_tuple_type<double>::value);
-		EXPECT_FALSE(coord::traits::has_tuple_type<ellipsoids::GRS80>::value);
-		EXPECT_FALSE(coord::traits::has_tuple_type<NotAFrame>::value);
+		EXPECT_FALSE(coordinates::traits::has_tuple_type<double>::value);
+		EXPECT_FALSE(coordinates::traits::has_tuple_type<ellipsoids::GRS80>::value);
+		EXPECT_FALSE(coordinates::traits::has_tuple_type<NotAFrame>::value);
 	}
 
 	TEST_F(FrameOfReferenceTest, has_convertFromBaseFrame)
 	{
-		EXPECT_TRUE(coord::traits::has_convertFromBaseFrame<ECEFFrame<horizontalDatums::ITRF2008>>::value);
-		EXPECT_TRUE(coord::traits::has_base_frame_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_convertFromBaseFrame<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_convertFromBaseFrame<Geodetic3DFrame<datums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_convertFromBaseFrame<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_convertFromBaseFrame<ECEFFrame<horizontalDatums::ITRF2008>>::value);
+		EXPECT_TRUE(coordinates::traits::has_base_frame_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_convertFromBaseFrame<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_convertFromBaseFrame<Geodetic3DFrame<datums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_convertFromBaseFrame<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
 
-		EXPECT_FALSE(coord::traits::has_convertFromBaseFrame<double>::value);
-		EXPECT_FALSE(coord::traits::has_convertFromBaseFrame<ellipsoids::GRS80>::value);
-		EXPECT_FALSE(coord::traits::has_convertFromBaseFrame<NotAFrame>::value);
+		EXPECT_FALSE(coordinates::traits::has_convertFromBaseFrame<double>::value);
+		EXPECT_FALSE(coordinates::traits::has_convertFromBaseFrame<ellipsoids::GRS80>::value);
+		EXPECT_FALSE(coordinates::traits::has_convertFromBaseFrame<NotAFrame>::value);
 	}
 
 	TEST_F(FrameOfReferenceTest, has_convertToBaseFrame)
 	{
-		EXPECT_TRUE(coord::traits::has_convertToBaseFrame<ECEFFrame<horizontalDatums::ITRF2008>>::value);
-		EXPECT_TRUE(coord::traits::has_base_frame_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_convertToBaseFrame<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_convertToBaseFrame<Geodetic3DFrame<datums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::has_convertToBaseFrame<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_convertToBaseFrame<ECEFFrame<horizontalDatums::ITRF2008>>::value);
+		EXPECT_TRUE(coordinates::traits::has_base_frame_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_convertToBaseFrame<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_convertToBaseFrame<Geodetic3DFrame<datums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::has_convertToBaseFrame<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
 
-		EXPECT_FALSE(coord::traits::has_convertToBaseFrame<double>::value);
-		EXPECT_FALSE(coord::traits::has_convertToBaseFrame<ellipsoids::GRS80>::value);
-		EXPECT_FALSE(coord::traits::has_convertToBaseFrame<NotAFrame>::value);
+		EXPECT_FALSE(coordinates::traits::has_convertToBaseFrame<double>::value);
+		EXPECT_FALSE(coordinates::traits::has_convertToBaseFrame<ellipsoids::GRS80>::value);
+		EXPECT_FALSE(coordinates::traits::has_convertToBaseFrame<NotAFrame>::value);
 	}
 
 	TEST_F(FrameOfReferenceTest, is_frame_of_reference)
 	{
-		EXPECT_TRUE(coord::traits::is_frame_of_reference<ECEFFrame<horizontalDatums::ITRF2008>>::value);
-		EXPECT_TRUE(coord::traits::has_base_frame_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::is_frame_of_reference<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::is_frame_of_reference<Geodetic3DFrame<datums::WGS84_G1674>>::value);
-		EXPECT_TRUE(coord::traits::is_frame_of_reference<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::is_frame_of_reference<ECEFFrame<horizontalDatums::ITRF2008>>::value);
+		EXPECT_TRUE(coordinates::traits::has_base_frame_type<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::is_frame_of_reference<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::is_frame_of_reference<Geodetic3DFrame<datums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::is_frame_of_reference<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
 
-		EXPECT_FALSE(coord::traits::is_frame_of_reference<double>::value);
-		EXPECT_FALSE(coord::traits::is_frame_of_reference<ellipsoids::GRS80>::value);
-		EXPECT_FALSE(coord::traits::is_frame_of_reference<NotAFrame>::value);
+		EXPECT_FALSE(coordinates::traits::is_frame_of_reference<double>::value);
+		EXPECT_FALSE(coordinates::traits::is_frame_of_reference<ellipsoids::GRS80>::value);
+		EXPECT_FALSE(coordinates::traits::is_frame_of_reference<NotAFrame>::value);
 	}
 
 	TEST_F(FrameOfReferenceTest, is_base_frame)
 	{
-		EXPECT_TRUE(coord::traits::is_base_frame<ECEFFrame<horizontalDatums::ITRF2008>>::value);
-		EXPECT_FALSE(coord::traits::is_base_frame<ECEFFrame<horizontalDatums::ITRF2014>>::value);
-		EXPECT_FALSE(coord::traits::is_base_frame<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_FALSE(coord::traits::is_base_frame<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
-		EXPECT_FALSE(coord::traits::is_base_frame<Geodetic3DFrame<datums::WGS84_G1674>>::value);
-		EXPECT_FALSE(coord::traits::is_base_frame<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_TRUE(coordinates::traits::is_base_frame<ECEFFrame<horizontalDatums::ITRF2008>>::value);
+		EXPECT_FALSE(coordinates::traits::is_base_frame<ECEFFrame<horizontalDatums::ITRF2014>>::value);
+		EXPECT_FALSE(coordinates::traits::is_base_frame<ECEFFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_FALSE(coordinates::traits::is_base_frame<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value);
+		EXPECT_FALSE(coordinates::traits::is_base_frame<Geodetic3DFrame<datums::WGS84_G1674>>::value);
+		EXPECT_FALSE(coordinates::traits::is_base_frame<ENUFrame<horizontalDatums::WGS84_G1674>>::value);
 
-		EXPECT_FALSE(coord::traits::is_base_frame<double>::value);
-		EXPECT_FALSE(coord::traits::is_base_frame<ellipsoids::GRS80>::value);
-		EXPECT_FALSE(coord::traits::is_base_frame<NotAFrame>::value);
+		EXPECT_FALSE(coordinates::traits::is_base_frame<double>::value);
+		EXPECT_FALSE(coordinates::traits::is_base_frame<ellipsoids::GRS80>::value);
+		EXPECT_FALSE(coordinates::traits::is_base_frame<NotAFrame>::value);
 	}
 
 	TEST_F(FrameOfReferenceTest, lowest_base_frame)
 	{
 		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>,
-			typename std::decay<typename coord::traits::lowest_base_frame<ECEFFrame<horizontalDatums::ITRF2008>>::type>::type>::value));
+			typename std::decay<typename coordinates::traits::lowest_base_frame<ECEFFrame<horizontalDatums::ITRF2008>>::type>::type>::value));
 		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>,
-			typename std::decay<typename coord::traits::lowest_base_frame<ECEFFrame<horizontalDatums::ITRF2014>>::type>::type>::value));
+			typename std::decay<typename coordinates::traits::lowest_base_frame<ECEFFrame<horizontalDatums::ITRF2014>>::type>::type>::value));
 		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>,
-			typename std::decay<typename coord::traits::lowest_base_frame<ECEFFrame<horizontalDatums::WGS84_G1674>>::type>::type>::value));
+			typename std::decay<typename coordinates::traits::lowest_base_frame<ECEFFrame<horizontalDatums::WGS84_G1674>>::type>::type>::value));
 		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>,
-			typename std::decay<typename coord::traits::lowest_base_frame<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::type>::type>::value));
+			typename std::decay<typename coordinates::traits::lowest_base_frame<Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::type>::type>::value));
 		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>,
-			typename std::decay<typename coord::traits::lowest_base_frame<Geodetic3DFrame<datums::WGS84_G1674>>::type>::type>::value));
+			typename std::decay<typename coordinates::traits::lowest_base_frame<Geodetic3DFrame<datums::WGS84_G1674>>::type>::type>::value));
 		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>,
-			typename std::decay<typename coord::traits::lowest_base_frame<ENUFrame<horizontalDatums::WGS84_G1674>>::type>::type>::value));
+			typename std::decay<typename coordinates::traits::lowest_base_frame<ENUFrame<horizontalDatums::WGS84_G1674>>::type>::type>::value));
 	}
 
 	TEST_F(FrameOfReferenceTest, is_convertible_frame)
 	{
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF2014>>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::WGS84_G1674>>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::ITRF2008>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::ITRF2014>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::ITRF2014>, Geodetic3DFrame<datums::WGS84_G1674>>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::NAD83>, ECEFFrame<horizontalDatums::WGS84_G1674>>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::ENUFrame<horizontalDatums::NAD83>, ECEFFrame<horizontalDatums::WGS84_G1674>>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::ENUFrame<horizontalDatums::NAD83>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
-		EXPECT_TRUE((coord::traits::is_convertible_frame<coordinateFrames::ENUFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF2014>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::WGS84_G1674>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::ITRF2008>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::ITRF2014>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::ITRF2014>, Geodetic3DFrame<datums::WGS84_G1674>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::ECEFFrame<horizontalDatums::NAD83>, ECEFFrame<horizontalDatums::WGS84_G1674>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::ENUFrame<horizontalDatums::NAD83>, ECEFFrame<horizontalDatums::WGS84_G1674>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::ENUFrame<horizontalDatums::NAD83>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
+		EXPECT_TRUE((coordinates::traits::is_convertible_frame<coordinateFrames::ENUFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::value));
 
-		EXPECT_FALSE((coord::traits::is_convertible_frame<double, double>::value));
-		EXPECT_FALSE((coord::traits::is_convertible_frame<double, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
-		EXPECT_FALSE((coord::traits::is_convertible_frame<NotAFrame, NotAFrame>::value));
-		EXPECT_FALSE((coord::traits::is_convertible_frame<NotAFrame, coordinateFrames::ECEFFrame<horizontalDatums::ITRF2008>>::value));
-		EXPECT_FALSE((coord::traits::is_convertible_frame<NotAFrame, coordinateFrames::ECEFFrame<horizontalDatums::WGS84_G1674>>::value));
-		EXPECT_FALSE((coord::traits::is_convertible_frame<NotAFrame, coordinateFrames::Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
-		EXPECT_FALSE((coord::traits::is_convertible_frame<NotAFrame, coordinateFrames::Geodetic2DFrame<horizontalDatums::NAD83>>::value));
-		EXPECT_FALSE((coord::traits::is_convertible_frame<NotAFrame, coordinateFrames::Geodetic3DFrame<datums::WGS84_G1674>>::value));
-		EXPECT_FALSE((coord::traits::is_convertible_frame<NotAFrame, coordinateFrames::Geodetic3DFrame<datums::NAD83>>::value));
-		EXPECT_FALSE((coord::traits::is_convertible_frame<NotAFrame, coordinateFrames::ENUFrame<horizontalDatums::ITRF2008>>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_frame<double, double>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_frame<double, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_frame<NotAFrame, NotAFrame>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_frame<NotAFrame, coordinateFrames::ECEFFrame<horizontalDatums::ITRF2008>>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_frame<NotAFrame, coordinateFrames::ECEFFrame<horizontalDatums::WGS84_G1674>>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_frame<NotAFrame, coordinateFrames::Geodetic2DFrame<horizontalDatums::WGS84_G1674>>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_frame<NotAFrame, coordinateFrames::Geodetic2DFrame<horizontalDatums::NAD83>>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_frame<NotAFrame, coordinateFrames::Geodetic3DFrame<datums::WGS84_G1674>>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_frame<NotAFrame, coordinateFrames::Geodetic3DFrame<datums::NAD83>>::value));
+		EXPECT_FALSE((coordinates::traits::is_convertible_frame<NotAFrame, coordinateFrames::ENUFrame<horizontalDatums::ITRF2008>>::value));
 	}
 
 	TEST_F(FrameOfReferenceTest, is_cartesian_frame)
 	{
-		EXPECT_FALSE(coord::traits::is_cartesian_frame<double>::value);
-		EXPECT_FALSE(coord::traits::is_cartesian_frame<ellipsoids::GRS80>::value);
-		EXPECT_FALSE(coord::traits::is_cartesian_frame<NotAFrame>::value);
-		EXPECT_TRUE(coord::traits::is_cartesian_frame<ECEFFrame<datums::IGS08>>::value);
-		EXPECT_TRUE(coord::traits::is_cartesian_frame<ECEFFrame<datums::NAD83>>::value);
-		EXPECT_TRUE(coord::traits::is_cartesian_frame<ECEFFrame<datums::WGS84_G1674>>::value);
-		EXPECT_FALSE(coord::traits::is_cartesian_frame<Geodetic2DFrame<datums::NAD83>>::value);
-		EXPECT_FALSE(coord::traits::is_cartesian_frame<Geodetic3DFrame<datums::NAD83>>::value);
-		EXPECT_FALSE(coord::traits::is_cartesian_frame<Geodetic3DFrame<datums::NAD83_MSL>>::value);
-		EXPECT_TRUE(coord::traits::is_cartesian_frame<ENUFrame<datums::NAD83>>::value);
-		EXPECT_TRUE(coord::traits::is_cartesian_frame<NEDFrame<datums::WGS84_G1674>>::value);
-		EXPECT_FALSE(coord::traits::is_cartesian_frame<AERFrame<datums::NAD83>>::value);
+		EXPECT_FALSE(coordinates::traits::is_cartesian_frame<double>::value);
+		EXPECT_FALSE(coordinates::traits::is_cartesian_frame<ellipsoids::GRS80>::value);
+		EXPECT_FALSE(coordinates::traits::is_cartesian_frame<NotAFrame>::value);
+		EXPECT_TRUE(coordinates::traits::is_cartesian_frame<ECEFFrame<datums::IGS08>>::value);
+		EXPECT_TRUE(coordinates::traits::is_cartesian_frame<ECEFFrame<datums::NAD83>>::value);
+		EXPECT_TRUE(coordinates::traits::is_cartesian_frame<ECEFFrame<datums::WGS84_G1674>>::value);
+		EXPECT_FALSE(coordinates::traits::is_cartesian_frame<Geodetic2DFrame<datums::NAD83>>::value);
+		EXPECT_FALSE(coordinates::traits::is_cartesian_frame<Geodetic3DFrame<datums::NAD83>>::value);
+		EXPECT_FALSE(coordinates::traits::is_cartesian_frame<Geodetic3DFrame<datums::NAD83_MSL>>::value);
+		EXPECT_TRUE(coordinates::traits::is_cartesian_frame<ENUFrame<datums::NAD83>>::value);
+		EXPECT_TRUE(coordinates::traits::is_cartesian_frame<NEDFrame<datums::WGS84_G1674>>::value);
+		EXPECT_FALSE(coordinates::traits::is_cartesian_frame<AERFrame<datums::NAD83>>::value);
 	}
 
 	TEST_F(FrameOfReferenceTest, least_common_ancestor)
 	{
 		// same frame
-		EXPECT_TRUE((std::is_same<Geodetic3DFrame<datums::NAD83>, typename coord::traits::least_common_ancestor<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::NAD83>>::type>::value));
+		EXPECT_TRUE((std::is_same<Geodetic3DFrame<datums::NAD83>, typename coordinates::traits::least_common_ancestor<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::NAD83>>::type>::value));
 
 		// different datums
-		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>, typename coord::traits::least_common_ancestor<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));
+		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>, typename coordinates::traits::least_common_ancestor<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));
 		
 		// different frames and datums
-		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>, typename coord::traits::least_common_ancestor<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));
+		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>, typename coordinates::traits::least_common_ancestor<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));
 		
 		// different frames
-		EXPECT_TRUE((std::is_same<Geodetic2DFrame<horizontalDatums::NAD83>, typename coord::traits::least_common_ancestor<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::NAD83>>::type>::value));
+		EXPECT_TRUE((std::is_same<Geodetic2DFrame<horizontalDatums::NAD83>, typename coordinates::traits::least_common_ancestor<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::NAD83>>::type>::value));
 		
 		// one of the two frames IS the LCA
-		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::NAD83>, typename coord::traits::least_common_ancestor<ENUFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::NAD83>>::type>::value));
+		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::NAD83>, typename coordinates::traits::least_common_ancestor<ENUFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::NAD83>>::type>::value));
 		
 		// different vertical frames
-		EXPECT_TRUE((std::is_same<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, typename coord::traits::least_common_ancestor<Geodetic3DFrame<datums::WGS84_G1674_MSL>, Geodetic3DFrame<datums::WGS84_G1674_AGL>>::type>::value));
+		EXPECT_TRUE((std::is_same<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, typename coordinates::traits::least_common_ancestor<Geodetic3DFrame<datums::WGS84_G1674_MSL>, Geodetic3DFrame<datums::WGS84_G1674_AGL>>::type>::value));
 	}
 
 	TEST_F(FrameOfReferenceTest, least_common_cartesian_ancestor)
 	{
-		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>, typename coord::traits::least_common_cartesian_ancestor<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));
-		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>, typename coord::traits::least_common_cartesian_ancestor<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));
-		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::NAD83>, typename coord::traits::least_common_cartesian_ancestor<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::NAD83>>::type>::value));
-		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::NAD83>, typename coord::traits::least_common_cartesian_ancestor<ENUFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::NAD83>>::type>::value));
-		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::WGS84_G1674>, typename coord::traits::least_common_cartesian_ancestor<Geodetic3DFrame<datums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));
-		EXPECT_TRUE((std::is_same<ENUFrame<datums::WGS84_G1674>, typename coord::traits::least_common_cartesian_ancestor<ENUFrame<datums::WGS84_G1674>, ENUFrame<datums::WGS84_G1674>>::type>::value));
-		EXPECT_TRUE((std::is_same<NEDFrame<datums::WGS84_G1674>, typename coord::traits::least_common_cartesian_ancestor<NEDFrame<datums::WGS84_G1674>, NEDFrame<datums::WGS84_G1674>>::type>::value));
-		EXPECT_TRUE((std::is_same<NEDFrame<datums::WGS84_G1674>, typename coord::traits::least_common_cartesian_ancestor<AERFrame<datums::WGS84_G1674>, AERFrame<datums::WGS84_G1674>>::type>::value));
+		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>, typename coordinates::traits::least_common_cartesian_ancestor<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));
+		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>, typename coordinates::traits::least_common_cartesian_ancestor<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));
+		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::NAD83>, typename coordinates::traits::least_common_cartesian_ancestor<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::NAD83>>::type>::value));
+		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::NAD83>, typename coordinates::traits::least_common_cartesian_ancestor<ENUFrame<horizontalDatums::NAD83>, Geodetic3DFrame<datums::NAD83>>::type>::value));
+		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::WGS84_G1674>, typename coordinates::traits::least_common_cartesian_ancestor<Geodetic3DFrame<datums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));
+		EXPECT_TRUE((std::is_same<ENUFrame<datums::WGS84_G1674>, typename coordinates::traits::least_common_cartesian_ancestor<ENUFrame<datums::WGS84_G1674>, ENUFrame<datums::WGS84_G1674>>::type>::value));
+		EXPECT_TRUE((std::is_same<NEDFrame<datums::WGS84_G1674>, typename coordinates::traits::least_common_cartesian_ancestor<NEDFrame<datums::WGS84_G1674>, NEDFrame<datums::WGS84_G1674>>::type>::value));
+		EXPECT_TRUE((std::is_same<NEDFrame<datums::WGS84_G1674>, typename coordinates::traits::least_common_cartesian_ancestor<AERFrame<datums::WGS84_G1674>, AERFrame<datums::WGS84_G1674>>::type>::value));
 	}
 
 	TEST_F(FrameConversionTest, same)
@@ -281,16 +281,16 @@ namespace
 
 		// convert to self
 		std::tuple<meter_t, meter_t, meter_t> sameECEF(1513460.904_m, -4463118.573_m, 4283412.811_m);
-		EXPECT_EQ(sameECEF, (coord::convert<ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF2008>>(sameECEF)));
-		EXPECT_EQ(sameECEF, (coord::convert<ECEFFrame<horizontalDatums::ITRF2014>, ECEFFrame<horizontalDatums::ITRF2014>>(sameECEF)));
-		EXPECT_EQ(sameECEF, (coord::convert<ECEFFrame<horizontalDatums::NAD83>, ECEFFrame<horizontalDatums::NAD83>>(sameECEF)));
-		EXPECT_EQ(sameECEF, (coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(sameECEF)));
+		EXPECT_EQ(sameECEF, (coordinates::convert<ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF2008>>(sameECEF)));
+		EXPECT_EQ(sameECEF, (coordinates::convert<ECEFFrame<horizontalDatums::ITRF2014>, ECEFFrame<horizontalDatums::ITRF2014>>(sameECEF)));
+		EXPECT_EQ(sameECEF, (coordinates::convert<ECEFFrame<horizontalDatums::NAD83>, ECEFFrame<horizontalDatums::NAD83>>(sameECEF)));
+		EXPECT_EQ(sameECEF, (coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(sameECEF)));
 
 		std::tuple<degree_t, degree_t, meter_t> sameGEO(42.459284_deg, -71.268002_deg, 50.0_m);
-		EXPECT_EQ(sameGEO, (coord::convert<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic2DFrame<horizontalDatums::NAD83>>(sameGEO)));
-		EXPECT_EQ(sameGEO, (coord::convert<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>(sameGEO)));
-		EXPECT_EQ(sameGEO, (coord::convert<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::NAD83>>(sameGEO)));
-		EXPECT_EQ(sameGEO, (coord::convert<Geodetic3DFrame<datums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>(sameGEO)));
+		EXPECT_EQ(sameGEO, (coordinates::convert<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic2DFrame<horizontalDatums::NAD83>>(sameGEO)));
+		EXPECT_EQ(sameGEO, (coordinates::convert<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>(sameGEO)));
+		EXPECT_EQ(sameGEO, (coordinates::convert<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::NAD83>>(sameGEO)));
+		EXPECT_EQ(sameGEO, (coordinates::convert<Geodetic3DFrame<datums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>(sameGEO)));
 	}
 
 	TEST_F(FrameConversionTest, IRTF2008_to_ITRFXX)
@@ -300,25 +300,25 @@ namespace
 		// Convert ITRF. Truth data: http://webapp.geod.nrcan.gc.ca/geod/tools-outils/trx.php?locale=en (make sure 'Longitude Positive West' is unchecked)
 		// Note: NOAA's VDatum seems to perform these transformations INCORECTLY, so don't use it!
 		std::tuple<meter_t, meter_t, meter_t> itrf2005_expected(1513460.903_m, -4463118.578_m, 4283412.810_m);
-		auto itrf2005_calculated = coord::convert<ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF2005>>(itrf2008);
+		auto itrf2005_calculated = coordinates::convert<ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF2005>>(itrf2008);
 		EXPECT_NEAR(std::get<0>(itrf2005_expected).to<double>(), std::get<0>(itrf2005_calculated).to<double>(), 5.0e-4);
 		EXPECT_NEAR(std::get<1>(itrf2005_expected).to<double>(), std::get<1>(itrf2005_calculated).to<double>(), 5.0e-4);
 		EXPECT_NEAR(std::get<2>(itrf2005_expected).to<double>(), std::get<2>(itrf2005_calculated).to<double>(), 5.0e-4);
 
 		std::tuple<meter_t, meter_t, meter_t> itrf2000_expected(1513460.904_m, -4463118.581_m, 4283412.806_m);
-		auto itrf2000_calculated = coord::convert<ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF2000>>(itrf2008);
+		auto itrf2000_calculated = coordinates::convert<ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF2000>>(itrf2008);
 		EXPECT_NEAR(std::get<0>(itrf2000_expected).to<double>(), std::get<0>(itrf2000_calculated).to<double>(), 5.0e-4);
 		EXPECT_NEAR(std::get<1>(itrf2000_expected).to<double>(), std::get<1>(itrf2000_calculated).to<double>(), 5.0e-4);
 		EXPECT_NEAR(std::get<2>(itrf2000_expected).to<double>(), std::get<2>(itrf2000_calculated).to<double>(), 5.0e-4);
 
 		std::tuple<meter_t, meter_t, meter_t> itrf96_expected(1513460.915_m, -4463118.583_m, 4283412.790_m);
-		auto itrf96_calculated = coord::convert<ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF96>>(itrf2008);
+		auto itrf96_calculated = coordinates::convert<ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF96>>(itrf2008);
 		EXPECT_NEAR(std::get<0>(itrf96_expected).to<double>(), std::get<0>(itrf96_calculated).to<double>(), 5.0e-4);
 		EXPECT_NEAR(std::get<1>(itrf96_expected).to<double>(), std::get<1>(itrf96_calculated).to<double>(), 5.0e-4);
 		EXPECT_NEAR(std::get<2>(itrf96_expected).to<double>(), std::get<2>(itrf96_calculated).to<double>(), 5.0e-4);
 
 		std::tuple<meter_t, meter_t, meter_t> itrf88_expected(1513460.944_m, -4463118.618_m, 4283412.728_m);
-		auto itrf88_calculated = coord::convert<ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF88>>(itrf2008);
+		auto itrf88_calculated = coordinates::convert<ECEFFrame<horizontalDatums::ITRF2008>, ECEFFrame<horizontalDatums::ITRF88>>(itrf2008);
 		EXPECT_NEAR(std::get<0>(itrf88_expected).to<double>(), std::get<0>(itrf88_calculated).to<double>(), 5.0e-4);
 		EXPECT_NEAR(std::get<1>(itrf88_expected).to<double>(), std::get<1>(itrf88_calculated).to<double>(), 5.0e-4);
 		EXPECT_NEAR(std::get<2>(itrf88_expected).to<double>(), std::get<2>(itrf88_calculated).to<double>(), 5.0e-4);
@@ -331,13 +331,13 @@ namespace
 		// Convert ITRF. Truth data: http://webapp.geod.nrcan.gc.ca/geod/tools-outils/trx.php?locale=en (make sure 'Longitude Positive West' is unchecked)
 		// Note: NOAA's VDatum seems to perform these transformations INCORECTLY, so don't use it!
 		std::tuple<meter_t, meter_t, meter_t> itrf90_expected(1513460.923_m, -4463118.565_m, 4283412.785_m);
-		auto itrf90_calculated = coord::convert<ECEFFrame<horizontalDatums::ITRF96>, ECEFFrame<horizontalDatums::ITRF90>>(itrf);
+		auto itrf90_calculated = coordinates::convert<ECEFFrame<horizontalDatums::ITRF96>, ECEFFrame<horizontalDatums::ITRF90>>(itrf);
 		EXPECT_NEAR(std::get<0>(itrf90_expected).to<double>(), std::get<0>(itrf90_calculated).to<double>(), 1.0e-3);
 		EXPECT_NEAR(std::get<1>(itrf90_expected).to<double>(), std::get<1>(itrf90_calculated).to<double>(), 1.0e-3);
 		EXPECT_NEAR(std::get<2>(itrf90_expected).to<double>(), std::get<2>(itrf90_calculated).to<double>(), 1.0e-3);
 
 		std::tuple<meter_t, meter_t, meter_t> itrf88_expected(1513460.944_m, -4463118.610_m, 4283412.733_m);
-		auto itrf88_calculated = coord::convert<ECEFFrame<horizontalDatums::ITRF2000>, ECEFFrame<horizontalDatums::ITRF88>>(itrf);
+		auto itrf88_calculated = coordinates::convert<ECEFFrame<horizontalDatums::ITRF2000>, ECEFFrame<horizontalDatums::ITRF88>>(itrf);
 		EXPECT_NEAR(std::get<0>(itrf88_expected).to<double>(), std::get<0>(itrf88_calculated).to<double>(), 1.0e-3);
 		EXPECT_NEAR(std::get<1>(itrf88_expected).to<double>(), std::get<1>(itrf88_calculated).to<double>(), 1.0e-3);
 		EXPECT_NEAR(std::get<2>(itrf88_expected).to<double>(), std::get<2>(itrf88_calculated).to<double>(), 1.0e-3);
@@ -352,10 +352,10 @@ namespace
 		auto test3 = std::tuple<degree_t, degree_t, meter_t>(-33.932048_deg, 18.397849_deg, 1000.0_m);
 		auto test4 = std::tuple<degree_t, degree_t, meter_t>(40.417638_deg, -3.719343_deg, 0.0_km);
 
-		auto result1 = coord::convert<Geodetic3DFrame<datums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test1);
-		auto result2 = coord::convert<Geodetic3DFrame<datums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test2);
-		auto result3 = coord::convert<Geodetic3DFrame<datums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test3);
-		auto result4 = coord::convert<Geodetic3DFrame<datums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test4);
+		auto result1 = coordinates::convert<Geodetic3DFrame<datums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test1);
+		auto result2 = coordinates::convert<Geodetic3DFrame<datums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test2);
+		auto result3 = coordinates::convert<Geodetic3DFrame<datums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test3);
+		auto result4 = coordinates::convert<Geodetic3DFrame<datums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test4);
 
 		EXPECT_NEAR(1513460.90425574, std::get<0>(result1).to<double>(), 1.0e-8);
 		EXPECT_NEAR(-4463118.57366578, std::get<1>(result1).to<double>(), 1.0e-8);
@@ -383,10 +383,10 @@ namespace
 		auto test3 = std::tuple<meter_t, meter_t, meter_t>(5027491.76199413_m, 1672214.28779206_m, -3540753.52360714_m);
 		auto test4 = std::tuple<kilometer_t, kilometer_t, kilometer_t>(4852.527699157_km, -315.443985333516_km, 4113.40113079432_km);
 
-		auto result1 = coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>(test1);
-		auto result2 = coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>(test2);
-		auto result3 = coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>(test3);
-		auto result4 = coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>(test4);
+		auto result1 = coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>(test1);
+		auto result2 = coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>(test2);
+		auto result3 = coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>(test3);
+		auto result4 = coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, Geodetic3DFrame<datums::WGS84_G1674>>(test4);
 
 		EXPECT_NEAR(42.459284, std::get<0>(result1).to<double>(), 1.0e-8);
 		EXPECT_NEAR(-71.268002, std::get<1>(result1).to<double>(), 1.0e-8);
@@ -416,23 +416,23 @@ namespace
 		auto boston_nad83 = std::tuple<degree_t, degree_t, meter_t>(42.354982_deg, -71.065598_deg, 0.0_m);
 		auto nevada_nad83 = std::tuple<degree_t, degree_t, meter_t>(37.234995_deg, -115.811088_deg, 0.0_m);
 
-		auto bostonCalculated = coord::convert<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, Geodetic2DFrame<horizontalDatums::NAD83>>(boston_wgs84);
+		auto bostonCalculated = coordinates::convert<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, Geodetic2DFrame<horizontalDatums::NAD83>>(boston_wgs84);
 
 		EXPECT_NEAR(std::get<0>(boston_nad83).to<double>(), std::get<0>(bostonCalculated).to<double>(), 5.0e-7);
 		EXPECT_NEAR(std::get<1>(boston_nad83).to<double>(), std::get<1>(bostonCalculated).to<double>(), 5.0e-7);
 
-		auto nevadaCalculated = coord::convert<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, Geodetic2DFrame<horizontalDatums::NAD83>>(nevada_wgs84);
+		auto nevadaCalculated = coordinates::convert<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, Geodetic2DFrame<horizontalDatums::NAD83>>(nevada_wgs84);
 
 		EXPECT_NEAR(std::get<0>(nevada_nad83).to<double>(), std::get<0>(nevadaCalculated).to<double>(), 5.0e-7);
 		EXPECT_NEAR(std::get<1>(nevada_nad83).to<double>(), std::get<1>(nevadaCalculated).to<double>(), 5.0e-7);
 
-		auto bostonCalculated3D = coord::convert<Geodetic3DFrame<datums::WGS84_G1674>, Geodetic3DFrame<datums::NAD83>>(boston_wgs84);
+		auto bostonCalculated3D = coordinates::convert<Geodetic3DFrame<datums::WGS84_G1674>, Geodetic3DFrame<datums::NAD83>>(boston_wgs84);
 
 		EXPECT_NEAR(std::get<0>(boston_nad83).to<double>(), std::get<0>(bostonCalculated3D).to<double>(), 5.0e-7);
 		EXPECT_NEAR(std::get<1>(boston_nad83).to<double>(), std::get<1>(bostonCalculated3D).to<double>(), 5.0e-7);
 		EXPECT_NEAR(std::get<2>(boston_nad83).to<double>(), std::get<2>(bostonCalculated3D).to<double>(), 5.0e-2);
 
-		auto nevadaCalculated3D = coord::convert<Geodetic3DFrame<datums::WGS84_G1674>, Geodetic3DFrame<datums::NAD83>>(nevada_wgs84);
+		auto nevadaCalculated3D = coordinates::convert<Geodetic3DFrame<datums::WGS84_G1674>, Geodetic3DFrame<datums::NAD83>>(nevada_wgs84);
 
 		EXPECT_NEAR(std::get<0>(nevada_nad83).to<double>(), std::get<0>(nevadaCalculated3D).to<double>(), 5.0e-7);
 		EXPECT_NEAR(std::get<1>(nevada_nad83).to<double>(), std::get<1>(nevadaCalculated3D).to<double>(), 5.0e-7);
@@ -450,23 +450,23 @@ namespace
 		auto boston_nad83 = std::tuple<degree_t, degree_t,meter_t>(42.354982_deg, -71.065598_deg, 0.0_m);
 		auto nevada_nad83 = std::tuple<degree_t, degree_t,meter_t>(37.234995_deg, -115.811088_deg, 0.0_m);
 
-		auto bostonCalculated = coord::convert<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>(boston_nad83);
+		auto bostonCalculated = coordinates::convert<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>(boston_nad83);
 
 		EXPECT_NEAR(std::get<0>(boston_wgs84).to<double>(), std::get<0>(bostonCalculated).to<double>(), 5.0e-7);
 		EXPECT_NEAR(std::get<1>(boston_wgs84).to<double>(), std::get<1>(bostonCalculated).to<double>(), 5.0e-7);
 
-		auto nevadaCalculated = coord::convert<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>(nevada_nad83);
+		auto nevadaCalculated = coordinates::convert<Geodetic2DFrame<horizontalDatums::NAD83>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>(nevada_nad83);
 
 		EXPECT_NEAR(std::get<0>(nevada_wgs84).to<double>(), std::get<0>(nevadaCalculated).to<double>(), 5.0e-7);
 		EXPECT_NEAR(std::get<1>(nevada_wgs84).to<double>(), std::get<1>(nevadaCalculated).to<double>(), 5.0e-7);
 
-		auto bostonCalculated3D = coord::convert<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>(boston_nad83);
+		auto bostonCalculated3D = coordinates::convert<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>(boston_nad83);
 
 		EXPECT_NEAR(std::get<0>(boston_wgs84).to<double>(), std::get<0>(bostonCalculated3D).to<double>(), 5.0e-7);
 		EXPECT_NEAR(std::get<1>(boston_wgs84).to<double>(), std::get<1>(bostonCalculated3D).to<double>(), 5.0e-7);
 		EXPECT_NEAR(std::get<2>(boston_wgs84).to<double>(), std::get<2>(bostonCalculated3D).to<double>(), 5.0e-2);
 
-		auto nevadaCalculated3D = coord::convert<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>(nevada_nad83);
+		auto nevadaCalculated3D = coordinates::convert<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>(nevada_nad83);
 
 		EXPECT_NEAR(std::get<0>(nevada_wgs84).to<double>(), std::get<0>(nevadaCalculated3D).to<double>(), 5.0e-7);
 		EXPECT_NEAR(std::get<1>(nevada_wgs84).to<double>(), std::get<1>(nevadaCalculated3D).to<double>(), 5.0e-7);
@@ -478,20 +478,20 @@ namespace
 		// truth data from Louis' matlab
 		auto origin = std::tuple<degree_t, degree_t, meter_t>(42.459284_deg, -71.268002_deg, 50_m);
 
-		auto test1 = coord::cartesianTuple(0_m,0_m,0_m);
-		auto test2 = coord::cartesianTuple(-5404681.93164781_m, 2922440.82470195_m,  -8115897.48471693_m);
-		auto test3 = coord::cartesianTuple(5298209.06171991_m, -2611778.32868034_m, -8735896.96152653_m);
-		auto test4 = coord::cartesianTuple(4494192.24378046_m, 1802333.53686265_m, -2221554.73053747_m);
+		auto test1 = coordinates::cartesianTuple(0_m,0_m,0_m);
+		auto test2 = coordinates::cartesianTuple(-5404681.93164781_m, 2922440.82470195_m,  -8115897.48471693_m);
+		auto test3 = coordinates::cartesianTuple(5298209.06171991_m, -2611778.32868034_m, -8735896.96152653_m);
+		auto test4 = coordinates::cartesianTuple(4494192.24378046_m, 1802333.53686265_m, -2221554.73053747_m);
 
-		auto expected1 = coord::cartesianTuple(1513460.90425574_m, -4463118.57366578_m, 4283412.81104103_m);
-		auto expected2 = coord::cartesianTuple(-6161359.99808944_m, 1339960.38688495_m, 960697.380382177_m);
-		auto expected3 = coord::cartesianTuple(5027491.76199413_m, 1672214.28779206_m, -3540753.52360714_m);
-		auto expected4 = coord::cartesianTuple(4852527.699157_m, -315443.985333514_m, 4113401.13079431_m);
+		auto expected1 = coordinates::cartesianTuple(1513460.90425574_m, -4463118.57366578_m, 4283412.81104103_m);
+		auto expected2 = coordinates::cartesianTuple(-6161359.99808944_m, 1339960.38688495_m, 960697.380382177_m);
+		auto expected3 = coordinates::cartesianTuple(5027491.76199413_m, 1672214.28779206_m, -3540753.52360714_m);
+		auto expected4 = coordinates::cartesianTuple(4852527.699157_m, -315443.985333514_m, 4113401.13079431_m);
 
-		auto result1 = coord::convert<ENUFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test1, origin, origin);
-		auto result2 = coord::convert<ENUFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test2, origin, origin);
-		auto result3 = coord::convert<ENUFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test3, origin, origin);
-		auto result4 = coord::convert<ENUFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test4, origin, origin);
+		auto result1 = coordinates::convert<ENUFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test1, origin, origin);
+		auto result2 = coordinates::convert<ENUFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test2, origin, origin);
+		auto result3 = coordinates::convert<ENUFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test3, origin, origin);
+		auto result4 = coordinates::convert<ENUFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test4, origin, origin);
 
 		EXPECT_NEAR(std::get<0>(expected1).to<double>(), std::get<0>(result1).to<double>(), 1.0e-8);
 		EXPECT_NEAR(std::get<1>(expected1).to<double>(), std::get<1>(result1).to<double>(), 1.0e-8);
@@ -516,23 +516,23 @@ namespace
 		auto origin = std::tuple<degree_t, degree_t, meter_t>(42.459284_deg, -71.268002_deg, 50_m);
 		auto origin2 = std::tuple<degree_t, degree_t, meter_t>(42.459284_deg, -71.268002_deg, 50000_m);	// boston @ 50km
 
-		auto test1 = coord::cartesianTuple(1513460.90425574_m, -4463118.57366578_m, 4283412.81104103_m);
-		auto test2 = coord::cartesianTuple(-6161359.99808944_m, 1339960.38688495_m, 960697.380382177_m);
-		auto test3 = coord::cartesianTuple(5027491.76199413_m, 1672214.28779206_m, -3540753.52360714_m);
-		auto test4 = coord::cartesianTuple(4852527.699157_m, -315443.985333514_m, 4113401.13079431_m);
-		auto test5 = coord::cartesianTuple(1516998.391159392_m, -4463557.703477143_m, 4282381.812770258_m); //lexington @ 500m
+		auto test1 = coordinates::cartesianTuple(1513460.90425574_m, -4463118.57366578_m, 4283412.81104103_m);
+		auto test2 = coordinates::cartesianTuple(-6161359.99808944_m, 1339960.38688495_m, 960697.380382177_m);
+		auto test3 = coordinates::cartesianTuple(5027491.76199413_m, 1672214.28779206_m, -3540753.52360714_m);
+		auto test4 = coordinates::cartesianTuple(4852527.699157_m, -315443.985333514_m, 4113401.13079431_m);
+		auto test5 = coordinates::cartesianTuple(1516998.391159392_m, -4463557.703477143_m, 4282381.812770258_m); //lexington @ 500m
 
-		auto expected1 = coord::cartesianTuple(0_m, 0_m, 0_m);
-		auto expected2 = coord::cartesianTuple(-5404681.93164781_m, 2922440.82470195_m, -8115897.48471693_m);
-		auto expected3 = coord::cartesianTuple(5298209.06171991_m, -2611778.32868034_m, -8735896.96152653_m);
-		auto expected4 = coord::cartesianTuple(4494192.24378046_m, 1802333.53686265_m, -2221554.73053747_m);
-		auto expected5 = coord::cartesianTuple(3209.087037877383_m, -1808.264874640016_m, -49501.06287128705_m);
+		auto expected1 = coordinates::cartesianTuple(0_m, 0_m, 0_m);
+		auto expected2 = coordinates::cartesianTuple(-5404681.93164781_m, 2922440.82470195_m, -8115897.48471693_m);
+		auto expected3 = coordinates::cartesianTuple(5298209.06171991_m, -2611778.32868034_m, -8735896.96152653_m);
+		auto expected4 = coordinates::cartesianTuple(4494192.24378046_m, 1802333.53686265_m, -2221554.73053747_m);
+		auto expected5 = coordinates::cartesianTuple(3209.087037877383_m, -1808.264874640016_m, -49501.06287128705_m);
 
-		auto result1 = coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test1, origin, origin);
-		auto result2 = coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test2, origin, origin);
-		auto result3 = coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test3, origin, origin);
-		auto result4 = coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test4, origin, origin);
-		auto result5 = coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test5, origin2, origin2);
+		auto result1 = coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test1, origin, origin);
+		auto result2 = coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test2, origin, origin);
+		auto result3 = coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test3, origin, origin);
+		auto result4 = coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test4, origin, origin);
+		auto result5 = coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test5, origin2, origin2);
 
 		EXPECT_NEAR(std::get<0>(expected1).to<double>(), std::get<0>(result1).to<double>(), 5.0e-9);
 		EXPECT_NEAR(std::get<1>(expected1).to<double>(), std::get<1>(result1).to<double>(), 5.0e-9);
@@ -557,10 +557,10 @@ namespace
 
 	TEST_F(FrameConversionTest, ENU_to_NED)
 	{
-		auto test = coord::cartesianTuple(1_m, 2_m, 3_m);
+		auto test = coordinates::cartesianTuple(1_m, 2_m, 3_m);
 
-		auto expected = coord::cartesianTuple(2_m, 1_m, -3_m);
-		auto result = coord::convert<ENUFrame<horizontalDatums::WGS84_G1674>, NEDFrame<horizontalDatums::WGS84_G1674>>(test);
+		auto expected = coordinates::cartesianTuple(2_m, 1_m, -3_m);
+		auto result = coordinates::convert<ENUFrame<horizontalDatums::WGS84_G1674>, NEDFrame<horizontalDatums::WGS84_G1674>>(test);
 
 		EXPECT_NEAR(std::get<0>(expected).to<double>(), std::get<0>(result).to<double>(), 5.0e-10);
 		EXPECT_NEAR(std::get<1>(expected).to<double>(), std::get<1>(result).to<double>(), 5.0e-10);
@@ -569,10 +569,10 @@ namespace
 
 	TEST_F(FrameConversionTest, NED_to_NED)
 	{
-		auto test = coord::cartesianTuple(2_m, 1_m, -3_m);
+		auto test = coordinates::cartesianTuple(2_m, 1_m, -3_m);
 
-		auto expected = coord::cartesianTuple(1_m, 2_m, 3_m);
-		auto result = coord::convert<NEDFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test);
+		auto expected = coordinates::cartesianTuple(1_m, 2_m, 3_m);
+		auto result = coordinates::convert<NEDFrame<horizontalDatums::WGS84_G1674>, ENUFrame<horizontalDatums::WGS84_G1674>>(test);
 
 		EXPECT_NEAR(std::get<0>(expected).to<double>(), std::get<0>(result).to<double>(), 5.0e-10);
 		EXPECT_NEAR(std::get<1>(expected).to<double>(), std::get<1>(result).to<double>(), 5.0e-10);
@@ -582,11 +582,11 @@ namespace
 	TEST_F(FrameConversionTest, GEO_to_NED)
 	{
 		// truth data from MATLAB: [n, e, d] = geodetic2ned(39, -76, 12000, 39, -75, 4000, wgs84Ellipsoid)
-		auto test = coord::sphericalTuple(39_deg, -76_deg, 12000_m);
-		auto origin = coord::sphericalTuple(39_deg, -75_deg, 4000_m);
+		auto test = coordinates::sphericalTuple(39_deg, -76_deg, 12000_m);
+		auto origin = coordinates::sphericalTuple(39_deg, -75_deg, 4000_m);
 
-		auto expected = coord::cartesianTuple(meter_t(4.766215572076285e+02), meter_t(-8.678476280073922e+04), meter_t(-7.411421394260990e+03));
-		auto result = coord::convert<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, NEDFrame<horizontalDatums::WGS84_G1674>>(test, origin, origin);
+		auto expected = coordinates::cartesianTuple(meter_t(4.766215572076285e+02), meter_t(-8.678476280073922e+04), meter_t(-7.411421394260990e+03));
+		auto result = coordinates::convert<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, NEDFrame<horizontalDatums::WGS84_G1674>>(test, origin, origin);
 
 		EXPECT_NEAR(std::get<0>(expected).to<double>(), std::get<0>(result).to<double>(), 5.0e-10);
 		EXPECT_NEAR(std::get<1>(expected).to<double>(), std::get<1>(result).to<double>(), 7.0e-10);
@@ -596,11 +596,11 @@ namespace
 	TEST_F(FrameConversionTest, NED_TO_GEO)
 	{
 		// truth data from MATLAB: [n, e, d] = geodetic2ned(39, -76, 12000, 39, -75, 4000, wgs84Ellipsoid)
-		auto test = coord::cartesianTuple(meter_t(4.766215572076285e+02), meter_t(-8.678476280073922e+04), meter_t(-7.411421394260990e+03)); 
-		auto origin = coord::sphericalTuple(39_deg, -75_deg, 4000_m);
+		auto test = coordinates::cartesianTuple(meter_t(4.766215572076285e+02), meter_t(-8.678476280073922e+04), meter_t(-7.411421394260990e+03));
+		auto origin = coordinates::sphericalTuple(39_deg, -75_deg, 4000_m);
 
-		auto expected = coord::sphericalTuple(39_deg, -76_deg, 12000_m);
-		auto result = coord::convert<NEDFrame<horizontalDatums::WGS84_G1674>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>(test, origin, origin);
+		auto expected = coordinates::sphericalTuple(39_deg, -76_deg, 12000_m);
+		auto result = coordinates::convert<NEDFrame<horizontalDatums::WGS84_G1674>, Geodetic2DFrame<horizontalDatums::WGS84_G1674>>(test, origin, origin);
 
 		EXPECT_NEAR(std::get<0>(expected).to<double>(), std::get<0>(result).to<double>(), 5.0e-10);
 		EXPECT_NEAR(std::get<1>(expected).to<double>(), std::get<1>(result).to<double>(), 5.0e-10);
@@ -610,11 +610,11 @@ namespace
 	TEST_F(FrameConversionTest, AER_to_NED)
 	{
 		// truth data from MATLAB: [n,e,d] = aer2ned(270, 5, 85000)
-		auto test = coord::sphericalTuple(270_deg, 5_deg, 85000_m);
-		auto origin = coord::sphericalTuple(39_deg, -75_deg, 4000_m);
+		auto test = coordinates::sphericalTuple(270_deg, 5_deg, 85000_m);
+		auto origin = coordinates::sphericalTuple(39_deg, -75_deg, 4000_m);
 
-		auto expected = coord::cartesianTuple(0_m, meter_t(-8.467654933779837e+04), meter_t(-7.408238133550944e+03));
-		auto result = coord::convert<AERFrame<horizontalDatums::WGS84_G1674>, NEDFrame<horizontalDatums::WGS84_G1674>>(test, origin, origin);
+		auto expected = coordinates::cartesianTuple(0_m, meter_t(-8.467654933779837e+04), meter_t(-7.408238133550944e+03));
+		auto result = coordinates::convert<AERFrame<horizontalDatums::WGS84_G1674>, NEDFrame<horizontalDatums::WGS84_G1674>>(test, origin, origin);
 
 		EXPECT_NEAR(std::get<0>(expected).to<double>(), std::get<0>(result).to<double>(), 5.0e-10);
 		EXPECT_NEAR(std::get<1>(expected).to<double>(), std::get<1>(result).to<double>(), 5.0e-10);
@@ -624,11 +624,11 @@ namespace
 	TEST_F(FrameConversionTest, NED_TO_AER)
 	{
 		// truth data from MATLAB: [n,e,d] = aer2ned(270, 5, 85000)
-		auto test = coord::cartesianTuple(0_m, meter_t(-8.467654933779837e+04), meter_t(-7.408238133550944e+03));
-		auto origin = coord::sphericalTuple(39_deg, -75_deg, 4000_m);
+		auto test = coordinates::cartesianTuple(0_m, meter_t(-8.467654933779837e+04), meter_t(-7.408238133550944e+03));
+		auto origin = coordinates::sphericalTuple(39_deg, -75_deg, 4000_m);
 
-		auto expected = coord::sphericalTuple(270_deg, 5_deg, 85000_m);
-		auto result = coord::convert<NEDFrame<horizontalDatums::WGS84_G1674>, AERFrame<horizontalDatums::WGS84_G1674>>(test, origin, origin);
+		auto expected = coordinates::sphericalTuple(270_deg, 5_deg, 85000_m);
+		auto result = coordinates::convert<NEDFrame<horizontalDatums::WGS84_G1674>, AERFrame<horizontalDatums::WGS84_G1674>>(test, origin, origin);
 
 		EXPECT_NEAR(std::get<0>(expected).to<double>(), std::get<0>(result).to<double>(), 5.0e-10);
 		EXPECT_NEAR(std::get<1>(expected).to<double>(), std::get<1>(result).to<double>(), 5.0e-10);
@@ -638,12 +638,12 @@ namespace
 	TEST_F(FrameConversionTest, ECEF_to_AER)
 	{
 		// truth data from MATLAB: [az, el, range] = geodetic2aer(39, -76, 12000, 39, -75, 4000, wgs84Ellipsoid)
-		auto testGeo = coord::sphericalTuple(39_deg, -76_deg, 12000_m);
-		auto origin = coord::sphericalTuple(39_deg, -75_deg, 4000_m);
+		auto testGeo = coordinates::sphericalTuple(39_deg, -76_deg, 12000_m);
+		auto origin = coordinates::sphericalTuple(39_deg, -75_deg, 4000_m);
 
-		auto test = coord::convert<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(testGeo, origin, origin);
-		auto expected = coord::sphericalTuple(270.3146650197312_deg, 4.881144545764371_deg, 87101.95973439791_m);
-		auto result = coord::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, AERFrame<horizontalDatums::WGS84_G1674>>(test, origin, origin);
+		auto test = coordinates::convert<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(testGeo, origin, origin);
+		auto expected = coordinates::sphericalTuple(270.3146650197312_deg, 4.881144545764371_deg, 87101.95973439791_m);
+		auto result = coordinates::convert<ECEFFrame<horizontalDatums::WGS84_G1674>, AERFrame<horizontalDatums::WGS84_G1674>>(test, origin, origin);
 
 		EXPECT_NEAR(std::get<0>(expected).to<double>(), std::get<0>(result).to<double>(), 5.0e-10);
 		EXPECT_NEAR(std::get<1>(expected).to<double>(), std::get<1>(result).to<double>(), 5.0e-10);
@@ -653,11 +653,11 @@ namespace
 	TEST_F(FrameConversionTest, AER_to_ECEF)
 	{
 		// truth data from MATLAB: [x,y,z] = aer2ecef(270, 5, 85000, 39, -75, 4000, wgs84Ellipsoid)
-		auto test = coord::sphericalTuple(270_deg, 5_deg, 85000_m);
-		auto origin = coord::sphericalTuple(39_deg, -75_deg, 4000_m);
+		auto test = coordinates::sphericalTuple(270_deg, 5_deg, 85000_m);
+		auto origin = coordinates::sphericalTuple(39_deg, -75_deg, 4000_m);
 
-		auto expected = coord::cartesianTuple(meter_t(1.205107031443989e+06), meter_t(-4.824685733453152e+06), meter_t(3.999496459635123e+06));
-		auto result = coord::convert<AERFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test, origin);
+		auto expected = coordinates::cartesianTuple(meter_t(1.205107031443989e+06), meter_t(-4.824685733453152e+06), meter_t(3.999496459635123e+06));
+		auto result = coordinates::convert<AERFrame<horizontalDatums::WGS84_G1674>, ECEFFrame<horizontalDatums::WGS84_G1674>>(test, origin);
 
 		EXPECT_NEAR(std::get<0>(expected).to<double>(), std::get<0>(result).to<double>(), 5.0e-10);
 		EXPECT_NEAR(std::get<1>(expected).to<double>(), std::get<1>(result).to<double>(), 5.0e-9);

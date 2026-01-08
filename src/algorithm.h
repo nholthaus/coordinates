@@ -43,7 +43,7 @@
 
 #include "point.h"
 
-namespace coord
+namespace coordinates
 {
 	using namespace units::literals;
 
@@ -56,7 +56,7 @@ namespace coord
 	template<class Point>
 	bool isNull(const Point& point)
 	{
-		static_assert(coord::traits::is_point<Point>::value, "Template parameter `Point` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_point<Point>::value, "Template parameter `Point` does not satisfy the `point` concept.");
 
 		auto x = std::get<0>(point.point());
 		auto y = std::get<1>(point.point());
@@ -71,19 +71,19 @@ namespace coord
 	template<class Units, class PointLhs, class PointRhs, class = typename std::enable_if<units::traits::is_unit_t<Units>::value>::type>
 	bool isSame(const PointLhs& lhs, const PointRhs& rhs, Units tolerance = Units(0))
 	{
-		static_assert(coord::traits::is_point<PointLhs>::value, "Template parameter `PointLhs` does not satisfy the `point` concept.");
-		static_assert(coord::traits::is_point<PointRhs>::value, "Template parameter `PointRhs` does not satisfy the `point` concept.");
-		static_assert(coord::traits::is_convertible_point<PointLhs, PointRhs>::value, "No known conversion between types `PointLhs` and `PointRhs`.");
+		static_assert(coordinates::traits::is_point<PointLhs>::value, "Template parameter `PointLhs` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_point<PointRhs>::value, "Template parameter `PointRhs` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_convertible_point<PointLhs, PointRhs>::value, "No known conversion between types `PointLhs` and `PointRhs`.");
 
 		// if the origins match, perform a direct comparison
 		if (lhs.frameData() == rhs.frameData())
 		{
 			// convert both points to the nearest frame of reference which is Cartesian.
-			using LCA = typename coord::traits::least_common_cartesian_ancestor<typename coord::traits::point_traits<PointLhs>::reference_frame, typename coord::traits::point_traits<PointRhs>::reference_frame>::type;
+			using LCA = typename coordinates::traits::least_common_cartesian_ancestor<typename coordinates::traits::point_traits<PointLhs>::reference_frame, typename coordinates::traits::point_traits<PointRhs>::reference_frame>::type;
 			using namespace units::math;
 
-			auto l = coord::convert<typename coord::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
-			auto r = coord::convert<typename coord::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
+			auto l = coordinates::convert<typename coordinates::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
+			auto r = coordinates::convert<typename coordinates::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
 
 			auto x0 = std::get<0>(l);
 			auto y0 = std::get<1>(l);
@@ -98,10 +98,10 @@ namespace coord
 		// otherwise, convert to ECEF
 		else
 		{
-			using BaseFrame = typename coord::traits::lowest_base_frame<typename coord::traits::point_traits<PointLhs>::reference_frame>::type;
+			using BaseFrame = typename coordinates::traits::lowest_base_frame<typename coordinates::traits::point_traits<PointLhs>::reference_frame>::type;
 
-			coord::cartesianTuple l = coord::convert<typename coord::traits::point_traits<PointLhs>::reference_frame, BaseFrame>(lhs.point(), lhs.frameData(), lhs.frameData());
-			coord::cartesianTuple r = coord::convert<typename coord::traits::point_traits<PointRhs>::reference_frame, BaseFrame>(rhs.point(), rhs.frameData(), rhs.frameData());
+			coordinates::cartesianTuple l = coordinates::convert<typename coordinates::traits::point_traits<PointLhs>::reference_frame, BaseFrame>(lhs.point(), lhs.frameData(), lhs.frameData());
+			coordinates::cartesianTuple r = coordinates::convert<typename coordinates::traits::point_traits<PointRhs>::reference_frame, BaseFrame>(rhs.point(), rhs.frameData(), rhs.frameData());
 
 			auto x0 = std::get<0>(l);
 			auto y0 = std::get<1>(l);
@@ -133,10 +133,10 @@ namespace coord
 	template<class PointLhs, class PointRhs, class PointTol>
 	bool isSame(const PointLhs& lhs, const PointRhs& rhs, const PointTol& tolerance)
 	{
-		static_assert(coord::traits::is_point<PointLhs>::value, "Template parameter `PointLhs` does not satisfy the `point` concept.");
-		static_assert(coord::traits::is_point<PointRhs>::value, "Template parameter `PointRhs` does not satisfy the `point` concept.");
-		static_assert(coord::traits::is_convertible_point<PointLhs, PointRhs>::value, "No known conversion between types `PointLhs` and `PointRhs`.");
-		static_assert(coord::traits::is_convertible_point<PointLhs, PointTol>::value, "No known conversion between types `PointTol` and `PointLhs`.");
+		static_assert(coordinates::traits::is_point<PointLhs>::value, "Template parameter `PointLhs` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_point<PointRhs>::value, "Template parameter `PointRhs` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_convertible_point<PointLhs, PointRhs>::value, "No known conversion between types `PointLhs` and `PointRhs`.");
+		static_assert(coordinates::traits::is_convertible_point<PointLhs, PointTol>::value, "No known conversion between types `PointTol` and `PointLhs`.");
 
 		// convert both points to the nearest frame of reference which is Cartesian.
 		using namespace units::math;
@@ -144,12 +144,12 @@ namespace coord
 		// if the origins match, perform a direct comparison
 		if (lhs.frameData() == rhs.frameData() && rhs.frameData() == tolerance.frameData())
 		{
-			using LCAtemp = typename coord::traits::least_common_cartesian_ancestor<typename coord::traits::point_traits<PointLhs>::reference_frame, typename coord::traits::point_traits<PointRhs>::reference_frame>::type;
-			using LCA = typename coord::traits::least_common_cartesian_ancestor<LCAtemp, typename coord::traits::point_traits<PointTol>::reference_frame>::type;
+			using LCAtemp = typename coordinates::traits::least_common_cartesian_ancestor<typename coordinates::traits::point_traits<PointLhs>::reference_frame, typename coordinates::traits::point_traits<PointRhs>::reference_frame>::type;
+			using LCA = typename coordinates::traits::least_common_cartesian_ancestor<LCAtemp, typename coordinates::traits::point_traits<PointTol>::reference_frame>::type;
 
-			auto l = coord::convert<typename coord::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
-			auto r = coord::convert<typename coord::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
-			auto t = coord::convert<typename coord::traits::point_traits<PointTol>::reference_frame, LCA>(tolerance.point(), tolerance.frameData());
+			auto l = coordinates::convert<typename coordinates::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
+			auto r = coordinates::convert<typename coordinates::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
+			auto t = coordinates::convert<typename coordinates::traits::point_traits<PointTol>::reference_frame, LCA>(tolerance.point(), tolerance.frameData());
 
 			auto x0 = std::get<0>(l);
 			auto y0 = std::get<1>(l);
@@ -167,11 +167,11 @@ namespace coord
 		// otherwise, convert to ECEF
 		else
 		{
-			using LCA = typename coord::traits::lowest_base_frame<typename coord::traits::point_traits<PointTol>::reference_frame>::type;
+			using LCA = typename coordinates::traits::lowest_base_frame<typename coordinates::traits::point_traits<PointTol>::reference_frame>::type;
 
-			auto l = coord::convert<typename coord::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
-			auto r = coord::convert<typename coord::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
-			auto t = coord::convert<typename coord::traits::point_traits<PointTol>::reference_frame, LCA>(tolerance.point(), tolerance.frameData());
+			auto l = coordinates::convert<typename coordinates::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
+			auto r = coordinates::convert<typename coordinates::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
+			auto t = coordinates::convert<typename coordinates::traits::point_traits<PointTol>::reference_frame, LCA>(tolerance.point(), tolerance.frameData());
 
 			auto x0 = std::get<0>(l);
 			auto y0 = std::get<1>(l);
@@ -199,19 +199,19 @@ namespace coord
 	template<class PointLhs, class PointRhs, class distance_unit = units::length::meter_t>
 	distance_unit distance(const PointLhs& lhs, const PointRhs& rhs)
 	{
-		static_assert(coord::traits::is_point<PointLhs>::value, "Template parameter `PointLhs` does not satisfy the `point` concept.");
-		static_assert(coord::traits::is_point<PointRhs>::value, "Template parameter `PointRhs` does not satisfy the `point` concept.");
-		static_assert(coord::traits::is_convertible_point<PointLhs, PointRhs>::value, "No known conversion between types `PointLhs` and `PointRhs`.");
+		static_assert(coordinates::traits::is_point<PointLhs>::value, "Template parameter `PointLhs` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_point<PointRhs>::value, "Template parameter `PointRhs` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_convertible_point<PointLhs, PointRhs>::value, "No known conversion between types `PointLhs` and `PointRhs`.");
 
 		// if the origins match, perform a direct comparison
 		if (lhs.frameData() == rhs.frameData())
 		{
 			// convert both points to the nearest frame of reference which is Cartesian.
-			using LCA = typename coord::traits::least_common_cartesian_ancestor<typename coord::traits::point_traits<PointLhs>::reference_frame, typename coord::traits::point_traits<PointRhs>::reference_frame>::type;
+			using LCA = typename coordinates::traits::least_common_cartesian_ancestor<typename coordinates::traits::point_traits<PointLhs>::reference_frame, typename coordinates::traits::point_traits<PointRhs>::reference_frame>::type;
 			using namespace units::math;
 
-			auto l = coord::convert<typename coord::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
-			auto r = coord::convert<typename coord::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
+			auto l = coordinates::convert<typename coordinates::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
+			auto r = coordinates::convert<typename coordinates::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
 
 			distance_unit x0 = std::get<0>(l);
 			distance_unit y0 = std::get<1>(l);
@@ -227,11 +227,11 @@ namespace coord
 		else
 		{
 			// convert both points to the nearest frame of reference which is Cartesian.
-			using LCA = typename coord::traits::lowest_base_frame<typename coord::traits::point_traits<PointLhs>::reference_frame>::type;
+			using LCA = typename coordinates::traits::lowest_base_frame<typename coordinates::traits::point_traits<PointLhs>::reference_frame>::type;
 			using namespace units::math;
 
-			auto l = coord::convert<typename coord::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
-			auto r = coord::convert<typename coord::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
+			auto l = coordinates::convert<typename coordinates::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
+			auto r = coordinates::convert<typename coordinates::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
 
 			distance_unit x0 = std::get<0>(l);
 			distance_unit y0 = std::get<1>(l);
@@ -254,13 +254,13 @@ namespace coord
 	template<class Point>
 	auto magnitude(const Point& point) -> typename std::decay<decltype(std::get<2>(point.point()))>::type
 	{
-		static_assert(coord::traits::is_point<Point>::value, "Template parameter `Point` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_point<Point>::value, "Template parameter `Point` does not satisfy the `point` concept.");
 
 		// convert both points to the nearest frame of reference which is Cartesian.
-		using LCA = typename coord::traits::least_common_cartesian_ancestor<typename coord::traits::point_traits<Point>::reference_frame, typename coord::traits::point_traits<Point>::reference_frame>::type;
+		using LCA = typename coordinates::traits::least_common_cartesian_ancestor<typename coordinates::traits::point_traits<Point>::reference_frame, typename coordinates::traits::point_traits<Point>::reference_frame>::type;
 		using namespace units::math;
 
-		auto p = coord::convert<typename coord::traits::point_traits<Point>::reference_frame, LCA>(point.point(), point.frameData());
+		auto p = coordinates::convert<typename coordinates::traits::point_traits<Point>::reference_frame, LCA>(point.point(), point.frameData());
 
 		auto x = std::get<0>(p);
 		auto y = std::get<1>(p);
@@ -280,19 +280,19 @@ namespace coord
 	template<class PointLhs, class PointRhs>
 	auto dotProduct(const PointLhs& lhs, const PointRhs& rhs) -> decltype(units::math::pow<2>(std::get<2>(lhs.point())))
 	{
-		static_assert(coord::traits::is_point<PointLhs>::value, "Template parameter `PointLhs` does not satisfy the `point` concept.");
-		static_assert(coord::traits::is_point<PointRhs>::value, "Template parameter `PointRhs` does not satisfy the `point` concept.");
-		static_assert(coord::traits::is_convertible_point<PointLhs, PointRhs>::value, "No known conversion between types `PointLhs` and `PointRhs`.");
+		static_assert(coordinates::traits::is_point<PointLhs>::value, "Template parameter `PointLhs` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_point<PointRhs>::value, "Template parameter `PointRhs` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_convertible_point<PointLhs, PointRhs>::value, "No known conversion between types `PointLhs` and `PointRhs`.");
 
 		// if the origins match, perform a direct comparison
 		if (lhs.frameData() == rhs.frameData())
 		{
 			// convert both points to the nearest frame of reference which is Cartesian.
-			using LCA = typename coord::traits::least_common_cartesian_ancestor<typename coord::traits::point_traits<PointLhs>::reference_frame, typename coord::traits::point_traits<PointRhs>::reference_frame>::type;
+			using LCA = typename coordinates::traits::least_common_cartesian_ancestor<typename coordinates::traits::point_traits<PointLhs>::reference_frame, typename coordinates::traits::point_traits<PointRhs>::reference_frame>::type;
 			using namespace units::math;
 
-			auto l = coord::convert<typename coord::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
-			auto r = coord::convert<typename coord::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
+			auto l = coordinates::convert<typename coordinates::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
+			auto r = coordinates::convert<typename coordinates::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
 
 			auto x0 = std::get<0>(l);
 			auto y0 = std::get<1>(l);
@@ -307,13 +307,13 @@ namespace coord
 		// otherwise, convert to lhs frame (through an intermediary to ensure the origin is translated)
 		else
 		{
-			using LCA = typename coord::traits::least_common_cartesian_ancestor<typename coord::traits::point_traits<PointLhs>::reference_frame, typename coord::traits::point_traits<PointRhs>::reference_frame>::type;
-			using Base = typename coord::traits::lowest_base_frame<typename coord::traits::point_traits<PointLhs>::reference_frame>::type;
+			using LCA = typename coordinates::traits::least_common_cartesian_ancestor<typename coordinates::traits::point_traits<PointLhs>::reference_frame, typename coordinates::traits::point_traits<PointRhs>::reference_frame>::type;
+			using Base = typename coordinates::traits::lowest_base_frame<typename coordinates::traits::point_traits<PointLhs>::reference_frame>::type;
 			using namespace units::math;
 
-			auto l = coord::convert<typename coord::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
-			auto rIntermediate = coord::convert<typename coord::traits::point_traits<PointRhs>::reference_frame, Base>(rhs.point(), rhs.frameData(), rhs.frameData());
-			auto r = coord::convert<Base, LCA>(rIntermediate, FrameData(), lhs.frameData());
+			auto l = coordinates::convert<typename coordinates::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
+			auto rIntermediate = coordinates::convert<typename coordinates::traits::point_traits<PointRhs>::reference_frame, Base>(rhs.point(), rhs.frameData(), rhs.frameData());
+			auto r = coordinates::convert<Base, LCA>(rIntermediate, FrameData(), lhs.frameData());
 
 			auto x0 = std::get<0>(l);
 			auto y0 = std::get<1>(l);
@@ -337,20 +337,20 @@ namespace coord
 	template<class PointLhs, class PointRhs>
 	auto crossProduct(const PointLhs& lhs, const PointRhs& rhs) -> std::tuple<decltype(units::math::pow<2>(std::get<2>(lhs.point()))), decltype(units::math::pow<2>(std::get<2>(lhs.point()))), decltype(units::math::pow<2>(std::get<2>(lhs.point())))>
 	{
-		static_assert(coord::traits::is_point<PointLhs>::value, "Template parameter `PointLhs` does not satisfy the `point` concept.");
-		static_assert(coord::traits::is_point<PointRhs>::value, "Template parameter `PointRhs` does not satisfy the `point` concept.");
-		static_assert(coord::traits::is_convertible_point<PointLhs, PointRhs>::value, "No known conversion between types `PointLhs` and `PointRhs`.");
+		static_assert(coordinates::traits::is_point<PointLhs>::value, "Template parameter `PointLhs` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_point<PointRhs>::value, "Template parameter `PointRhs` does not satisfy the `point` concept.");
+		static_assert(coordinates::traits::is_convertible_point<PointLhs, PointRhs>::value, "No known conversion between types `PointLhs` and `PointRhs`.");
 
 		// convert both points to the nearest frame of reference which is Cartesian.
 		using cross_product_type = std::tuple<decltype(units::math::pow<2>(std::get<0>(lhs.point()))), decltype(units::math::pow<2>(std::get<1>(lhs.point()))), decltype(units::math::pow<2>(std::get<2>(lhs.point())))>;
 		// if the origins match, perform a direct comparison
 		if (lhs.frameData() == rhs.frameData())
 		{
-			using LCA = typename coord::traits::least_common_cartesian_ancestor<typename coord::traits::point_traits<PointLhs>::reference_frame, typename coord::traits::point_traits<PointRhs>::reference_frame>::type;
+			using LCA = typename coordinates::traits::least_common_cartesian_ancestor<typename coordinates::traits::point_traits<PointLhs>::reference_frame, typename coordinates::traits::point_traits<PointRhs>::reference_frame>::type;
 			using namespace units::math;
 
-			auto l = coord::convert<typename coord::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
-			auto r = coord::convert<typename coord::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
+			auto l = coordinates::convert<typename coordinates::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
+			auto r = coordinates::convert<typename coordinates::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
 
 			auto x0 = std::get<0>(l);
 			auto y0 = std::get<1>(l);
@@ -365,11 +365,11 @@ namespace coord
 		// otherwise, convert to ECEF
 		else
 		{
-			using LCA = typename coord::traits::lowest_base_frame<typename coord::traits::point_traits<PointLhs>::reference_frame>::type;
+			using LCA = typename coordinates::traits::lowest_base_frame<typename coordinates::traits::point_traits<PointLhs>::reference_frame>::type;
 			using namespace units::math;
 
-			auto l = coord::convert<typename coord::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
-			auto r = coord::convert<typename coord::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
+			auto l = coordinates::convert<typename coordinates::traits::point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData());
+			auto r = coordinates::convert<typename coordinates::traits::point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData());
 
 			auto x0 = std::get<0>(l);
 			auto y0 = std::get<1>(l);
