@@ -34,7 +34,7 @@
 //	INCLUDES
 //------------------------
 
-#include <coord/ellipsoid.h>
+#include <ellipsoid.h>
 #include <units.h>
 
 #include "gtest_units.h"

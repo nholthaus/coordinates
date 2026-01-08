@@ -34,7 +34,7 @@
 //	INCLUDES
 //------------------------
 
-#include "coord/horizontalDatum.h"
+#include <horizontalDatum.h>
 
 #include <stdexcept>
 

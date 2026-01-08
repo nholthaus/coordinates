@@ -34,7 +34,7 @@
 //	INCLUDES
 //------------------------
 
-#include <coord/geoid.h>
+#include <geoid.h>
 #include <stdexcept>
 #include <type_traits>
 
@@ -97,15 +97,15 @@ TEST_F(GeoidTest, EGM96)
     // truth values are from http://earth-info.nga.mil/GandG/wgs84/gravitymod/egm96/intpt.html and
     // http://earth-info.nga.mil/GandG/wgs84/gravitymod/egm96/outintpt.dat
 
-    constexpr auto test1 = geoids::EGM96::undulation(38.628155_deg, 269.779155_deg);
-    constexpr auto test2 = geoids::EGM96::undulation(-14.621217_deg, 305.021114_deg);
-    constexpr auto test3 = geoids::EGM96::undulation(46.874319_deg, 102.448729_deg);
-    constexpr auto test4 = geoids::EGM96::undulation(-23.617446_deg, 133.874712_deg);
-    constexpr auto test5 = geoids::EGM96::undulation(38.625473_deg, 359.999500_deg);
-    constexpr auto test6 = geoids::EGM96::undulation(-00.466744_deg, 0.002300_deg);
-    constexpr auto boston = geoids::EGM96::undulation(42.3550_deg, -71.0656_deg);
-    constexpr auto nevada = geoids::EGM96::undulation(37.2350_deg, -115.8111_deg);
-    constexpr auto exact = geoids::EGM96::undulation(25.75_deg, 121.25_deg);
+    auto test1 = geoids::EGM96::undulation(38.628155_deg, 269.779155_deg);
+    auto test2 = geoids::EGM96::undulation(-14.621217_deg, 305.021114_deg);
+    auto test3 = geoids::EGM96::undulation(46.874319_deg, 102.448729_deg);
+    auto test4 = geoids::EGM96::undulation(-23.617446_deg, 133.874712_deg);
+    auto test5 = geoids::EGM96::undulation(38.625473_deg, 359.999500_deg);
+    auto test6 = geoids::EGM96::undulation(-00.466744_deg, 0.002300_deg);
+    auto boston = geoids::EGM96::undulation(42.3550_deg, -71.0656_deg);
+    auto nevada = geoids::EGM96::undulation(37.2350_deg, -115.8111_deg);
+    auto exact = geoids::EGM96::undulation(25.75_deg, 121.25_deg);
 
     // test accuracy to ~1cm
     EXPECT_NEAR_UNITS(-31.628_m, test1, 1.1_cm);
@@ -133,15 +133,15 @@ TEST_F(GeoidTest, GEOID12A)
     EXPECT_THROW(geoids::GEOID12A::undulation(58_deg, -131_deg), std::runtime_error);
     EXPECT_THROW(geoids::GEOID12A::undulation(58_deg, -59_deg), std::runtime_error);
 
-    constexpr auto Miami = geoids::GEOID12A::undulation(25.7617_deg, -80.1918_deg);
-    constexpr auto DC = geoids::GEOID12A::undulation(38.9072_deg, -77.0369_deg);
-    constexpr auto Boston = geoids::GEOID12A::undulation(42.3601_deg, -71.0589_deg);
-    constexpr auto Chicago = geoids::GEOID12A::undulation(41.8781_deg, -87.6298_deg);
-    constexpr auto ElPaso = geoids::GEOID12A::undulation(31.7619_deg, -106.4850_deg);
-    constexpr auto Boise = geoids::GEOID12A::undulation(43.6187_deg, -116.2146_deg);
-    constexpr auto LosAngeles = geoids::GEOID12A::undulation(34.0522_deg, -118.2437_deg);
-    constexpr auto SanFrancisco = geoids::GEOID12A::undulation(37.7749_deg, -122.4194_deg);
-    constexpr auto Portland = geoids::GEOID12A::undulation(45.5231_deg, -122.6765_deg);
+    auto Miami = geoids::GEOID12A::undulation(25.7617_deg, -80.1918_deg);
+    auto DC = geoids::GEOID12A::undulation(38.9072_deg, -77.0369_deg);
+    auto Boston = geoids::GEOID12A::undulation(42.3601_deg, -71.0589_deg);
+    auto Chicago = geoids::GEOID12A::undulation(41.8781_deg, -87.6298_deg);
+    auto ElPaso = geoids::GEOID12A::undulation(31.7619_deg, -106.4850_deg);
+    auto Boise = geoids::GEOID12A::undulation(43.6187_deg, -116.2146_deg);
+    auto LosAngeles = geoids::GEOID12A::undulation(34.0522_deg, -118.2437_deg);
+    auto SanFrancisco = geoids::GEOID12A::undulation(37.7749_deg, -122.4194_deg);
+    auto Portland = geoids::GEOID12A::undulation(45.5231_deg, -122.6765_deg);
 
     EXPECT_NEAR_UNITS(-25.527_m, Miami, 1_mm); // Miami
     EXPECT_NEAR_UNITS(-32.052_m, DC, 1_mm); // D.C
@@ -168,15 +168,15 @@ TEST_F(GeoidTest, USGG2012)
     EXPECT_THROW(geoids::USGG2012::undulation(58_deg, -131_deg), std::runtime_error);
     EXPECT_THROW(geoids::USGG2012::undulation(58_deg, -59_deg), std::runtime_error);
 
-    constexpr auto Miami = geoids::USGG2012::undulation(25.7617_deg, -80.1918_deg);
-    constexpr auto DC = geoids::USGG2012::undulation(38.9072_deg, -77.0369_deg);
-    constexpr auto Boston = geoids::USGG2012::undulation(42.3601_deg, -71.0589_deg);
-    constexpr auto Chicago = geoids::USGG2012::undulation(41.8781_deg, -87.6298_deg);
-    constexpr auto ElPaso = geoids::USGG2012::undulation(31.7619_deg, -106.4850_deg);
-    constexpr auto Boise = geoids::USGG2012::undulation(43.6187_deg, -116.2146_deg);
-    constexpr auto LosAngeles = geoids::USGG2012::undulation(34.0522_deg, -118.2437_deg);
-    constexpr auto SanFrancisco = geoids::USGG2012::undulation(37.7749_deg, -122.4194_deg);
-    constexpr auto Portland = geoids::USGG2012::undulation(45.5231_deg, -122.6765_deg);
+    auto Miami = geoids::USGG2012::undulation(25.7617_deg, -80.1918_deg);
+    auto DC = geoids::USGG2012::undulation(38.9072_deg, -77.0369_deg);
+    auto Boston = geoids::USGG2012::undulation(42.3601_deg, -71.0589_deg);
+    auto Chicago = geoids::USGG2012::undulation(41.8781_deg, -87.6298_deg);
+    auto ElPaso = geoids::USGG2012::undulation(31.7619_deg, -106.4850_deg);
+    auto Boise = geoids::USGG2012::undulation(43.6187_deg, -116.2146_deg);
+    auto LosAngeles = geoids::USGG2012::undulation(34.0522_deg, -118.2437_deg);
+    auto SanFrancisco = geoids::USGG2012::undulation(37.7749_deg, -122.4194_deg);
+    auto Portland = geoids::USGG2012::undulation(45.5231_deg, -122.6765_deg);
 
     EXPECT_NEAR_UNITS(-27.169_m, Miami, 1_mm); // Miami
     EXPECT_NEAR_UNITS(-32.932_m, DC, 1_mm); // D.C

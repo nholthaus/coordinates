@@ -49,23 +49,6 @@ FetchContent_MakeAvailable(googletest)
 # ----------------------------
 add_executable(coordTest
         main.cpp
-
-        # Keeping headers listed is optional; helps IDE browsing
-        ellipsoidTest.h
-        geoidTest.h
-        frameOfReferenceTest.h
-        pointTest.h
-        helmertTest.h
-        horizontalDatumTest.h
-        verticalDatumTest.h
-        datumTest.h
-        topographyTest.h
-        positionECEFTest.h
-        positionGeodeticTest.h
-        positionENUTest.h
-        positionNEDTest.h
-        positionAERTest.h
-        gtest_units.h
 )
 
 target_compile_features(coordTest PRIVATE cxx_std_23)

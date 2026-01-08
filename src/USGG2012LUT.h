@@ -1,0 +1,60 @@
+//--------------------------------------------------------------------------------------------------
+//
+//	Coordinates: A compile-time c++23 coordinate conversion library based on `units`
+//
+//--------------------------------------------------------------------------------------------------
+//
+// The MIT License (MIT)
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+// and associated documentation files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+// BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+//--------------------------------------------------------------------------------------------------
+//
+// Copyright (c) 2016 Nic Holthaus
+//
+//--------------------------------------------------------------------------------------------------
+//
+///	@file			USGG2012.h
+///	@brief			Look-up table for the USGS GEOID 2012.
+/// @details		This is just the s2012u00.asc file from http://www.ngs.noaa.gov/GEOID/USGG2012/USGG2012_data.shtml
+///					reformated from a data file into a vector. This geoid is used to convert from NAD83
+///					to MSL.
+//
+//--------------------------------------------------------------------------------------------------
+
+#ifndef COORDINATES_USGG2012LUT_CPP_H
+#define COORDINATES_USGG2012LUT_CPP_H
+
+//------------------------------
+//  INCLUDES
+//------------------------------
+
+#include <array>
+
+//------------------------------
+//  EXTERN DECLARATIONS
+//------------------------------
+
+/// Precision, in decimal degrees, of the look-up table
+extern const double USGG2012LUT_PRECISION_DEG;
+
+/// Table entries are stored as ints. To get the real value, divide each by the divisor.
+extern const double USGG2012LUT_DIVISOR;
+
+/// Geoid Look-up Table
+extern const std::array<std::array<int32_t, 4201>, 2041> USGG2012LUT;
+
+#endif //COORDINATES_USGG2012LUT_CPP_H

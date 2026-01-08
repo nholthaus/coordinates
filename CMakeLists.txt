@@ -28,8 +28,7 @@
 # --------------------------------------------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.28)
-
-project(coord VERSION 0.1.0 LANGUAGES CXX)
+project(coordinates)
 
 include(GNUInstallDirs)
 include(CTest)
@@ -47,18 +46,7 @@ fetchcontent_declare(
 		)
 fetchcontent_makeavailable(units)
 
-# ----------------------------
-# LIBRARY (HEADER-ONLY)
-# ----------------------------
-add_library(${PROJECT_NAME} INTERFACE)
-
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_23)
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
-target_link_libraries(${PROJECT_NAME} INTERFACE units)
-target_include_directories(${PROJECT_NAME} INTERFACE
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-                           )
+add_subdirectory(src)
 
 # ----------------------------
 # Tests
