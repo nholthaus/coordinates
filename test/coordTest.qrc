@@ -1,0 +1,7 @@
+<RCC>
+	<qresource>
+		<file alias="e141_s13.dt1">resources/DTED/e141_s13.dt1</file>
+    <file alias="e141_s13.pgm">resources/e141_s13.pgm</file>
+    <file alias="e141_s13_shade.pgm">resources/e141_s13_shade.pgm</file>
+	</qresource>
+</RCC>

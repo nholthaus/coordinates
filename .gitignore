@@ -1,0 +1,13 @@
+# Build Folders
+*build*/
+
+# IDE Folders
+.vscode/
+.idea/
+
+# autosave files
+~*.docx
+*.asv
+
+# Some generated images
+MATLAB/*.jpg

@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-msvc
+            os: windows-latest
+            c_compiler: cl
+            cxx_compiler: cl
+            config: Release
+
+          - name: ubuntu-gcc
+            os: ubuntu-latest
+            c_compiler: gcc
+            cxx_compiler: g++
+            config: Release
+
+          - name: ubuntu-clang-19
+            os: ubuntu-latest
+            c_compiler: clang-19
+            cxx_compiler: clang++-19
+            config: Release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Ensures a modern CMake (and can provide Ninja as well).
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: ">=3.28.0"
+
+      - name: Install Clang (Ubuntu only)
+        if: matrix.name == 'ubuntu-clang-19'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19 clang-tools-19 llvm-19-tools ninja-build
+
+      # Required when using cl.exe with Ninja on windows
+      - name: Setup MSVC dev cmd
+        if: matrix.name == 'windows-msvc'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure
+        shell: bash
+        run: |
+          cmake -S . -B build \
+            -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }}
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build build --config ${{ matrix.config }} --parallel
+
+      - name: Test
+        shell: bash
+        run: |
+          ctest --test-dir build -C ${{ matrix.config }} --output-on-failure
