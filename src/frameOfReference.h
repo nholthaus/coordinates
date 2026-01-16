@@ -159,6 +159,16 @@ inline namespace coordinates
 	}
 
 	//----------------------------------
+	//	ASSERT HELPER
+	//----------------------------------
+
+	inline void requireSameFrameData(const FrameData& lhs, const FrameData& rhs, const char* message)
+	{
+		if (!(lhs == rhs))
+			throw std::logic_error(message);
+	}
+
+	//----------------------------------
 	//	COORDINATE FRAMES OF REFERENCE
 	//----------------------------------
 

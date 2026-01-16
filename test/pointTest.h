@@ -541,14 +541,7 @@ namespace
 		EXPECT_TRUE(enu2.frameData().origin == Boston.point());
 
 		// same units/different origin
-		// when dissimilar origins are added, the result is equal to the left-hand side, plus the
-		// right-hand side *expressed in the ENU coordinate frame of the left-hand side*. This is *not*
-		// equivalent to adding the two points/vectors in ECEF space.
-		auto test5 = enu1 - enu3;
-		EXPECT_NEAR(3871256.076971372, test5.east().to<double>(), 5.0e-9);
-		EXPECT_NEAR(-241206.0467010568, test5.north().to<double>(), 5.0e-9);
-		EXPECT_NEAR(1312823.256969204, test5.up().to<double>(), 5.0e-9);
-		EXPECT_TRUE(test5.frameData() == enu1.frameData());
+		EXPECT_THROW(enu1 - enu3, std::logic_error);
 
 		EXPECT_EQ(12_m, enu1.east());
 		EXPECT_EQ(24_m, enu1.north());
@@ -585,11 +578,7 @@ namespace
 		// when dissimilar origins are added, the result is equal to the left-hand side, plus the
 		// right-hand side *expressed in the ENU coordinate frame of the left-hand side*. This is *not*
 		// equivalent to adding the two points/vectors in ECEF space.
-		auto test7 = ned1 - ned3;
-		EXPECT_NEAR(-241218.0467010568, test7.north().to<double>(), 5.0e-9);
-		EXPECT_NEAR(3871268.076971372, test7.east().to<double>(), 5.0e-9);
-		EXPECT_NEAR(-1312751.256969204, test7.down().to<double>(), 5.0e-9);
-		EXPECT_TRUE(test7.frameData() == ned1.frameData());
+		EXPECT_THROW(ned1-ned3, std::logic_error);
 
 		EXPECT_EQ(12_m, ned1.north());
 		EXPECT_EQ(24_m, ned1.east());

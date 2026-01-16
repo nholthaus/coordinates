@@ -201,6 +201,81 @@ inline namespace coordinates
 		 */
 		template<typename T>
 		concept is_cartesian_point = is_point<T> && is_cartesian_frame<typename point_traits<T>::reference_frame>;
+
+		//----------------------------------
+		//	VECTOR TRAITS + CONCEPT CHECKERS
+		//----------------------------------
+
+		namespace detail
+		{
+			/**
+			 * @brief		vector traits implementation for classes which are not vectors.
+			 */
+			template<class, typename = void>
+			struct vector_traits
+			{
+				typedef void tuple_type;
+				typedef void frame_data_type;
+				typedef void reference_frame;
+			};
+
+			/**
+			 * @brief		Traits class defining the properties of a vector.
+			 * @details		A vector is distinct from a point: it represents a directed quantity and
+			 *					may or may not be anchored to an origin depending on the reference frame.
+			 */
+			template<class V>
+			struct vector_traits<V, std::void_t<typename V::reference_frame, typename V::tuple_type, typename V::frame_data_type, typename V::vector_tag>>
+			{
+				typedef typename V::reference_frame reference_frame;
+				typedef typename V::tuple_type      tuple_type;
+				typedef typename V::frame_data_type frame_data_type;
+			};
+		}    // namespace detail
+
+		/**
+		 * @brief		Traits class defining the properties of a vector.
+		 */
+		template<class V>
+		struct vector_traits : detail::vector_traits<V>
+		{
+		};
+
+		/**
+		 * @brief		Tests that a class has a `vector()` member function.
+		 * @details		The requirements are:
+		 *					- takes no arguments
+		 *					- const
+		 *					- is non-static
+		 *					- returns a tuple of the same type as the classes `tuple_type`.
+		 */
+		template<typename T>
+		concept has_vector = requires(T v) {
+			{ v.vector() } -> std::same_as<typename vector_traits<T>::tuple_type>;
+		};
+
+		/**
+		 * @brief		Tests that a class has a `setVector(const tuple_type&)` member function.
+		 */
+		template<typename T>
+		concept has_setVector = requires(T v) {
+			{ v.setVector(typename vector_traits<T>::tuple_type{}) } -> std::same_as<void>;
+		};
+
+		/**
+		 * @brief		Trait which tests whether a class satisfies the `vector` concept.
+		 * @details		To satisfy the `vector` concept, a class must:
+		 *					- be default constructible.
+		 *					- have a `reference_frame` typedef.
+		 *					- have a `tuple_type` typedef.
+		 *					- have a `frame_data_type` typedef.
+		 *					- have a `vector_tag` typedef.
+		 *					- have a `tuple_type vector() const` member function.
+		 *					- have a `void setVector(const tuple_type&)` member function.
+		 */
+		template<typename T>
+		concept is_vector = std::is_default_constructible_v<T> && has_reference_frame<T, vector_traits> && has_tuple_type<T, vector_traits> && has_vector<T> &&
+		                    has_setVector<T>;
 	}    // namespace traits
 
 	//----------------------------------
