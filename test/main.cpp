@@ -49,6 +49,8 @@
 #include "positionNEDTest.h"
 #include "positionAERTest.h"
 
+#include "vectorTest.h"
+
 #include "geodesicTest.h"
 #include "intersectionTest.h"
 #include "losTest.h"

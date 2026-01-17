@@ -412,7 +412,7 @@ inline namespace coordinates
 				const long long col0 = clampLL(dCol, 0, static_cast<long long>(width) - 1);
 
 				// 5-pixel cross centered at (row0,col0)
-				for (long long dr = -2; dr <= 2; ++dr)
+				for (long long dr = 0; dr <= 0; ++dr)
 				{
 					const long long rr = row0 + dr;
 					if (rr < 0 || rr >= static_cast<long long>(height))
@@ -423,7 +423,7 @@ inline namespace coordinates
 					rgb[idx + 1]          = 0;
 					rgb[idx + 2]          = 255;
 				}
-				for (long long dc = -2; dc <= 2; ++dc)
+				for (long long dc = 0; dc <= 0; ++dc)
 				{
 					const long long cc = col0 + dc;
 					if (cc < 0 || cc >= static_cast<long long>(width))

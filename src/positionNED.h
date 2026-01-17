@@ -38,6 +38,9 @@
 #include "point.h"
 #include "positionGeodetic.h"
 
+#include <cassert>
+#include <stdexcept>
+
 inline namespace coordinates
 {
 	//	----------------------------------------------------------------------------
@@ -506,6 +509,48 @@ inline namespace coordinates
 		//////////////////////////////////////////////////////////////////////////
 		//		ARITHMETIC OPERATORS
 		//////////////////////////////////////////////////////////////////////////
+
+		/**
+		 * @brief		Addition assignment with a NED vector.
+		 * @details		Adds the vector components to this position.
+		 * @tparam		Vector	Vector type satisfying the vector concept and exposing north/east/down + frameData.
+		 * @param[in]	v	NED vector to add.
+		 * @returns		reference to this position.
+		 */
+		template<typename Vector>
+			requires(traits::is_vector<Vector> && requires(const Vector& v) { v.north(); v.east(); v.down(); v.frameData(); })
+		PositionNED& operator+=(const Vector& v)
+		{
+			assert(m_frameData == v.frameData());
+			if (m_frameData != v.frameData())
+				throw std::logic_error("PositionNED frame mismatch in operator+= (vector)");
+
+			m_north = m_north + v.north();
+			m_east  = m_east + v.east();
+			m_down  = m_down + v.down();
+			return *this;
+		}
+
+		/**
+		 * @brief		Subtraction assignment with a NED vector.
+		 * @details		Subtracts the vector components from this position.
+		 * @tparam		Vector	Vector type satisfying the vector concept and exposing north/east/down + frameData.
+		 * @param[in]	v	NED vector to subtract.
+		 * @returns		reference to this position.
+		 */
+		template<typename Vector>
+			requires(traits::is_vector<Vector> && requires(const Vector& v) { v.north(); v.east(); v.down(); v.frameData(); })
+		PositionNED& operator-=(const Vector& v)
+		{
+			assert(m_frameData == v.frameData());
+			if (m_frameData != v.frameData())
+				throw std::logic_error("PositionNED frame mismatch in operator-= (vector)");
+
+			m_north = m_north - v.north();
+			m_east  = m_east - v.east();
+			m_down  = m_down - v.down();
+			return *this;
+		}
 
 		/**
 		 * @brief		multiplication operator
