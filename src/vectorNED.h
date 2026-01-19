@@ -156,21 +156,65 @@ inline namespace coordinates
 		{
 		}
 
+		/**
+		 * @brief		Implicit conversion constructor from a VectorECEF.
+		 * @details		Converts an ECEF free vector to a NED anchored vector using the stored origin in the ECEF frame data.
+		 */
+		template<template<class> class ECEFUnits>
+		VectorNED(const VectorECEF<Datum, ECEFUnits, T>& ecef)
+		    : m_north(0)
+		    , m_east(0)
+		    , m_down(0)
+		    , m_frameData(ecef.frameData())
+		{
+			const FrameData               fd = ecef.frameData();
+			const PositionGeodetic<Datum> origin(fd.origin, fd.date);
+
+			PositionECEF<Datum, meters, T> eOrg(origin);
+			PositionECEF<Datum, meters, T> eTip(eOrg.x() + ecef.x(), eOrg.y() + ecef.y(), eOrg.z() + ecef.z());
+			eTip.setFrameData(eOrg.frameData());
+
+			PositionNED<Datum, meters, T> pTip;
+			pTip.setFrameData(FrameData(origin.point(), fd.date));
+			coordinates::convert(eTip, pTip);
+
+			PositionNED<Datum, meters, T> pOrg(0.0_m, 0.0_m, 0.0_m, origin, fd.date);
+
+			m_north = pTip.north() - pOrg.north();
+			m_east  = pTip.east() - pOrg.east();
+			m_down  = pTip.down() - pOrg.down();
+		}
+
+		/**
+		 * @brief		Implicit conversion constructor from a VectorENU.
+		 * @details		Uses ECEF as the least-common-ancestor frame for conversion.
+		 */
+		template<template<class> class ENUUnits>
+		VectorNED(const VectorENU<Datum, ENUUnits, T>& enu)
+		    : VectorNED(VectorECEF<Datum, meters, T>(enu))
+		{
+		}
+
 		//////////////////////////////////////////////////////////////////////////
 		//		ACCESSORS
 		//////////////////////////////////////////////////////////////////////////
 
-		[[nodiscard]] distance_unit_type north() const { return m_north; }
-		[[nodiscard]] distance_unit_type east() const { return m_east; }
-		[[nodiscard]] distance_unit_type down() const { return m_down; }
+		[[nodiscard]] distance_unit_type north() const
+		{ return m_north; }
+		[[nodiscard]] distance_unit_type east() const
+		{ return m_east; }
+		[[nodiscard]] distance_unit_type down() const
+		{ return m_down; }
 
-		[[nodiscard]] frame_data_type frameData() const { return m_frameData; }
+		[[nodiscard]] frame_data_type frameData() const
+		{ return m_frameData; }
 
 		/**
 		 * @brief		Vector as a tuple.
 		 * @returns		Vector components as a (meters, meters, meters) tuple.
 		 */
-		[[nodiscard]] tuple_type vector() const { return tuple_type(m_north, m_east, m_down); }
+		[[nodiscard]] tuple_type vector() const
+		{ return tuple_type(m_north, m_east, m_down); }
 
 		/**
 		 * @brief		Set the vector value from a tuple.
@@ -220,7 +264,8 @@ inline namespace coordinates
 			return *this;
 		}
 
-		friend std::ostream& operator<<(std::ostream& os, const VectorNED& v) { return os << "(" << v.m_north << ", " << v.m_east << ", " << v.m_down << ")"; }
+		friend std::ostream& operator<<(std::ostream& os, const VectorNED& v)
+		{ return os << "(" << v.m_north << ", " << v.m_east << ", " << v.m_down << ")"; }
 
 	private:
 		distance_unit_type m_north;
@@ -238,15 +283,14 @@ inline namespace coordinates
 #include "positionNED.h"
 
 template<is_datum Datum, template<class> class PosUnits, typename T>
-VectorNED<Datum, PosUnits, T> operator-(const PositionNED<Datum, PosUnits, T>& lhs,
-                                                     const PositionNED<Datum, PosUnits, T>& rhs)
+VectorNED<Datum, PosUnits, T> operator-(const PositionNED<Datum, PosUnits, T>& lhs, const PositionNED<Datum, PosUnits, T>& rhs)
 {
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionNED frame mismatch in operator-");
 	return VectorNED<Datum, PosUnits, T>(lhs.north() - rhs.north(),
-	                                                  lhs.east() - rhs.east(),
-	                                                  lhs.down() - rhs.down(),
-	                                                  PositionGeodetic<Datum>(lhs.frameData().origin, lhs.date()),
-	                                                  lhs.date());
+	                                     lhs.east() - rhs.east(),
+	                                     lhs.down() - rhs.down(),
+	                                     PositionGeodetic<Datum>(lhs.frameData().origin, lhs.date()),
+	                                     lhs.date());
 }
 
 template<is_datum Datum, template<class> class PosUnits, template<class> class VecUnits, typename T>
@@ -267,6 +311,76 @@ PositionNED<Datum, PosUnits, T> operator-(PositionNED<Datum, PosUnits, T> lhs, c
 	lhs.setEast(lhs.east() - rhs.east());
 	lhs.setDown(lhs.down() - rhs.down());
 	return lhs;
+}
+
+#include <type_traits>
+
+//----------------------------------
+//  SCALAR MULTIPLY / DIVIDE (NED)
+//----------------------------------
+
+template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
+	requires(std::is_arithmetic_v<S>)
+VectorNED<Datum, VecUnits, std::common_type_t<T, S>>
+operator*(const VectorNED<Datum, VecUnits, T>& v, const S s)
+{
+	using R = std::common_type_t<T, S>;
+	VectorNED<Datum, VecUnits, R> out(
+		VecUnits<R>(v.north()) * static_cast<R>(s),
+		VecUnits<R>(v.east())  * static_cast<R>(s),
+		VecUnits<R>(v.down())  * static_cast<R>(s),
+		v.frameData().origin,
+		v.date()
+	);
+	out.setFrameData(v.frameData());
+	return out;
+}
+
+template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
+	requires(std::is_arithmetic_v<S>)
+VectorNED<Datum, VecUnits, std::common_type_t<T, S>>
+operator*(const S s, const VectorNED<Datum, VecUnits, T>& v)
+{
+	return v * s;
+}
+
+template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
+	requires(std::is_arithmetic_v<S>)
+VectorNED<Datum, VecUnits, std::common_type_t<T, S>>
+operator/(const VectorNED<Datum, VecUnits, T>& v, const S s)
+{
+	using R = std::common_type_t<T, S>;
+	VectorNED<Datum, VecUnits, R> out(
+		VecUnits<R>(v.north()) / static_cast<R>(s),
+		VecUnits<R>(v.east())  / static_cast<R>(s),
+		VecUnits<R>(v.down())  / static_cast<R>(s),
+		v.frameData().origin,
+		v.date()
+	);
+	out.setFrameData(v.frameData());
+	return out;
+}
+
+//----------------------------------
+//  COMPOUND ASSIGN (NED)
+//----------------------------------
+
+template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
+	requires(std::is_arithmetic_v<S>)
+VectorNED<Datum, VecUnits, T>&
+operator*=(VectorNED<Datum, VecUnits, T>& v, const S s)
+{
+	v = v * s;
+	return v;
+}
+
+template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
+	requires(std::is_arithmetic_v<S>)
+VectorNED<Datum, VecUnits, T>&
+operator/=(VectorNED<Datum, VecUnits, T>& v, const S s)
+{
+	v = v / s;
+	return v;
 }
 
 #endif    // vectorNED_h

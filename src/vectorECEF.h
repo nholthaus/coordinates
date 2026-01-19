@@ -155,7 +155,7 @@ inline namespace coordinates
 		 * @param[in]		enu		ENU vector to convert.
 		 */
 		template<template<class> class ENUUnits>
-		explicit VectorECEF(const VectorENU<Datum, ENUUnits, T>& enu);
+		VectorECEF(const VectorENU<Datum, ENUUnits, T>& enu);
 
 		/**
 		 * @brief		Conversion constructor from a VectorNED.
@@ -165,7 +165,7 @@ inline namespace coordinates
 		 * @param[in]		ned		NED vector to convert.
 		 */
 		template<template<class> class NEDUnits>
-		explicit VectorECEF(const VectorNED<Datum, NEDUnits, T>& ned);
+		VectorECEF(const VectorNED<Datum, NEDUnits, T>& ned);
 
 		//////////////////////////////////////////////////////////////////////////
 		//		ACCESSORS
@@ -175,7 +175,12 @@ inline namespace coordinates
 		[[nodiscard]] distance_unit_type y() const { return m_y; }
 		[[nodiscard]] distance_unit_type z() const { return m_z; }
 
-		/**
+
+
+		[[nodiscard]] frame_data_type frameData() const { return m_frameData; }
+		void setFrameData(const frame_data_type& f) { m_frameData = f; }
+
+/**
 		 * @brief		Vector as a tuple.
 		 * @returns		Vector components as a (meters, meters, meters) tuple.
 		 */
@@ -254,7 +259,7 @@ VectorECEF<Datum, DistanceUnits, T>::VectorECEF(const VectorENU<Datum, ENUUnits,
     : m_x(0)
     , m_y(0)
     , m_z(0)
-    , m_frameData(Datum::epoch())
+    , m_frameData(enu.frameData())
 {
     // Build a tip point in the ENU frame, convert both tip and origin to ECEF, and subtract.
     const FrameData fd = enu.frameData();
@@ -277,7 +282,7 @@ VectorECEF<Datum, DistanceUnits, T>::VectorECEF(const VectorNED<Datum, NEDUnits,
     : m_x(0)
     , m_y(0)
     , m_z(0)
-    , m_frameData(Datum::epoch())
+    , m_frameData(ned.frameData())
 {
     const FrameData fd = ned.frameData();
     const PositionGeodetic<Datum> origin(fd.origin, fd.date);
@@ -316,6 +321,136 @@ PositionECEF<Datum, PosUnits, T> operator-(PositionECEF<Datum, PosUnits, T> lhs,
 	lhs.setY(lhs.y() - rhs.y());
 	lhs.setZ(lhs.z() - rhs.z());
 	return lhs;
+}
+
+
+//----------------------------------
+//  VECTOR ARITHMETIC (LCA = ECEF)
+//----------------------------------
+
+template<class VL, class VR>
+	requires(
+		requires(const VL& v) { typename VL::datum_type; v.vector(); v.frameData(); } &&
+		requires(const VR& v) { typename VR::datum_type; v.vector(); v.frameData(); } &&
+		std::is_same_v<typename VL::datum_type, typename VR::datum_type>)
+VectorECEF<typename VL::datum_type> operator+(const VL& lhs, const VR& rhs)
+{
+	VectorECEF<typename VL::datum_type> l(lhs);
+	VectorECEF<typename VL::datum_type> r(rhs);
+
+	requireSameFrameData(l.frameData(), r.frameData(), "Vector frame mismatch in operator+ (LCA=ECEF)");
+
+	l += r;
+	return l;
+}
+
+template<class VL, class VR>
+	requires(
+		requires(const VL& v) { typename VL::datum_type; v.vector(); v.frameData(); } &&
+		requires(const VR& v) { typename VR::datum_type; v.vector(); v.frameData(); } &&
+		std::is_same_v<typename VL::datum_type, typename VR::datum_type>)
+VectorECEF<typename VL::datum_type> operator-(const VL& lhs, const VR& rhs)
+{
+	VectorECEF<typename VL::datum_type> l(lhs);
+	VectorECEF<typename VL::datum_type> r(rhs);
+
+	requireSameFrameData(l.frameData(), r.frameData(), "Vector frame mismatch in operator- (LCA=ECEF)");
+
+	l -= r;
+	return l;
+}
+
+//----------------------------------
+//  POSITION + VECTOR (mixed frames -> LCA=ECEF)
+//----------------------------------
+
+template<is_datum Datum, template<class> class PosUnits, class AnyVector, typename T>
+	requires(
+		requires(const AnyVector& v) { typename AnyVector::datum_type; v.vector(); v.frameData(); } &&
+		std::is_same_v<typename AnyVector::datum_type, Datum>
+	)
+PositionECEF<Datum, PosUnits, T> operator+(PositionECEF<Datum, PosUnits, T> lhs, const AnyVector& rhs)
+{
+	VectorECEF<Datum, meters, T> v(rhs);
+	return lhs + v;
+}
+
+template<is_datum Datum, template<class> class PosUnits, class AnyVector, typename T>
+	requires(
+		requires(const AnyVector& v) { typename AnyVector::datum_type; v.vector(); v.frameData(); } &&
+		std::is_same_v<typename AnyVector::datum_type, Datum>
+	)
+PositionECEF<Datum, PosUnits, T> operator-(PositionECEF<Datum, PosUnits, T> lhs, const AnyVector& rhs)
+{
+	VectorECEF<Datum, meters, T> v(rhs);
+	return lhs - v;
+}
+
+
+
+
+//----------------------------------
+//  SCALAR MULTIPLY / DIVIDE (ECEF)
+//----------------------------------
+
+template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
+	requires(std::is_arithmetic_v<S>)
+VectorECEF<Datum, VecUnits, std::common_type_t<T, S>>
+operator*(const VectorECEF<Datum, VecUnits, T>& v, const S s)
+{
+	using R = std::common_type_t<T, S>;
+	VectorECEF<Datum, VecUnits, R> out(
+		VecUnits<R>(v.x()) * static_cast<R>(s),
+		VecUnits<R>(v.y()) * static_cast<R>(s),
+		VecUnits<R>(v.z()) * static_cast<R>(s)
+	);
+	out.setFrameData(v.frameData());
+	return out;
+}
+
+template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
+	requires(std::is_arithmetic_v<S>)
+VectorECEF<Datum, VecUnits, std::common_type_t<T, S>>
+operator*(const S s, const VectorECEF<Datum, VecUnits, T>& v)
+{
+	return v * s;
+}
+
+template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
+	requires(std::is_arithmetic_v<S>)
+VectorECEF<Datum, VecUnits, std::common_type_t<T, S>>
+operator/(const VectorECEF<Datum, VecUnits, T>& v, const S s)
+{
+	using R = std::common_type_t<T, S>;
+	VectorECEF<Datum, VecUnits, R> out(
+		VecUnits<R>(v.x()) / static_cast<R>(s),
+		VecUnits<R>(v.y()) / static_cast<R>(s),
+		VecUnits<R>(v.z()) / static_cast<R>(s)
+	);
+	out.setFrameData(v.frameData());
+	return out;
+}
+
+//----------------------------------
+//  COMPOUND ASSIGN (ECEF)
+//----------------------------------
+
+template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
+	requires(std::is_arithmetic_v<S>)
+VectorECEF<Datum, VecUnits, T>&
+operator*=(VectorECEF<Datum, VecUnits, T>& v, const S s)
+{
+	v = v * s;
+	return v;
+}
+
+template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
+	requires(std::is_arithmetic_v<S>)
+VectorECEF<Datum, VecUnits, T>&
+operator/=(VectorECEF<Datum, VecUnits, T>& v, const S s)
+{
+	v = v / s;
+	return v;
 }
 
 #endif    // vectorECEF_h
