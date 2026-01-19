@@ -351,6 +351,40 @@ inline namespace coordinates
 		//////////////////////////////////////////////////////////////////////////
 
 		/**
+		 * @brief 		Addition assignment with an ECEF vector.
+		 * @details 		Adds the vector components to this position.
+		 * @tparam 		Vector	Vector type satisfying the vector concept and exposing x/y/z accessors.
+		 * @param[in]	v	ECEF vector to add.
+		 * @returns 		reference to this position.
+		 */
+		template<typename Vector>
+			requires(traits::is_vector<Vector> && requires(const Vector& v) { v.x(); v.y(); v.z(); })
+		PositionECEF& operator+=(const Vector& v)
+		{
+			m_x = m_x + v.x();
+			m_y = m_y + v.y();
+			m_z = m_z + v.z();
+			return *this;
+		}
+
+		/**
+		 * @brief 		Subtraction assignment with an ECEF vector.
+		 * @details 		Subtracts the vector components from this position.
+		 * @tparam 		Vector	Vector type satisfying the vector concept and exposing x/y/z accessors.
+		 * @param[in]	v	ECEF vector to subtract.
+		 * @returns 		reference to this position.
+		 */
+		template<typename Vector>
+			requires(traits::is_vector<Vector> && requires(const Vector& v) { v.x(); v.y(); v.z(); })
+		PositionECEF& operator-=(const Vector& v)
+		{
+			m_x = m_x - v.x();
+			m_y = m_y - v.y();
+			m_z = m_z - v.z();
+			return *this;
+		}
+
+		/**
 		 * @brief		multiplication operator
 		 * @details		multiplies this point's coordinates by the given <i>factor</i>, and returns
 		 * 				a reference to this point.
