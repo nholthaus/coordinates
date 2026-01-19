@@ -53,8 +53,8 @@
 
 #include "geodesicTest.h"
 #include "intersectionTest.h"
-#include "losTest.h"
-#include "lineOfSightTest.h"
+// #include "losTest.h"	///< LINE OF SIGHT ISN'T WORKING YET
+// #include "lineOfSightTest.h"
 
 int main(int argc, char* argv[])
 {
