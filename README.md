@@ -2,9 +2,11 @@
 
 ## Description
 
-Coordinates is a modern C++23 library for representing, transforming, and reasoning about physical position on and around the Earth. It is designed for technically demanding domains such as aerospace simulation, radar and RF analysis, navigation, autonomy, and scientific modeling—domains where *implicit assumptions* about coordinate frames, datums, or units routinely lead to subtle and costly errors.
+Coordinates is a generic, mostly-compile-time, type-driven C++23 library for representing, transforming, and reasoning about physical position on and around the Earth. It is designed for technically demanding domains such as aerospace simulation, radar and RF analysis, navigation, autonomy, and scientific modeling—domains where *implicit assumptions* about coordinate frames, datums, or units routinely lead to subtle and costly errors.
 
 The library provides **strongly typed point representations**, **explicit reference frames**, and **well-defined geodetic models**. Conversions between representations are expressed directly in the type system, allowing many classes of errors to be detected at compile time rather than at runtime. Where implicit conversions are permitted, they are intentionally constrained to cases that are physically unambiguous.
+
+Reference frames form a graph, and a single generic `convert<From, To>` transforms between any two by routing through their **least common ancestor**—there is no N² matrix of hand-written pairwise conversions. The algorithm is chosen from the frame *types*, so adding a new frame (including the body frames described below) requires no changes to the conversion dispatcher.
 
 Coordinates builds on the `units` library to enforce dimensional correctness and integrates geodesy concepts—ellipsoids, horizontal and vertical datums, geoids, and terrain—as first-class abstractions rather than hidden global assumptions.
 
@@ -41,8 +43,10 @@ With raw doubles, this would compile and silently produce meaningless results.
 
 - **Language standard:** C++23
 - **CMake:** 3.28 or newer
-- **Required dependency:** `units` ≥ 3.5.1
+- **Required dependency:** `units` 3.5.1
 - **Optional runtime data:** DTED elevation tiles
+
+If `units` is not found on the system, CMake will fetch and build `units` 3.5.1 automatically (this is on by default via `COORDINATES_FETCH_DEPS`).
 
 ### Example: Dependency Resolution
 
@@ -176,9 +180,10 @@ Different point types may use different representations, but they can still refe
 #### Example: Same Location in Multiple Frames
 
 ```cpp
-PositionGeodetic geo = ...;
+PositionGeodetic geo  = ...;
 PositionECEF     ecef = geo;
 PositionENU      enu  = geo;
+```
 
 ---
 
@@ -685,7 +690,7 @@ a squared-distance variant is typically provided.
 #### Example: Squared Distance Comparison
 
 ```cpp
-if (distanceSquared(a, b) < 100_m2
+if (distanceSquared(a, b) < 100_m2)
 {
     // within 100 meters
 }
@@ -769,6 +774,9 @@ representations before calling the function.
 
 ## Line-of-Sight Helpers
 
+> **Status: not yet working.** Line-of-sight (LOS) is a work in progress. It is gated behind an off-by-default
+> build option and is not part of the supported API yet. The description below is the intended design.
+
 Higher-level algorithms, such as line-of-sight (LOS), build on the same conversion and distance
 infrastructure.
 
@@ -777,8 +785,6 @@ These algorithms typically:
 - Construct observer-relative rays
 - Account for Earth curvature
 - Optionally incorporate terrain data
-
-LOS-related helpers are documented separately in the Line-of-Sight section.
 
 ---
 

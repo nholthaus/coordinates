@@ -322,9 +322,7 @@ inline namespace coordinates
 				auto h      = (p / (cos(phi))) - v;
 
 				auto      lat_deg(phi);
-				degrees<> lon_deg(lambda);
-
-				lon_deg = ((lon_deg > 180.0_deg) ? 180.0_deg - lon_deg : lon_deg);
+				degrees<> lon_deg(lambda);    // atan2 already yields (-180, 180]
 
 				return tuple_type(lat_deg, lon_deg, h);
 			}

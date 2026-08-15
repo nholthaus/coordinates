@@ -6,9 +6,10 @@ target_compile_features(coordinates PUBLIC cxx_std_23)
 set_target_properties(coordinates PROPERTIES
         CXX_EXTENSIONS OFF
         POSITION_INDEPENDENT_CODE ON
+        LINKER_LANGUAGE CXX    # the library may have no .cpp sources when GEOID/DTED are off
 )
 
-target_link_libraries(coordinates PUBLIC units)
+target_link_libraries(coordinates PUBLIC units::units)
 
 # ----------------------------
 # Public headers
@@ -20,6 +21,8 @@ set(PUBLIC_HEADERS
         abstractTileManager.h
         algorithm.h
         coordinate_traits.h
+        coordinates.h
+        coordinates_fwd.h
         datum.h
         dted.h
         dtedRawFileContents.h
@@ -27,9 +30,12 @@ set(PUBLIC_HEADERS
         dtedTileManager.h
         ellipsoid.h
         frameOfReference.h
+        geodesicDirectResult.h
+        geodesicInverseResult.h
         geoid.h
         helmert.h
         horizontalDatum.h
+        intersection.h
         point.h
         positionAER.h
         positionECEF.h
@@ -37,8 +43,12 @@ set(PUBLIC_HEADERS
         positionGeodetic.h
         positionNED.h
         positionXYZ.h
+        tileException.h
         tileMetadata.h
         topography.h
+        vectorECEF.h
+        vectorENU.h
+        vectorNED.h
         verticalDatum.h
 )
 

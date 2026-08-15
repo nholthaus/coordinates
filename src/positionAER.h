@@ -126,7 +126,7 @@ namespace coordinates
 		    : m_azimuth(azimuth)
 		    , m_elevation(elevation)
 		    , m_range(range)
-		    , m_frameData(sphericalTuple(latitude0, longitude0, altitude0), dateOfObservation)
+		    , m_frameData(SphericalTuple(latitude0, longitude0, altitude0), dateOfObservation)
 		{
 		}
 
