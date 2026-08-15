@@ -729,7 +729,7 @@ inline namespace coordinates
 	//	CONCEPTS
 	//----------------------------------
 
-	namespace traits
+	inline namespace traits
 	{
 		//--------------------------------------------------------------------------
 		//  horizontal_datum_traits

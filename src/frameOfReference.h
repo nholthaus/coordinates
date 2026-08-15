@@ -44,6 +44,8 @@
 
 inline namespace coordinates
 {
+	using namespace units;
+
 	//----------------------------------
 	//	BASE FRAME TYPE
 	//----------------------------------
