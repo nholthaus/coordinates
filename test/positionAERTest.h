@@ -153,6 +153,21 @@ TEST_F(PositionAERTest, prerequisites)
 		EXPECT_EQ(Boston.point(), aer4.frameData().origin);
 	}
 
+	TEST_F(PositionAERTest, scalarOriginConstructor)
+	{
+		// Origin supplied as raw latitude/longitude/altitude scalars (not a Position object).
+		AER aer(5_deg, 10_deg, 15000_m, 42_deg, -71_deg, 0_m);
+		EXPECT_EQ(5_deg, std::get<0>(aer.point()));
+		EXPECT_EQ(10_deg, std::get<1>(aer.point()));
+		EXPECT_EQ(15000_m, std::get<2>(aer.point()));
+		EXPECT_EQ(Boston.point(), aer.frameData().origin);
+
+		// with an explicit date of observation
+		AER aer2(5_deg, 10_deg, 15000_m, 42_deg, -71_deg, 0_m, 2016_yr);
+		EXPECT_EQ(Boston.point(), aer2.frameData().origin);
+		EXPECT_EQ(2016_yr, aer2.frameData().date);
+	}
+
 	TEST_F(PositionAERTest, tupleConstructor)
 	{
 		SphericalTuple tup(5_deg, 10_deg, 15_km);

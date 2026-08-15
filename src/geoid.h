@@ -145,7 +145,7 @@ inline namespace coordinates
             * @param[in]	longitude longitude to find the undulation at, either in -180W to 180E, or 0E to 360E
             * @returns		geoid undulation at (latitude, longitude) relative to the WGS84 ellipsoid.
             */
-            static constexpr meters<> undulation(degrees<> latitude, degrees<> longitude)
+            static meters<> undulation(degrees<> latitude, degrees<> longitude)
             {
                 // convert from -180  180 to 0 360 if need be.
                 longitude = longitude < 0.0_deg ? longitude + 360.0_deg : longitude;
@@ -237,7 +237,7 @@ inline namespace coordinates
              * @param[in]	longitude longitude to find the undulation at, either in -130W to -60W, or 230E to 300E
              * @returns		geoid undulation at (latitude, longitude) relative to the GRS80 ellipsoid.
              */
-            static constexpr meters<> undulation(degrees<> latitude, degrees<> longitude)
+            static meters<> undulation(degrees<> latitude, degrees<> longitude)
             {
                 // convert from -180  180 to 0 360 if need be.
                 longitude = longitude < 0.0_deg ? longitude + 360.0_deg : longitude;
@@ -334,7 +334,7 @@ inline namespace coordinates
              * @param[in]	longitude longitude to find the undulation at, either in -130W to -60W, or 230E to 300E
              * @returns		geoid undulation at (latitude, longitude) relative to the NAVD88 Datum.
              */
-            static constexpr meters<> undulation(degrees<> latitude, degrees<> longitude)
+            static meters<> undulation(degrees<> latitude, degrees<> longitude)
             {
                 // convert from -180  180 to 0 360 if need be.
                 longitude = longitude < 0.0_deg ? longitude + 360.0_deg : longitude;

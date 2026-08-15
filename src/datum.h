@@ -142,7 +142,7 @@ inline namespace coordinates
 		///	@details
 		/// @note		Only suitable for use within CONUS (24-58N, 130-60W)
 		//  ----------------------------------------------------------------------------
-		struct IGS08_MSL : Datum<horizontalDatums::NAD83, geoids::USGG2012>
+		struct IGS08_MSL : Datum<horizontalDatums::IGS08, geoids::USGG2012>
 		{
 		};
 
