@@ -633,6 +633,57 @@ meters<> altitudeMSL = ellipsoidal.toOrthometricHeight();
 
 ---
 
+# Rotations
+
+Orientation is a first-class concept in Coordinates, provided by a small, reusable rotation-math library
+(`lib/quaternion.h`, `lib/rotation.h`) that depends only on `units`. It offers **four fully
+interconvertible** representations of the same 3D rotation, each suited to a different task:
+
+- **`Quaternion`** — the canonical internal representation (Hamilton convention, active rotation).
+  Cheap to compose, free of gimbal lock, and ready for interpolation.
+- **`EulerAngles`** — human-readable yaw/pitch/roll, using the intrinsic **Z-Y-X (Tait-Bryan)** convention:
+  yaw about Z, then pitch about the new Y, then roll about the new X (the aerospace body-axis convention).
+- **`RotationMatrix`** — a 3×3 direction-cosine matrix, applied directly to Cartesian vectors.
+- **`AxisAngle`** — a unit axis and an angle about it.
+
+Every representation converts to and from every other through the quaternion via the free functions
+`toQuaternion`, `toEulerAngles`, `toRotationMatrix`, and `toAxisAngle`. All operations are
+`constexpr`-capable: a rotation known at compile time is computed at compile time, and the same code runs at
+run time otherwise.
+
+### Example
+
+```cpp
+#include <quaternion.h>
+#include <rotation.h>
+
+using namespace coordinates;
+using namespace units::literals;
+
+// Build a rotation from yaw/pitch/roll (intrinsic Z-Y-X).
+const EulerAngles euler(90.0_deg, 0.0_deg, 0.0_deg);   // yaw 90 deg
+const Quaternion  yaw90 = toQuaternion(euler);
+
+// Rotate a vector: body +X (forward) maps to parent +Y under a +90 deg yaw.
+const std::tuple<meters<>, meters<>, meters<>> forward(1.0_m, 0.0_m, 0.0_m);
+const auto rotated = yaw90.rotate(forward);            // ~ (0, 1, 0) meters
+
+// Compose two rotations: `a * b` applies `b` first, then `a`.
+const Quaternion roll45     = toQuaternion(EulerAngles(0.0_deg, 0.0_deg, 45.0_deg));
+const Quaternion yawThenRoll = roll45 * yaw90;
+
+// Inverse / identity are always available.
+const Quaternion undo     = yaw90.conjugate();         // inverse for a unit quaternion
+const Quaternion identity = Quaternion::identity();
+```
+
+Additional operations include `normalized`, `inverse`, `dot`, `fromTwoVectors` (shortest-arc rotation between
+two directions), and `slerp` (spherical linear interpolation).
+
+---
+
+---
+
 # Algorithms and Helper Functions
 
 This document describes the free functions, helper algorithms, and extension points provided by

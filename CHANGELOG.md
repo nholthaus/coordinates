@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Latent numeric and packaging fixes, CI hardening, and licensing/documentation.
+Modernization on `units` 3.5.1: a reusable rotation-math library, plus latent
+numeric and packaging fixes, CI hardening, and licensing/documentation.
+
+### Added
+
+- **Rotation-math library** in `lib/` (`quaternion.h`, `rotation.h`): four fully
+  interconvertible, `constexpr`-capable rotation representations — `Quaternion`
+  (canonical, Hamilton convention, active rotation), `EulerAngles` (intrinsic Z-Y-X
+  Tait-Bryan yaw/pitch/roll), `RotationMatrix` (3x3 direction-cosine), and `AxisAngle`.
+  Operations include compose (`operator*`), `conjugate`/`inverse`, `normalized`,
+  `rotate` (a vector), `fromTwoVectors`, `slerp`, `identity`, and the `toQuaternion`/
+  `toEulerAngles`/`toRotationMatrix`/`toAxisAngle` cross-conversions. Depends only on
+  `units`, with a constant-evaluable trig fallback so trig-bearing conversions remain
+  usable in a constant-expression context.
 
 ### Changed
 

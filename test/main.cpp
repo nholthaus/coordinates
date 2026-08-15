@@ -56,6 +56,8 @@
 // #include "losTest.h"	///< LINE OF SIGHT ISN'T WORKING YET
 // #include "lineOfSightTest.h"
 
+#include "rotationTest.h"
+
 int main(int argc, char* argv[])
 {
      ::testing::InitGoogleTest(&argc, argv);
