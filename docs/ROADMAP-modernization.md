@@ -182,6 +182,14 @@ closed in favor of it. Phases 0, 1, R, 4 are merged; 2/3/5 will merge in as they
 - [ ] `coordinate.h` + `is_coordinate`; six positions + three vectors as aliases; delete pure-virtual
       `Point`. Land frame-family by frame-family (ECEF+Geodetic → ENU/NED → AER), each re-running its truth
       test. Bump VERSION to 2.0.0 (alias shim preserves callers).
+- [ ] **`PositionXYZ<BodyFrame<Parent, Transform>>` as the FIRST citizen of the new `Coordinate` template**
+      (owner decision): a body-axis Cartesian point defined relative to another point + orientation — the
+      wingtip-of-an-airplane use case (`PositionXYZ<Wingtip>{3_ft, 0_ft, 0_ft}` = 3 ft out the wingtip's X).
+      Aerospace body convention (X forward, Y right, Z down), consistent with `BodyFrame`/`Pose`; converts to
+      ECEF/LLA/NED like any position via the frame graph. This is what the deleted-empty `positionXYZ.h`
+      always intended (a body-relative point, never the arbitrary-origin unitless sketch it actually held).
+- [ ] Fix header self-containment as the position/vector headers are rewritten (`vectorENU.h`/`vectorNED.h`
+      currently reference `VectorECEF` without including it — resolved by the collapse, not patched earlier).
 
 ### Phase 4 — BodyFrame + Orientation + Pose (nested, offset)  `[~]`
 - [x] `src/bodyFrame.h`: `BodyTransform<OffsetX,Y,Z, Yaw,Pitch,Roll>` (offset+orientation as unit-typed
