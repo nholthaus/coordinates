@@ -21,10 +21,20 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
   `toEulerAngles`/`toRotationMatrix`/`toAxisAngle` cross-conversions. Depends only on
   `units`, with a constant-evaluable trig fallback so trig-bearing conversions remain
   usable in a constant-expression context.
+- **`BodyFrame`** (`src/bodyFrame.h`): a Cartesian frame rigidly attached to a parent
+  frame at a compile-time offset and orientation, carried in the frame type via the
+  `BodyTransform` policy (with `Offset` and `Attitude` convenience aliases). Body frames
+  nest to arbitrary depth (e.g. a camera on a wingtip on an aircraft body in local NED)
+  and join the existing frame graph with no dispatcher changes.
+- **`Pose`** (`src/pose.h`): a runtime 6-DOF rigid transform (a translation plus a
+  `Quaternion`) for bodies whose position and attitude vary over time. Provides
+  `transformPoint`, `inverse`, composition via `operator*`, and `identity`.
 
 ### Changed
 
 - Bumped the project version to 1.2.0.
+- `FrameData` constructors are now `constexpr`, so body-frame conversions evaluate at
+  compile time.
 - CI hardened: warnings-as-errors, Debug configurations, an AddressSanitizer +
   UndefinedBehaviorSanitizer job, a feature-toggle job, and an install-smoke consumer
   that verifies `find_package(coordinates)` resolves against the installed package.

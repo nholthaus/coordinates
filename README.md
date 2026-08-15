@@ -684,6 +684,75 @@ two directions), and `slerp` (spherical linear interpolation).
 
 ---
 
+# Body Frames and Pose
+
+Because reference frames form a graph joined by a generic `convert<From, To>`, a *rigid body* is naturally
+modeled as a frame attached to a parent frame. Coordinates provides two complementary models, both backed by
+the rotation library:
+
+- **`BodyFrame<Parent, Transform>`** — a **compile-time** rigid mounting. The offset and orientation are
+  carried in the frame *type* through a `BodyTransform` policy, so the mounting is fixed and free of runtime
+  cost. Convenience aliases `Offset<X, Y, Z>` (pure translation) and `Attitude<Yaw, Pitch, Roll>` (pure
+  rotation) cover the common cases. Body frames **nest to arbitrary depth** and slot into the frame graph
+  with no changes to the conversion dispatcher.
+- **`Pose`** — a **runtime** 6-DOF rigid transform (a translation plus a `Quaternion`) for a body whose
+  position and attitude vary over time, such as a moving vehicle or a slewing sensor.
+
+### Nested body frames — a camera on a wingtip
+
+```cpp
+#include <bodyFrame.h>
+
+using namespace coordinates;
+using namespace coordinates::coordinateFrames;
+using namespace units::literals;
+
+using WgsDatum  = datums::WGS84_G1674;
+using LocalNED  = NEDFrame<WgsDatum>;
+
+// Aircraft body: yawed 90 deg relative to local NED, no offset.
+using PlaneBody = BodyFrame<LocalNED,  Attitude<90.0_deg, 0.0_deg, 0.0_deg>>;
+// Wingtip: offset from the body origin, no rotation.
+using Wingtip   = BodyFrame<PlaneBody, Offset<0.5_m, 3.2_m, -0.1_m>>;
+// Camera: mounted on the wingtip, bore pointing aft (yaw 180 deg).
+using CameraAft = BodyFrame<Wingtip,   Attitude<180.0_deg, 0.0_deg, 0.0_deg>>;
+
+// A point 10 m in front of the camera, expressed all the way down to local NED.
+const CartesianTuple pCam(10.0_m, 0.0_m, 0.0_m);
+const CartesianTuple pNed = convert<CameraAft, LocalNED>(pCam, FrameData{}, FrameData{});
+```
+
+The `convert` call composes each leg's rotate-and-translate (camera → wingtip → plane body → NED) purely from
+the frame types.
+
+### Runtime pose composition
+
+```cpp
+#include <pose.h>
+
+using namespace coordinates;
+using namespace units::literals;
+
+// A pose maps a point from its local frame into its parent frame (rotate, then translate).
+const Pose parentFromMid(CartesianTuple(10.0_m, 0.0_m, 0.0_m),
+                         EulerAngles(90.0_deg, 0.0_deg, 0.0_deg));
+const Pose midFromLocal (CartesianTuple(0.0_m, 5.0_m, 0.0_m),
+                         EulerAngles(0.0_deg, 45.0_deg, 0.0_deg));
+
+// Compose: `a * b` applies the inner (right-hand) transform first.
+const Pose parentFromLocal = parentFromMid * midFromLocal;
+
+const CartesianTuple local(1.0_m, 2.0_m, 3.0_m);
+const CartesianTuple inParent = parentFromLocal.transformPoint(local);
+
+// The inverse maps parent-to-local; `Pose::identity()` is the neutral element.
+const Pose localFromParent = parentFromLocal.inverse();
+```
+
+---
+
+---
+
 # Algorithms and Helper Functions
 
 This document describes the free functions, helper algorithms, and extension points provided by
