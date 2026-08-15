@@ -221,8 +221,24 @@ closed in favor of it. Phases 0, 1, R, 4 are merged; 2/3/5 will merge in as they
 - [ ] Commit Phase 4 as its own MR.
 
 ### Phase 5 — constexpr/consteval sweep + compile-time proofs  `[ ]`
-- [ ] Mark the honest-constexpr surface; assemble the `static_assert` round-trip suite; type-driven
-      dispatch becomes literally compile-time-evaluable where the math allows.
+Goal (owner-sharpened): **PARTIAL compile-time folding within a chain** — even when the end-to-end transform
+can't be a constant expression, every leg that CAN fold should. Today NONE of the dispatchers or node
+transforms are `constexpr`, so nothing folds; fixing that lets a chain fold up to its first genuine runtime
+barrier (the extern geoid LUT, or a runtime origin) and no further.
+- [ ] Mark the whole dispatch pipeline `constexpr`: `convert<>`, `convertToBase`/`convertFromBase`
+      dispatchers, and every node's `convertToBaseFrame`/`convertFromBaseFrame`.
+- [ ] **Route the trig-bearing geodesy legs through `lib/rotation.h`'s `if consteval` trig fallback**
+      (ECEF↔Geodetic `frameOfReference.h:284-322`, ENU↔ECEF `:395-422`, AER↔NED `:495`): constant-evaluable
+      `sin`/`cos`/`atan2`/`asin` when constant-evaluated, `std::` at runtime — so these legs fold when
+      constant-evaluated while the runtime path stays bit-for-bit `std::`. (units' own trig is not constexpr.)
+- [ ] Leg foldability map — GUARANTEED foldable (pure algebra): Helmert (`helmert.h`), NED↔ENU swap,
+      BodyFrame rotate+translate. FOLDABLE VIA FALLBACK: ECEF↔Geodetic, ENU↔ECEF, AER. GENUINE RUNTIME
+      BARRIER (never folds): geoid-undulation / Geodetic3D height (extern LUT + throw), a runtime `FrameData`
+      origin.
+- [ ] `static_assert` proofs of PARTIAL folding: each foldable leg in isolation AND a partial SUB-CHAIN that
+      folds even though a full end-to-end wouldn't — e.g. `PositionXYZ<Wingtip> → NED → ECEF → ITRF2014`
+      constant-evaluates (BodyFrame + NED↔ENU + Helmert legs), and a chain that hits the geodetic leg folds
+      up to it. These fail to compile if a leg silently regresses to runtime — the hard guard.
 
 ### Phase 6 (stretch) — LOS  `[ ]`
 - [ ] Finish the terrain intersector, or keep quarantined behind the flag.
