@@ -59,6 +59,9 @@
 #include <vectorENU.h>
 #include <vectorNED.h>
 
+#include <bodyFrame.h>
+#include <pose.h>
+
 inline namespace coordinates
 {
 	//----------------------------------

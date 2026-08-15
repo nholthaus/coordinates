@@ -57,6 +57,7 @@
 // #include "lineOfSightTest.h"
 
 #include "rotationTest.h"
+#include "bodyFrameTest.h"
 
 int main(int argc, char* argv[])
 {
