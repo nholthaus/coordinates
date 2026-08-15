@@ -29,14 +29,14 @@ option(COORDINATES_ENABLE_USGG2012 "Enable USGG2012 LUT"                ON)
 # Dependency: units
 # Prefer find_package, fallback to FetchContent if requested.
 # ----------------------------
-find_package(units 3.3.0 CONFIG QUIET)
+find_package(units 3.5.1 CONFIG QUIET)
 
 if (NOT units_FOUND)
 	if (COORDINATES_FETCH_DEPS)
 		FetchContent_Declare(
 				units
 				GIT_REPOSITORY https://github.com/nholthaus/units.git
-				GIT_TAG        v3.3.0
+				GIT_TAG        v3.5.1
 		)
 		FetchContent_MakeAvailable(units)
 	else()

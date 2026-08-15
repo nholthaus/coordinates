@@ -44,6 +44,8 @@
 
 inline namespace coordinates
 {
+	using namespace units;
+
 	//----------------------------------
 	//	BASE FRAME TYPE
 	//----------------------------------
@@ -156,6 +158,16 @@ inline namespace coordinates
 		os << f.date;
 		os << " }";
 		return os;
+	}
+
+	//----------------------------------
+	//	ASSERT HELPER
+	//----------------------------------
+
+	inline void requireSameFrameData(const FrameData& lhs, const FrameData& rhs, const char* message)
+	{
+		if (!(lhs == rhs))
+			throw std::logic_error(message);
 	}
 
 	//----------------------------------

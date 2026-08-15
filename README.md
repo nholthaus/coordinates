@@ -41,7 +41,7 @@ With raw doubles, this would compile and silently produce meaningless results.
 
 - **Language standard:** C++23
 - **CMake:** 3.28 or newer
-- **Required dependency:** `units` ≥ 3.3.0
+- **Required dependency:** `units` ≥ 3.5.1
 - **Optional runtime data:** DTED elevation tiles
 
 ### Example: Dependency Resolution

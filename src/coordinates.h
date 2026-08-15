@@ -30,42 +30,49 @@
 #ifndef coordinate_h
 #define coordinate_h
 
-#pragma warning( disable : 4503 )	// decorated name length exceeded, name was truncated. This only affects debugging.
+#pragma warning(disable : 4503)    // decorated name length exceeded, name was truncated. This only affects debugging.
 
 //------------------------
 //	INCLUDES
 //------------------------
-#include <units.h>
 #include <CAS.h>
 #include <threadPool.h>
+#include <units.h>
 
 #include <abstractTile.h>
 #include <abstractTileManager.h>
 #include <algorithm.h>
 
 #include <datum.h>
-#include <topography.h>
 #include <frameOfReference.h>
+#include <topography.h>
 
 #include <point.h>
-#include <positionECEF.h>
-#include <positionGeodetic.h>
-#include <positionENU.h>
-#include <positionNED.h>
 #include <positionAER.h>
+#include <positionECEF.h>
+#include <positionENU.h>
+#include <positionGeodetic.h>
+#include <positionNED.h>
 #include <positionXYZ.h>
+
+#include <vectorECEF.h>
+#include <vectorENU.h>
+#include <vectorNED.h>
 
 inline namespace coordinates
 {
 	//----------------------------------
 	//	CONVENIENCE CLASSES
 	//----------------------------------
-	using ITRS = PositionECEF<ITRS2008>;
-	using ECEF = PositionECEF<WGS84_G1674>;
-	using LLA = PositionGeodetic<WGS84_G1674>;
-	using ENU = PositionENU<WGS84_G1674>;
-	using NED = PositionNED<WGS84_G1674>;
-	using AER = PositionAER<WGS84_G1674>;
-}
+	using ITRS    = PositionECEF<ITRS2008>;
+	using ECEF    = PositionECEF<WGS84_G1674>;
+	using LLA     = PositionGeodetic<WGS84_G1674>;
+	using ENU     = PositionENU<WGS84_G1674>;
+	using NED     = PositionNED<WGS84_G1674>;
+	using AER     = PositionAER<WGS84_G1674>;
+	using VecECEF = VectorECEF<WGS84_G1674>;
+	using VecENU  = VectorENU<WGS84_G1674>;
+	using VecNED  = VectorNED<WGS84_G1674>;
+}    // namespace coordinates
 
-#endif // coordinate_h
+#endif    // coordinate_h
