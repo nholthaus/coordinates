@@ -53,6 +53,23 @@ target_sources(coordinates
 )
 
 # ----------------------------
+# Reusable rotation-math library headers (lib/, depends only on units)
+# ----------------------------
+set(LIB_HEADERS
+        "${CMAKE_SOURCE_DIR}/lib/rotationDetail.h"
+        "${CMAKE_SOURCE_DIR}/lib/quaternion.h"
+        "${CMAKE_SOURCE_DIR}/lib/rotation.h"
+)
+
+target_sources(coordinates
+        PUBLIC
+        FILE_SET lib_headers
+        TYPE HEADERS
+        BASE_DIRS "${CMAKE_SOURCE_DIR}/lib"
+        FILES ${LIB_HEADERS}
+)
+
+# ----------------------------
 # Sources with bloat knobs
 # ----------------------------
 set(_sources)
@@ -97,6 +114,7 @@ target_include_directories(coordinates
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
@@ -109,4 +127,5 @@ install(TARGETS coordinates
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
         FILE_SET public_headers DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        FILE_SET lib_headers DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )

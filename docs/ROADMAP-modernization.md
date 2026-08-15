@@ -57,14 +57,19 @@ Operations (all `constexpr`-marked): compose (`*`), inverse/conjugate, normalize
 from/to every representation, `fromTwoVectors`, `slerp`, identity.
 
 ### Orientation / Pose / BodyFrame — falls out of the frame graph
-`FrameData` already stores `origin + orientation + date`; no frame *consumes* `orientation` yet. Body/
-attitude/pose are that hook finally used, backed by the rotation lib. `FrameData.orientation` stays the
-Euler `OrientationTuple` (API/back-compat); internally it converts to a `Quaternion`.
+Backed by the Phase-R rotation lib. **Design decision (locked): per-frame body data lives in the frame
+TYPE, not the single runtime `FrameData`.** The dispatcher threads ONE `FrameData` up the whole recursion
+(same `f` at every level), so distinct per-level offsets for nested bodies must come from the type: each
+`BodyFrame` resolves its OWN compile-time-tagged offset+orientation during the type-driven recursion, so
+`BodyFrame<Wingtip>` and `BodyFrame<PlaneBody>` compose correctly with zero dispatcher changes — the purest
+form of the library's compile-time thesis. **Runtime-varying pose** (a moving vehicle) is carried as the
+DATA a `Pose` coordinate VALUE holds and composed with the rotation lib, NOT baked into a frame type.
 
-- **`BodyFrame<Parent>`** — a frame node whose `convertToBaseFrame` rotate+translates by its `FrameData`'s
-  per-frame offset (`origin`) AND orientation, so a body frame sits anywhere relative to its parent at any
-  attitude. **Nests to arbitrary depth** (the LCA `depth<>` recursion already walks any depth):
-  - `BodyFrame<NEDFrame<Datum>>` = a vehicle body carried in local NED.
+- **`BodyFrame<Parent, Transform>`** — a frame node whose `convertToBaseFrame` rotate+translates by its
+  type-tagged offset AND orientation (a compile-time `Transform` policy / static registry), so a body frame
+  sits anywhere relative to its parent at any attitude. **Nests to arbitrary depth** (the LCA recursion
+  walks any depth):
+  - `BodyFrame<NEDFrame<Datum>, ...>` = a vehicle body carried in local NED.
   - `BodyFrame<BodyFrame<NEDFrame<Datum>>>` = **camera on a wingtip pointing aft** — plane body relative to
     NED, then camera offset to the wingtip and rotated aft relative to the plane body. Camera-frame points
     convert down through wingtip→plane→NED by composing each leg's rotate+translate.
@@ -136,13 +141,24 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done.
 - [ ] Docs: `LICENSE` (reconcile the STR header in `cacheTest.h` with owner), README sync, `CHANGELOG.md`,
       `Doxyfile`.
 
-### Phase R — lib/ rotation + quaternion math  `[ ]`
-- [ ] `lib/quaternion.h` + `lib/rotation.h`: Quaternion / EulerAngles / RotationMatrix / AxisAngle, fully
-      interconvertible, `constexpr`-marked, runtime-capable.
-- [ ] Ops: compose / inverse / conjugate / normalize / rotate(vector) / fromTwoVectors / slerp / identity.
-- [ ] `if consteval` constexpr-trig fallback (`sin`/`cos`/`atan2`/`asin`/`acos`) — constexpr path in a
-      constant-evaluated context, `std::` at runtime.
-- [ ] Full gtest suite + `static_assert` round-trip proofs (Z-Y-X Tait-Bryan convention pinned).
+### Phase R — lib/ rotation + quaternion math  `[~]`
+- [x] `lib/quaternion.h` + `lib/rotation.h`: Quaternion / EulerAngles / RotationMatrix / AxisAngle, fully
+      interconvertible, `constexpr`-marked, runtime-capable. CMake: `lib/` on the target's public include
+      path + installed as a `lib_headers` file-set.
+- [x] Ops: compose / inverse / conjugate / normalize / rotate(vector, unit-preserving) / dot /
+      fromTwoVectors / slerp / identity.
+- [x] `lib/rotationDetail.h`: `if consteval` constexpr-trig fallback (`sin`/`cos`/`sqrt`/`asin`/`atan`/
+      `atan2`), machine-precision accurate vs `std::` (~5e-16 over full ranges), `std::` at runtime.
+- [x] Full gtest suite (`test/rotationTest.h`, 90 tests, 7 `Rotation*` suites) + `static_assert` round-trip
+      proofs; Z-Y-X (intrinsic Tait-Bryan) convention pinned + convention-locked in tests.
+- [x] Defect caught by the suite + fixed: `toEulerAngles` gimbal-lock (|pitch|=90) recovered a wrong
+      yaw/roll split for coupled inputs. Root-caused (both yaw/roll terms scale by cos(pitch)→0, so the
+      generic atan2 is singular), derived the observable-angle closed form (`yaw = 2*atan2(z,w)`, roll=0 —
+      valid for both ±90), fixed. Coupled ±90 sweep (882 cases) drift now ~4.5e-8; the two tests upgraded
+      from skip to hard rotation-equivalence assertions.
+- [x] Full `ctest` green: **419/419** on Linux g++15, zero skips (329 existing + 90 rotation).
+- [ ] Windows MSVC build + `ctest` green (running).
+- [ ] Doxygen audit of the three lib headers; commit as its own MR.
 
 ### Phase 2 — concepts + DRY foundations (behavior-identical)  `[ ]`
 - [ ] `void_t` traits → `requires`-constrained specializations.
