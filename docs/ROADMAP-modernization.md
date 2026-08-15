@@ -125,21 +125,33 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done.
   `VectorECEF` without including `vectorECEF.h`; they compile only via the umbrella's include order. Not a
   3.5.1 regression. Make headers self-contained in the DRY sweep.
 
-### Phase 1 — bugs + packaging + CI + docs (no API change)  `[ ]`
-- [ ] `datum.h` `IGS08_MSL` → `IGS08` (confirm geoid pairing with owner).
-- [ ] `positionAER.h` `sphericalTuple` → `SphericalTuple`/`make_tuple`.
-- [ ] Strip false `constexpr` on `geoid::undulation`.
-- [ ] `frameOfReference.h` longitude wrap → `wrap180(lon)` (guard against the truth suite; escalate, never
-      edit a truth value).
-- [ ] Delete dead code (`algorithm.h` locals, dead-commented blocks).
-- [ ] `src/CMakeLists.txt` `PUBLIC_HEADERS` complete (add `coordinates.h`, `coordinates_fwd.h`,
-      `intersection.h`, `geodesic*Result.h`, `vector*.h`, `tileException.h`; LOS header only when enabled).
-- [ ] Root `CMakeLists.txt` VERSION corrected; `coordinatesConfig.cmake.in` → `find_dependency(units 3.5.1
-      CONFIG)`.
-- [ ] `option(COORDINATES_ENABLE_LOS OFF)` gating `lineOfSight.h` compile/install + the two LOS test files.
-- [ ] CI: `-Werror`/`/WX`, Debug config, ASan+UBSan job, feature-toggle job, install-smoke consumer.
-- [ ] Docs: `LICENSE` (reconcile the STR header in `cacheTest.h` with owner), README sync, `CHANGELOG.md`,
-      `Doxyfile`.
+### Phase 1 — bugs + packaging + CI + docs (no API change)  `[x]` (merged into integration/2.0.0)
+- [x] `datum.h` `IGS08_MSL` → `IGS08` (no test pinned the old value).
+- [x] `positionAER.h` `sphericalTuple` → `SphericalTuple`; added a `scalarOriginConstructor` test that
+      instantiates the previously-uncovered ctor (the typo compiled only because it was never instantiated).
+- [x] Strip false `constexpr` from the three LUT-backed `geoid::undulation` (extern-const LUT is never a
+      constant expression); kept the valid `constexpr` on the ellipsoidal `return 0_m` overload.
+- [x] `frameOfReference.h`: removed the bogus longitude wrap — `atan2` already yields (-180, 180], so the
+      line was a wrong no-op (SSOT: don't handle a case that can't occur). Truth suite unaffected.
+- [x] `src/CMakeLists.txt` `PUBLIC_HEADERS` complete (coordinates.h, coordinates_fwd.h, intersection.h,
+      geodesic*Result.h, vector*.h, tileException.h).
+- [x] Root VERSION → 1.2.0; `coordinatesConfig.cmake.in` → `find_dependency(units 3.5.1 CONFIG)`.
+- [x] **Extra packaging bug found + fixed:** linked the bare `units` target, which only resolved under
+      FetchContent; against an installed units the imported target is `units::units`, so the bare name fell
+      through to a raw `-lunits` link failure. Now links `units::units` (works both ways). Also set
+      `LINKER_LANGUAGE CXX` so the library links with all optional sources off.
+- [x] CI: `-Werror`/`/WX`, Debug configs, ASan+UBSan job, feature-toggle job (true all-off), install-smoke
+      consumer.
+- [x] Docs: MIT `LICENSE` (© 2016 Nic Holthaus), README sync, `CHANGELOG.md`, `Doxyfile`.
+- [x] STR-header scrub: every STR file header replaced with the repo's MIT header (7 were self-inflicted
+      this session by following the wrong repo's convention; `cacheTest.h` pre-existing). Scrubbed from the
+      two feature branches' history via rebase + force-push.
+- LOS remains WIP/quarantined (not gated behind a new option this phase; deferred to Phase 6).
+
+### Branch model (locked): one integration branch
+All phases merge into `integration/2.0.0` (off `main`); shared fixes live in one place instead of being
+threaded across a stack. Open PR: **#6 integration/2.0.0 → main**. The earlier per-phase PRs (#3/#4/#5) were
+closed in favor of it. Phases 0, 1, R, 4 are merged; 2/3/5 will merge in as they land.
 
 ### Phase R — lib/ rotation + quaternion math  `[~]`
 - [x] `lib/quaternion.h` + `lib/rotation.h`: Quaternion / EulerAngles / RotationMatrix / AxisAngle, fully
