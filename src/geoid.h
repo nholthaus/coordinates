@@ -60,7 +60,7 @@ inline namespace coordinates
     template <typename ReferenceEllipsoid>
     struct Geoid
     {
-        typedef ReferenceEllipsoid reference_ellipsoid;
+        using reference_ellipsoid = ReferenceEllipsoid;
     };
 
     namespace geoids
@@ -409,16 +409,17 @@ inline namespace coordinates
         template <class T, typename = void>
         struct geoid_traits
         {
-            typedef void reference_ellipsoid;
+            using reference_ellipsoid = void;
         };
 
         /**
          * @brief		Traits class defining the properties of a geoid.
          */
         template <class T>
-        struct geoid_traits<T, std::void_t<typename T::reference_ellipsoid>>
+            requires requires { typename T::reference_ellipsoid; }
+        struct geoid_traits<T, void>
         {
-            typedef T::reference_ellipsoid reference_ellipsoid;
+            using reference_ellipsoid = T::reference_ellipsoid;
             ///< Ellipsoid that the geoid model is referenced to.
         };
     }

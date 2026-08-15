@@ -53,7 +53,6 @@
 #include <positionENU.h>
 #include <positionGeodetic.h>
 #include <positionNED.h>
-#include <positionXYZ.h>
 
 #include <vectorECEF.h>
 #include <vectorENU.h>

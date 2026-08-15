@@ -63,27 +63,6 @@ inline namespace coordinates
 
 	using namespace units::literals;
 
-	template<int N, typename T>
-	    requires(std::is_arithmetic_v<T>)
-	constexpr T cpow(T x)
-	{
-		static_assert(N >= 0, "pow<N>(x): N must be non-negative");
-
-		if constexpr (N == 0)
-		{
-			return T{1};
-		}
-		else
-		{
-			T result = x;
-			for (int i = 1; i < N; ++i)
-			{
-				result = result * x;
-			}
-			return result;
-		}
-	}
-
 	/**
 	 * @brief		Tests whether a point is null
 	 * @details		A point is null if all of its values are (0,0,0)

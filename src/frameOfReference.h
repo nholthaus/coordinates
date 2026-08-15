@@ -61,9 +61,9 @@ inline namespace coordinates
 	template<class Datum, class Base, class Tuple>
 	struct frameOfReference
 	{
-		typedef Datum datum_type;
-		typedef Base  base_frame_type;
-		typedef Tuple tuple_type;    // tuple type that the frame can conver from
+		using datum_type      = Datum;
+		using base_frame_type = Base;
+		using tuple_type      = Tuple;    // tuple type that the frame can conver from
 	};
 
 	//----------------------------------
@@ -550,7 +550,12 @@ inline namespace coordinates
 			};
 
 			template<class Frame>
-			struct frame_traits<Frame, std::void_t<typename Frame::base_frame_type, typename Frame::datum_type, typename Frame::tuple_type>>
+			    requires requires {
+				    typename Frame::base_frame_type;
+				    typename Frame::datum_type;
+				    typename Frame::tuple_type;
+			    }
+			struct frame_traits<Frame, void>
 			{
 				using base_frame_type = Frame::base_frame_type;
 				using datum_type      = Frame::datum_type;
@@ -664,14 +669,14 @@ inline namespace coordinates
 		    requires(is_frame_of_reference<T>)
 		struct lowest_base_frame
 		{
-			typedef lowest_base_frame<typename frame_traits<T>::base_frame_type>::type type;
+			using type = typename lowest_base_frame<typename frame_traits<T>::base_frame_type>::type;
 		};
 
 		template<typename T>
 		    requires(is_frame_of_reference<T> && is_base_frame<T>)
 		struct lowest_base_frame<T>
 		{
-			typedef T type;
+			using type = T;
 		};
 
 		/**
@@ -854,7 +859,7 @@ inline namespace coordinates
 		    requires(!is_same_frame<FrameFrom, FrameTo>) && has_convertToBaseFrame_with<FrameFrom, FrameData>
 		frame_traits<FrameTo>::tuple_type convertToBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
 		{
-			typedef typename frame_traits<FrameFrom>::base_frame_type NextFrameFrom;
+			using NextFrameFrom = typename frame_traits<FrameFrom>::base_frame_type;
 			return convertToBase<NextFrameFrom, FrameTo>(FrameFrom::convertToBaseFrame(p, f), f);
 		};
 
@@ -878,7 +883,7 @@ inline namespace coordinates
 		    requires(!is_same_frame<FrameFrom, FrameTo>) && has_convertFromBaseFrame_with<FrameTo, FrameData>
 		frame_traits<FrameTo>::tuple_type convertFromBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
 		{
-			typedef typename frame_traits<FrameTo>::base_frame_type NextFrameTo;
+			using NextFrameTo = typename frame_traits<FrameTo>::base_frame_type;
 			return FrameTo::convertFromBaseFrame(convertFromBase<FrameFrom, NextFrameTo>(p, f), f);
 		};
 	}    // namespace dispatchers

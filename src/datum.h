@@ -58,10 +58,10 @@ inline namespace coordinates
 		                             typename vertical_datum_traits<Vertical>::reference_ellipsoid>,
 		              "The `Horizontal` and `Vertical` Datum components must refer to the same ellipsoid.");
 
-		typedef Horizontal                                                       horizontal_datum;
-		typedef Vertical                                                         vertical_datum;
-		typedef horizontal_datum_traits<Horizontal>::reference_ellipsoid reference_ellipsoid;
-		typedef horizontal_datum_traits<Horizontal>::reference_frame     reference_frame;
+		using horizontal_datum    = Horizontal;
+		using vertical_datum      = Vertical;
+		using reference_ellipsoid = horizontal_datum_traits<Horizontal>::reference_ellipsoid;
+		using reference_frame     = horizontal_datum_traits<Horizontal>::reference_frame;
 	};
 
 	//----------------------------------
@@ -232,7 +232,7 @@ inline namespace coordinates
 		    }
 		struct datum_traits<T, void>
 		{
-			typedef T::horizontal_datum horizontal_datum;          ///< Horizontal component of the datum
+			using horizontal_datum    = T::horizontal_datum;       ///< Horizontal component of the datum
 			using vertical_datum      = T::vertical_datum;         ///< Vertical component of the datum
 			using reference_ellipsoid = T::reference_ellipsoid;    ///< Ellipsoid component of the datum
 			using reference_frame     = T::reference_frame;        ///< Reference (ITRF) frame of the datum

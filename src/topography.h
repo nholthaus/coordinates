@@ -48,7 +48,7 @@ inline namespace coordinates
 	template<typename ReferenceGeoid>
 	struct Topography
 	{
-		typedef ReferenceGeoid reference_geoid;
+		using reference_geoid = ReferenceGeoid;
 	};
 
 	inline namespace topography
@@ -85,16 +85,17 @@ inline namespace coordinates
 		template<class, typename = void>
 		struct topography_traits
 		{
-			typedef void reference_geoid;
+			using reference_geoid = void;
 		};
 
 		/**
 		 * @brief		Traits class defining the properties of a geoid.
 		 */
 		template<class T>
-		struct topography_traits<T, std::void_t<typename T::reference_geoid>>
+		    requires requires { typename T::reference_geoid; }
+		struct topography_traits<T, void>
 		{
-			typedef T::reference_geoid reference_geoid;    ///< Geoid that the topographic model is referenced to.
+			using reference_geoid = T::reference_geoid;    ///< Geoid that the topographic model is referenced to.
 		};
 	}    // namespace traits
 
