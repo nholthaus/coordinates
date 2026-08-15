@@ -171,10 +171,34 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done.
       `Point`. Land frame-family by frame-family (ECEF+Geodetic → ENU/NED → AER), each re-running its truth
       test. Bump VERSION to 2.0.0 (alias shim preserves callers).
 
-### Phase 4 — BodyFrame + Orientation + Pose (nested, offset)  `[ ]`
-- [ ] New frame-graph nodes consuming `FrameData.orientation` via the rotation lib; camera-on-wingtip
-      nesting works; pose (rotate+translate) vs orientation-only (compose) verified.
-- [ ] Tests: body-in-NED round-trips, nesting, pose vs orientation-only, `static_assert` round-trips.
+### Phase 4 — BodyFrame + Orientation + Pose (nested, offset)  `[~]`
+- [x] `src/bodyFrame.h`: `BodyTransform<OffsetX,Y,Z, Yaw,Pitch,Roll>` (offset+orientation as unit-typed
+      NTTPs — units 3.5.1 makes unit quantities valid NTTPs, matching the datum-coefficient idiom), aliases
+      `Offset<>` (pure translation) + `Attitude<>` (pure rotation), and `BodyFrame<Parent, Transform>` — a
+      Cartesian frame-graph node that rotate+translates via the rotation lib. Slots into the LCA solver
+      with ZERO dispatcher changes.
+- [x] Nested, offsetable body frames PROVEN: `BodyFrame<BodyFrame<NEDFrame<Datum>, Wingtip>, CameraAft>`
+      (camera-on-a-wingtip pointing aft). `convert<CameraAft, NEDFrame>` and its inverse round-trip; a
+      point 10m ahead of the aft camera maps through camera→wingtip→body correctly.
+- [x] `src/pose.h`: `Pose` (6-DOF runtime VALUE — translation + Quaternion). `transformPoint` (rotate then
+      translate), `inverse`, `operator*` compose (parentFromLocal = parentFromMid * midFromLocal),
+      Euler/Quaternion ctors, `identity`. All constexpr-capable.
+- [x] SSOT collapse: a standalone `Orientation` frame node is redundant — a rotation-only body frame is
+      `BodyFrame<Parent, Attitude<...>>` and a rotation-only pose is `Pose(zero, quat)`. One mechanism
+      covers position, orientation-only, and full 6-DOF; no separate `Orientation` type.
+- [x] Two-model consistency PROVEN: the same camera-on-wingtip scenario as nested `BodyFrame`s and as
+      composed `Pose`s maps a test point to identical parent coordinates (compile-time frames for static
+      mounting, runtime poses for a moving body).
+- [x] `bodyFrame.h`/`pose.h` wired into PUBLIC_HEADERS + umbrella `coordinates.h` (umbrella compiles).
+- [x] Made `FrameData` a literal type (`constexpr` constructors) so `BodyFrame::convertToBaseFrame`/
+      `convertFromBaseFrame` are constexpr-invocable and round-trip at compile time. Additive, no runtime
+      change; full suite green after (no regression on the shared type). The end-to-end `convert()` free
+      function + dispatchers gain `constexpr` in Phase 5.
+- [x] Exhaustive gtest suite (`test/bodyFrameTest.h`, 37 tests, 10 `BodyFrame*`/`Pose*` suites) incl. the
+      camera-on-wingtip nesting, nested↔composed-pose equivalence, and `static_assert` compile-time proofs.
+- [x] Full `ctest` green on Linux g++15: **456/456**, zero skips (329 + 90 rotation + 37 body/pose).
+- [ ] Windows MSVC build + `ctest` green (running).
+- [ ] Commit Phase 4 as its own MR.
 
 ### Phase 5 — constexpr/consteval sweep + compile-time proofs  `[ ]`
 - [ ] Mark the honest-constexpr surface; assemble the `static_assert` round-trip suite; type-driven

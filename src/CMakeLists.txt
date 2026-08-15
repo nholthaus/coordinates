@@ -28,12 +28,14 @@ set(PUBLIC_HEADERS
         dtedRawFileContents.h
         dtedTile.h
         dtedTileManager.h
+        bodyFrame.h
         ellipsoid.h
         frameOfReference.h
         geodesicDirectResult.h
         geodesicInverseResult.h
         geoid.h
         helmert.h
+        pose.h
         horizontalDatum.h
         intersection.h
         point.h

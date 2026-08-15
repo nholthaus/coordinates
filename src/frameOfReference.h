@@ -89,37 +89,37 @@ inline namespace coordinates
 	 */
 	struct FrameData
 	{
-		FrameData()
+		constexpr FrameData()
 		    : origin(0.0_deg, 0.0_deg, 0.0_m)
 		    , orientation(0.0_deg, 0.0_deg, 0.0_deg)
 		    , date(0) {};
 
-		FrameData(SphericalTuple origin)
+		constexpr FrameData(SphericalTuple origin)
 		    : origin(std::move(origin))
 		    , orientation(0.0_deg, 0.0_deg, 0.0_deg)
 		    , date(0) {};
 
-		FrameData(OrientationTuple orientation)
+		constexpr FrameData(OrientationTuple orientation)
 		    : origin(0.0_deg, 0.0_deg, 0.0_m)
 		    , orientation(std::move(orientation))
 		    , date(0) {};
 
-		FrameData(years<> date)
+		constexpr FrameData(years<> date)
 		    : origin(0.0_deg, 0.0_deg, 0.0_m)
 		    , orientation(0.0_deg, 0.0_deg, 0.0_deg)
 		    , date(date) {};
 
-		FrameData(SphericalTuple origin, OrientationTuple orientation)
+		constexpr FrameData(SphericalTuple origin, OrientationTuple orientation)
 		    : origin(std::move(origin))
 		    , orientation(std::move(orientation))
 		    , date(0) {};
 
-		FrameData(SphericalTuple origin, years<> date)
+		constexpr FrameData(SphericalTuple origin, years<> date)
 		    : origin(std::move(origin))
 		    , orientation(0.0_deg, 0.0_deg, 0.0_deg)
 		    , date(date) {};
 
-		FrameData(const SphericalTuple& origin, const OrientationTuple& orientation, years<> date)
+		constexpr FrameData(const SphericalTuple& origin, const OrientationTuple& orientation, years<> date)
 		    : origin(origin)
 		    , orientation(orientation)
 		    , date(date) {};
@@ -128,7 +128,7 @@ inline namespace coordinates
 		template<typename Angle0, typename Angle1, typename Length>
 		    requires(units::traits::is_angle_unit_v<std::remove_cvref_t<Angle0>> && units::traits::is_angle_unit_v<std::remove_cvref_t<Angle1>> &&
 		             units::traits::is_length_unit_v<std::remove_cvref_t<Length>>)
-		FrameData(const std::tuple<Angle0, Angle1, Length>& originIn)
+		constexpr FrameData(const std::tuple<Angle0, Angle1, Length>& originIn)
 		    : origin(std::get<0>(originIn), std::get<1>(originIn), std::get<2>(originIn))
 		    , orientation(0.0_deg, 0.0_deg, 0.0_deg)
 		    , date(0){};
