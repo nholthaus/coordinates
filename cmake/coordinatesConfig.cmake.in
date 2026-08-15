@@ -2,6 +2,6 @@
 
 include(CMakeFindDependencyMacro)
 
-find_dependency(units CONFIG)
+find_dependency(units 3.5.1 CONFIG)
 
 include("${CMAKE_CURRENT_LIST_DIR}/coordinatesTargets.cmake")
