@@ -19,6 +19,7 @@ coordinates_set_warnings(coordinates)
 set(PUBLIC_HEADERS
         EGM96LUT.h
         GEOID12ALUT.h
+        USGG2012LUT.h
         abstractTile.h
         abstractTileManager.h
         algorithm.h
@@ -83,6 +84,27 @@ target_sources(coordinates
 )
 
 # ----------------------------
+# Reusable utility headers (include/) pulled in transitively by the public headers
+# (coordinates.h -> CAS.h / threadPool.h; geoid.h -> interpolate.h; the tile cache -> cache.h).
+# These must be installed or a consumer's #include <coordinates.h> fails to find them.
+# ----------------------------
+set(UTIL_HEADERS
+        "${CMAKE_SOURCE_DIR}/include/CAS.h"
+        "${CMAKE_SOURCE_DIR}/include/cache.h"
+        "${CMAKE_SOURCE_DIR}/include/concurrentQueue.h"
+        "${CMAKE_SOURCE_DIR}/include/interpolate.h"
+        "${CMAKE_SOURCE_DIR}/include/threadPool.h"
+)
+
+target_sources(coordinates
+        PUBLIC
+        FILE_SET util_headers
+        TYPE HEADERS
+        BASE_DIRS "${CMAKE_SOURCE_DIR}/include"
+        FILES ${UTIL_HEADERS}
+)
+
+# ----------------------------
 # Sources with bloat knobs
 # ----------------------------
 set(_sources)
@@ -141,4 +163,5 @@ install(TARGETS coordinates
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
         FILE_SET public_headers DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
         FILE_SET lib_headers DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        FILE_SET util_headers DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
