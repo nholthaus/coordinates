@@ -375,7 +375,7 @@ inline namespace coordinates
 			using base_tuple_type = frameOfReference<HorizontalDatum, ECEFFrame<HorizontalDatum>, CartesianTuple>::base_frame_type::tuple_type;
 
 			template<class... Args>
-			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData& f, Args... args)
+			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData& f, Args...)
 			{
 				// Source: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ECEF_to_ENU
 				// NOTE: the origin is assumed to be in the same datum as the point.
@@ -400,7 +400,7 @@ inline namespace coordinates
 			}
 
 			template<class... Args>
-			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData& f, Args... args)
+			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData& f, Args...)
 			{
 				// Source: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ECEF_to_ENU
 				// NOTE: the origin is assumed to be in the same datum as the point.
@@ -436,7 +436,7 @@ inline namespace coordinates
 			using base_tuple_type = frameOfReference<HorizontalDatum, ENUFrame<HorizontalDatum>, CartesianTuple>::base_frame_type::tuple_type;
 
 			template<class... Args>
-			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData&, Args... args)
+			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData&, Args...)
 			{
 				// Source: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ECEF_to_ENU
 				// NOTE: the origin is assumed to be in the same datum as the point.
@@ -449,7 +449,7 @@ inline namespace coordinates
 			}
 
 			template<class... Args>
-			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData&, Args... args)
+			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData&, Args...)
 			{
 				// Source: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ECEF_to_ENU
 				// NOTE: the origin is assumed to be in the same datum as the point.

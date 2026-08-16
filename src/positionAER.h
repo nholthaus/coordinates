@@ -38,7 +38,7 @@
 #include "point.h"
 #include "positionGeodetic.h"
 
-namespace coordinates
+inline namespace coordinates
 {
 	//	----------------------------------------------------------------------------
 	//	CLASS		PositionAER
