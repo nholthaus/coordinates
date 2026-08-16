@@ -542,7 +542,7 @@ namespace
 				TestCache test(vec.begin(), vec.end());
 
 				EXPECT_EQ(4, test.size());
-				for (int i = 0; i < test.size(); ++i)
+				for (std::size_t i = 0; i < test.size(); ++i)
 				{
 					EXPECT_STREQ(vec[i].getString().c_str(), (std::next(test.begin(),i))->getString().c_str());
 				}
@@ -563,7 +563,7 @@ namespace
 				TestCache test(vec.begin(), vec.end(), 2);
 
 				EXPECT_EQ(2, test.size());
-				for (int i = 0; i < test.size(); ++i)
+				for (std::size_t i = 0; i < test.size(); ++i)
 				{
 					EXPECT_STREQ(vec[i].getString().c_str(), (std::next(test.begin(), i))->getString().c_str());
 				}
@@ -733,7 +733,7 @@ namespace
 			TestCache test{ { 0, 'a' }, { 1, 'b' }, { 2, 'c' }, { 3, 'd' }, { 4, 'e' } };
 			EXPECT_EQ(5, test.size());
 			char ch = 'a';
-			for (int i = 0; i < test.size(); ++i)
+			for (std::size_t i = 0; i < test.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 			}
@@ -756,7 +756,7 @@ namespace
 
 			EXPECT_EQ(2, test.size());
 			char ch = 'a';
-			for (int i = 0; i < test.size(); ++i)
+			for (std::size_t i = 0; i < test.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 			}
@@ -1531,7 +1531,6 @@ namespace
 	{
 		TestObject::clearfunctioncalls();
 		{
-			int i = 0;
 			TestCache test{ { 0, 'a' }, { 1, 'b' }, { 2, 'c' }, { 3, 'd' } };
 			EXPECT_EQ(4, test.capacity());
 
@@ -1930,7 +1929,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -1940,7 +1939,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -1952,7 +1951,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -1962,7 +1961,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -1973,7 +1972,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -1983,7 +1982,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -2277,7 +2276,6 @@ namespace
 	{
 		TestObject::clearfunctioncalls();
 		using emplaceRetVal_t = ::std::pair<TestCache::iterator, bool>;
-		using cacheEntry = TestCache::value_type;
 		emplaceRetVal_t ret;
 
 		{
@@ -2418,7 +2416,7 @@ namespace
 			EXPECT_EQ(4, c2.size());
 
 			// order should be preserved
-			for (int i = 0; i < c2.size(); ++i)
+			for (std::size_t i = 0; i < c2.size(); ++i)
 			{
 				EXPECT_STREQ(std::next(c.begin(), i)->getString().c_str(), std::next(c2.begin(), i)->getString().c_str());
 			}
@@ -2442,7 +2440,7 @@ namespace
 
 			// order should be preserved
 			char ch = 'a';
-			for (int i = 0; i < c2.size(); ++i)
+			for (std::size_t i = 0; i < c2.size(); ++i)
 			{
 				EXPECT_EQ((char)(ch + i), (char)c2[i].getString().c_str()[0]);
 			}
@@ -2462,7 +2460,7 @@ namespace
 
 			EXPECT_EQ(10, c2.size());
 			ch = 'a';
-			for (int i = 0; i < c2.size(); ++i)
+			for (std::size_t i = 0; i < c2.size(); ++i)
 			{
 				EXPECT_EQ((char)(ch + i), (char)c2[i].getString().c_str()[0]);
 			}
@@ -2599,7 +2597,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -2609,7 +2607,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -2620,7 +2618,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -2630,7 +2628,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -2767,7 +2765,7 @@ namespace
 			EXPECT_EQ(4, test.capacity());
 
 			char ch = 'a';
-			for (int i = 0; i < test.size(); ++i)
+			for (std::size_t i = 0; i < test.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 			}
@@ -2778,7 +2776,7 @@ namespace
 			EXPECT_EQ(2, test.capacity());
 
 			ch = 'a';
-			for (int i = 0; i < test.size(); ++i)
+			for (std::size_t i = 0; i < test.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 			}
@@ -2933,19 +2931,19 @@ namespace
 
 			// verify cache order was not affected
 			ch = 'a';
-			for (int i = 0; i < c1.size(); ++i)
+			for (std::size_t i = 0; i < c1.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(c1.begin(), i))->getString().c_str()[0]);
 			}
 
 			ch = 'a';
-			for (int i = 0; i < c2.size(); ++i)
+			for (std::size_t i = 0; i < c2.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(c2.begin(), i))->getString().c_str()[0]);
 			}
 
 			ch = 'd';
-			for (int i = 0; i < c3.size(); ++i)
+			for (std::size_t i = 0; i < c3.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(c3.begin(), i))->getString().c_str()[0]);
 			}

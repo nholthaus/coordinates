@@ -12,8 +12,15 @@ endif()
 
 FetchContent_MakeAvailable(googletest)
 
+# Each test suite is its own translation unit under suites/, so they compile in parallel and
+# rebuild incrementally. main.cpp provides the GoogleTest entry point; the suites register their
+# tests via static initialization. (Line-of-sight suites are intentionally excluded until LOS is
+# enabled.)
+file(GLOB _test_suite_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/suites/*.cpp")
+
 add_executable(coordTest
         main.cpp
+        ${_test_suite_sources}
 )
 
 target_compile_features(coordTest PRIVATE cxx_std_23)
@@ -23,7 +30,7 @@ set_target_properties(coordTest PROPERTIES
 )
 
 target_link_libraries(coordTest PRIVATE
-        GTest::gtest_main
+        GTest::gtest
         coordinates::coordinates
 )
 

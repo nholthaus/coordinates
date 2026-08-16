@@ -165,12 +165,12 @@ TEST_F(EllipsoidTest, constexpr)
 {
     static_assert(coordinates::traits::is_ellipsoid<WGS84>);
 
-    using _a = RequireConstexpr<WGS84::a()>;
-    using _b = RequireConstexpr<WGS84::b()>;
-    using _f = RequireConstexpr<WGS84::f()>;
-    using _invf = RequireConstexpr<WGS84::invf()>;
-    using _e = RequireConstexpr<WGS84::e()>;
-    using _e2 = RequireConstexpr<WGS84::e2()>;
+    static_assert(sizeof(RequireConstexpr<WGS84::a()>) > 0);
+    static_assert(sizeof(RequireConstexpr<WGS84::b()>) > 0);
+    static_assert(sizeof(RequireConstexpr<WGS84::f()>) > 0);
+    static_assert(sizeof(RequireConstexpr<WGS84::invf()>) > 0);
+    static_assert(sizeof(RequireConstexpr<WGS84::e()>) > 0);
+    static_assert(sizeof(RequireConstexpr<WGS84::e2()>) > 0);
 }
 // TEST FOR THE APPROXIMATE CORRECTNESS OF WGS84 DERIVED PARAMETERS
 TEST_F(EllipsoidTest, WGS84)

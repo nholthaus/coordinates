@@ -69,8 +69,6 @@ namespace
 
 		void SetUp() override
 		{
-			auto result = std::setprecision(15);
-
 			// Code here will be called immediately after the constructor (right
 			// before each test).
 			Boston.setPoint(42.3601_deg, -71.0589_deg, 0.0_m);
@@ -518,8 +516,6 @@ TEST_F(PositionNEDTest, implicitConversionConstructor_fromNEDsameOrigin)
 
 	TEST_F(PositionNEDTest, distance)
 	{
-		auto result = std::setprecision(16);
-
 		LLA origin1(42.0_deg, -71.0_deg, 0.0_m);	// Boston-ish
 		LLA origin2(34.0_deg, -118.0_deg, 0.0_m);	// LA-ish
 
@@ -546,8 +542,6 @@ TEST_F(PositionNEDTest, implicitConversionConstructor_fromNEDsameOrigin)
 
 	TEST_F(PositionNEDTest, dotProduct)
 	{
-		auto result = std::setprecision(16);
-
 		LLA origin1(42.0_deg, -71.0_deg, 0.0_m);	// Boston-ish
 		LLA origin2(34.0_deg, -118.0_deg, 0.0_m);	// LA-ish
 

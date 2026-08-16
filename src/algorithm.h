@@ -233,10 +233,6 @@ inline namespace coordinates
 			distance_unit y1 = std::get<1>(r);
 			distance_unit z1 = std::get<2>(r);
 
-			auto x2 = pow<2>(x1 - x0);
-			auto y2 = pow<2>(y1 - y0);
-			auto z2 = pow<2>(z1 - z0);
-
 			// 3-D distance formula
 			return sqrt(pow<2>(x1 - x0) + pow<2>(y1 - y0) + pow<2>(z1 - z0));
 		}
@@ -873,7 +869,7 @@ inline namespace coordinates
 		 *				`tile->metadata().latitudeResolution()`.
 		 * @returns		2D vector of bytes, representing a monochrome image.
 		 */
-		static std::vector<std::vector<int8_t>> image(const AbstractTile* tile, degrees<> resolution)
+		inline std::vector<std::vector<int8_t>> image(const AbstractTile* tile, degrees<> resolution)
 		{
 			if (tile == nullptr)
 			{
@@ -976,7 +972,7 @@ inline namespace coordinates
 		 * @param[in]	latitude latitude to calculate factor for
 		 * @returns		z-factor
 		 */
-		static meters<> z_factor(const degrees<> latitude)
+		inline meters<> z_factor(const degrees<> latitude)
 		{
 			// See: http://webhelp.esri.com/arcgisdesktop/9.3/index.cfm?TopicName=Applying%20a%20z-factor
 			if (const int val = static_cast<int>(abs(latitude.to<double>())); val >= 0 && val < 10)
@@ -999,7 +995,7 @@ inline namespace coordinates
 				return 0.00005156_m;
 		}
 
-		static std::vector<std::vector<uint8_t>>
+		inline std::vector<std::vector<uint8_t>>
 		hillshade(const AbstractTile* tile, degrees<> resolution = 0.0_deg, const degrees<> sunAltitude = 45.0_deg, const degrees<> sunAzimuth = 315.0_deg)
 		{
 			// see: http://edndoc.esri.com/arcobjects/9.2/net/shared/geoprocessing/spatial_analyst_tools/how_hillshade_works.htm

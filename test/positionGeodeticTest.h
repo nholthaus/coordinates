@@ -541,9 +541,6 @@ namespace
 
 	TEST_F(PositionGeodeticTest, isSame)
 	{
-		using LLA_ft = PositionGeodetic<datums::WGS84_G1674, units::length::feet>;
-		using LLA_nm = PositionGeodetic<datums::WGS84_G1674, units::length::nanometers>;
-
 		LLA lla(42.3601_deg, -71.0589_deg, 0.0_m);
 		LLA exactlySame(42.3601_deg, -71.0589_deg, 0.0_m);
 		LLA close(42.36011_deg, -71.05891_deg, 0.0_m);

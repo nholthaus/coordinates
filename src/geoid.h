@@ -108,7 +108,7 @@ inline namespace coordinates
             * @param[in]	longitude longitude to find the undulation at, either in -180W to 180E, or 0E to 360E
             * @returns		0 meters for all lat/lon combinations.
             */
-            static constexpr meters<> undulation(degrees<> latitude, degrees<> longitude)
+            static constexpr meters<> undulation([[maybe_unused]] degrees<> latitude, [[maybe_unused]] degrees<> longitude)
             {
                 return 0_m;
             }
@@ -381,11 +381,11 @@ inline namespace coordinates
                 constexpr auto numLatitudeLines  = static_cast<int>(GEOID12ALUT.size());
                 constexpr auto numLongitudeLines = static_cast<int>(GEOID12ALUT[0].size());
 
-                for (int i = 0; i < interpolationDimension; ++i)
+                for (int i = 0; i < static_cast<int>(interpolationDimension); ++i)
                 {
                     const int row = clamp_index(latIndex + (i - 1), 0, numLatitudeLines - 1);
 
-                    for (int j = 0; j < interpolationDimension; ++j)
+                    for (int j = 0; j < static_cast<int>(interpolationDimension); ++j)
                     {
                         const int col = clamp_index(lonIndex + (j - 1), 0, numLongitudeLines - 1);
                         elevationSurface[i][j] = GEOID12ALUT[row][col] / divisor;

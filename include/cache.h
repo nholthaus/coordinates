@@ -1284,7 +1284,7 @@ protected:
 
 	/// Overload for iterators that match <key_type, mapped_type> with a bidirectional iterator (i.e. another Cache)
 	template<class InputIterator>
-	void copyRange(InputIterator first, InputIterator last, std::true_type isKeyValueItr, std::true_type isBidirectional)
+	void copyRange(InputIterator first, InputIterator last, std::true_type, std::true_type)
 	{
 		// only copy the first n
 		InputIterator realLast = last;
@@ -1306,7 +1306,7 @@ protected:
 
 	/// Overload for iterators that match <key_type, mapped_type> with a forward iterator (i.e. unordered_map, map)
 	template<class InputIterator>
-	void copyRange(InputIterator first, InputIterator last, std::true_type isKeyValueItr, std::false_type isBidirectional)
+	void copyRange(InputIterator first, InputIterator last, std::true_type, std::false_type)
 	{
 		// only copy the first n
 		InputIterator realLast = last;
@@ -1374,7 +1374,6 @@ protected:
 		list_iterator_type listPos;
 		try
 		{
-			list_iterator_type mutableItr = m_list.erase(itr, itr);    // constant-time remove const.
 			if (!m_container.count(k))
 			{
 				listPos  = m_list.insert(itr, k);

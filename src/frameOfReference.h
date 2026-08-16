@@ -436,7 +436,7 @@ inline namespace coordinates
 			using base_tuple_type = frameOfReference<HorizontalDatum, ENUFrame<HorizontalDatum>, CartesianTuple>::base_frame_type::tuple_type;
 
 			template<class... Args>
-			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData& f, Args... args)
+			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData&, Args... args)
 			{
 				// Source: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ECEF_to_ENU
 				// NOTE: the origin is assumed to be in the same datum as the point.
@@ -449,7 +449,7 @@ inline namespace coordinates
 			}
 
 			template<class... Args>
-			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData& f, Args... args)
+			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData&, Args... args)
 			{
 				// Source: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ECEF_to_ENU
 				// NOTE: the origin is assumed to be in the same datum as the point.
@@ -483,7 +483,7 @@ inline namespace coordinates
 			 * @returns		equivalent ECEF coordinate
 			 */
 			template<class... Args>
-			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData& f, Args...)
+			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData&, Args...)
 			{
 				// source: http://gis.stackexchange.com/questions/58923/calculate-view-angle/
 
@@ -508,7 +508,7 @@ inline namespace coordinates
 			 * @returns		equivalent az/el/range from observer
 			 */
 			template<class... Args>
-			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData& f, Args...)
+			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData&, Args...)
 			{
 				// source: http://mathworld.wolfram.com/SphericalCoordinates.html
 
@@ -845,7 +845,7 @@ inline namespace coordinates
 		 */
 		template<class FrameFrom, class FrameTo, class FrameData>
 		    requires is_same_frame<FrameFrom, FrameTo>
-		frame_traits<FrameTo>::tuple_type convertToBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
+		frame_traits<FrameTo>::tuple_type convertToBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData&)
 		{
 			return typename frame_traits<FrameTo>::tuple_type(std::get<0>(p), std::get<1>(p), std::get<2>(p));
 			// this should handle unit conversions if necessary
@@ -869,7 +869,7 @@ inline namespace coordinates
 		 */
 		template<class FrameFrom, class FrameTo, class FrameData>
 		    requires is_same_frame<FrameFrom, FrameTo>
-		frame_traits<FrameTo>::tuple_type convertFromBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
+		frame_traits<FrameTo>::tuple_type convertFromBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData&)
 		{
 			return typename frame_traits<FrameTo>::tuple_type(std::get<0>(p), std::get<1>(p), std::get<2>(p));
 			// this should handle unit conversions if necessary

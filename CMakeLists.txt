@@ -5,6 +5,19 @@ project(coordinates
 		LANGUAGES CXX
 )
 
+# ----------------------------
+# Build-speed defaults
+# ----------------------------
+# The library uses no C++20 modules; disable the per-translation-unit module-dependency
+# scan that CMake enables by default for C++20/23, which adds measurable overhead.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
+# Use ccache as a compiler launcher when available, to skip re-compiling unchanged TUs.
+find_program(CCACHE_PROGRAM ccache)
+if (CCACHE_PROGRAM)
+	set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+endif()
+
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(CTest)

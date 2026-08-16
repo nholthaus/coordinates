@@ -99,12 +99,12 @@ namespace
 		using coordinates::Point<ENUFrame<horizontalDatums::ITRF2008>, coordinates::CartesianTuple, coordinates::FrameData>::frame_data_type;
 
 		tuple_type point() const { return tuple_type(); }
-		void setPoint(const tuple_type& t) {}
-		void setPoint(tuple_type&& t) {}
+		void setPoint(const tuple_type&) {}
+		void setPoint(tuple_type&&) {}
 
 		frame_data_type frameData() const { return frame_data_type(); }
-		void setFrameData(const frame_data_type& frameData) { return; }
-		void setFrameData(frame_data_type&& frameData) { return; }
+		void setFrameData(const frame_data_type&) { return; }
+		void setFrameData(frame_data_type&&) { return; }
 	};
 
 	struct TestSphericalPoint : public coordinates::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coordinates::SphericalTuple, coordinates::FrameData>
@@ -116,12 +116,12 @@ namespace
 		using coordinates::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coordinates::SphericalTuple, coordinates::FrameData>::reference_frame;
 
 		tuple_type point() const { return tuple_type(); }
-		void setPoint(const tuple_type& t) {}
-		void setPoint(tuple_type&& t) {}
+		void setPoint(const tuple_type&) {}
+		void setPoint(tuple_type&&) {}
 
 		frame_data_type frameData() const { return frame_data_type(); }
-		void setFrameData(const frame_data_type& t) {}
-		void setFrameData(frame_data_type&& t) {}
+		void setFrameData(const frame_data_type&) {}
+		void setFrameData(frame_data_type&&) {}
 	};
 
 	TEST_F(PointTest, is_default_constructible)

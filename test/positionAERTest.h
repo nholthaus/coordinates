@@ -71,8 +71,6 @@ namespace
 
 		void SetUp() override
 		{
-			auto result = std::setprecision(15);
-
 			// Code here will be called immediately after the constructor (right
 			// before each test).
 			Boston.setPoint(42_deg, -71_deg, 0_m);
@@ -517,7 +515,6 @@ TEST_F(PositionAERTest, implicitConversionAssignment_fromAER)
 
 	TEST_F(PositionAERTest, isSame)
 	{
-		using AER_ft = PositionAER<datums::WGS84_G1674, units::length::feet>;
 		using ECEF_mm = PositionECEF<datums::WGS84_G1674, units::length::millimeters>;
 
 		AER aer1(5_deg, 10_deg, 15_km, Boston);

@@ -27,15 +27,6 @@
 //
 //--------------------------------------------------------------------------------------------------
 
-// The test suites live in per-suite translation units under test/suites/*.cpp (each includes one
-// *Test.h). GoogleTest registers tests via static initialization across all those TUs, so this file
-// only needs to provide the entry point. Splitting the suites into separate TUs lets them compile in
-// parallel and rebuild incrementally, instead of one monolithic translation unit.
-
-#include <gtest/gtest.h>
-
-int main(int argc, char* argv[])
-{
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
-}
+#include "gtest_units.h"
+#include "coordinates.h"
+#include "positionECEFTest.h"

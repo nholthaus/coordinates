@@ -481,7 +481,7 @@ namespace
 		EXPECT_EQ(0.007_m, ecef.z());
 	}
 
-	TEST_F(PointTest, ostream)
+	TEST_F(PositionECEFTest, ostream)
 	{
 		PositionECEF<datums::NAD83, inches> ecef1(12.1_in, 24.2_in, 36.3_in);
 

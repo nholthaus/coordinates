@@ -30,7 +30,9 @@
 #ifndef coordinate_h
 #define coordinate_h
 
+#if defined(_MSC_VER)
 #pragma warning(disable : 4503)    // decorated name length exceeded, name was truncated. This only affects debugging.
+#endif
 
 //------------------------
 //	INCLUDES
