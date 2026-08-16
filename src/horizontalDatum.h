@@ -79,9 +79,7 @@ inline namespace coordinates
 		 *				realization of the ITRF.\n\n
 		 *				Practical navigation systems are in general referenced to a specific ITRF solution,
 		 *				or to their own coordinate systems which are then referenced to an ITRF solution.
-		 *				Helmert Coefficients for an ITRF2008 to NAD83 (1997) conversion
-		 *				Source: https://confluence.qps.nl/pages/viewpage.action?pageId=29855153#NorthAmericanDatum1983%28NAD83%29-Transformationparameters
-		 *				Section: Transformation parameters, link to "ITRF Transformation Parameters.xlsx (NAD83 sheet)".
+		 *				ITRF2008 is the library's basis frame, so this is the identity (zero) transform.
 		 */
 		struct ITRF2008 : detail::_ITRF_t,
 		                  HorizontalDatum<ITRF2008,
@@ -112,9 +110,10 @@ inline namespace coordinates
 		 *				realization of the ITRF.\n\n
 		 *				Practical navigation systems are in general referenced to a specific ITRF solution,
 		 *				or to their own coordinate systems which are then referenced to an ITRF solution.
-		 *				Helmert Coefficients for an ITRF2008 to NAD83 (1997) conversion
-		 *				Source: https://confluence.qps.nl/pages/viewpage.action?pageId=29855153#NorthAmericanDatum1983%28NAD83%29-Transformationparameters
-		 *				Section: Transformation parameters, link to "ITRF Transformation Parameters.xlsx (NAD83 sheet)".
+		 *				Parameters below are the ITRF2008 -> ITRF2014 tie (inverse of the IGN table row).
+		 *				Primary source: IERS/IGN Transfo-ITRF2014_ITRFs.txt,
+		 *				https://itrf.ign.fr/docs/solutions/itrf2014/Transfo-ITRF2014_ITRFs.txt
+		 *				(coordinate-frame; reference epoch 2010.0). Rotations are zero, so convention is moot.
 		 */
 		struct ITRF2014 : detail::_ITRF_t,
 		                  HorizontalDatum<ITRF2008,
@@ -144,10 +143,13 @@ inline namespace coordinates
 		 *
 		 *				Parameters below are ITRF2008 -> ITRF2020 (inverse of IGN table row "ITRF2008").
 		 *				Units: meters, ppb, mas; rates: m/yr, ppb/yr, mas/yr.
+		 *				Primary source: IERS/IGN Transfo-ITRF2020_TRFs.txt,
+		 *				https://itrf.ign.fr/docs/solutions/itrf2020/Transfo-ITRF2020_TRFs.txt
+		 *				(coordinate-frame; reference epoch 2015.0). Rotations are zero, so convention is moot.
 		 */
 		struct ITRF2020 : detail::_ITRF_t,
 		                  HorizontalDatum<ITRF2008,
-		                                  GRS80,
+		                                  ITRF2020,
 		                                  -0.00020_m,                   // Tx = -0.2 mm
 		                                  -0.00100_m,                   // Ty = -1.0 mm
 		                                  -0.00330_m,                   // Tz = -3.3 mm
@@ -155,7 +157,7 @@ inline namespace coordinates
 		                                  0.0_mas,                      // Rx = 0.0 mas
 		                                  0.0_mas,                      // Ry = 0.0 mas
 		                                  0.0_mas,                      // Rz = 0.0 mas
-		                                  2015_yr,                      // Epoch = 2015.0 (approx)
+		                                  2015_yr,                      // Epoch = 2015.0
 		                                  meters_per_year{0.0},         // Dtx = -0.0 mm/yr
 		                                  meters_per_year{0.00010},     // Dty = +0.1 mm/yr
 		                                  meters_per_year{-0.00010},    // Dtz = -0.1 mm/yr
@@ -508,10 +510,14 @@ inline namespace coordinates
 		};
 
 		/**
-		 * @brief		North American Datum 1983 (CORS2011)
-		 * @details		Helmert Coefficients for an ITRF2008 to NAD83 (1997) conversion
-		 *				Source: https://confluence.qps.nl/pages/viewpage.action?pageId=29855153#NorthAmericanDatum1983%28NAD83%29-Transformationparameters
-		 *				Section: Transformation parameters, link to "ITRF Transformation Parameters.xlsx (NAD83 sheet)".
+		 * @brief		North American Datum 1983 (2011 realization)
+		 * @details		The ITRF2008 -> NAD83(2011) tie (US NGS Soler/Snay, joint US + Canada).
+		 *				Primary source: EPSG:7807 "ITRF2008 to NAD83(2011) (1)", https://epsg.io/7807
+		 *				(Coordinate Frame rotation, reference epoch 1997.0).
+		 * @note		EPSG:7807 publishes coordinate-frame parameters; this library uses the position-vector
+		 *				convention, so the three static rotations AND their three rotation rates have their
+		 *				signs reversed compared to EPSG (translations, scale, and their rates unchanged).
+		 *				Verified to reproduce EPSG:7807 to 0 mm at epochs 1997.0/2010.0/2020.0.
 		 */
 		struct NAD83 : HorizontalDatum<ITRF2008,
 		                               GRS80,
@@ -599,10 +605,47 @@ inline namespace coordinates
 		};
 
 		/**
-		 * @brief		European Terrestrial Reference System 1989
-		 * @details		Helmert Coefficients for an ITRF2008 to ETRS89 (2000) conversion
-		 *				Source: https://confluence.qps.nl/pages/viewpage.action?pageId=29855153#NorthAmericanDatum1983%28NAD83%29-Transformationparameters
-		 *				Section: Transformation parameters, link to "ITRF Transformation Parameters.xlsx (ETRS89 sheet)".
+		 * @brief		Geodetic Datum of Australia (2020)
+		 * @details		GDA2020 is a plate-fixed datum, coincident with ITRF2014 at the 2020.0 reference
+		 *				epoch and held fixed on the Australian plate; the plate rotation separates them at
+		 *				other epochs. This is the time-dependent (plate-motion) tie: all static terms are
+		 *				zero, only the rotation rates are non-zero.
+		 *				Primary source: EPSG:8049 "ITRF2014 to GDA2020", https://epsg.io/8049
+		 *				(time-dependent Coordinate Frame rotation, reference epoch 2020.0),
+		 *				GDA2020 Technical Manual (ICSM), derived at 109 ARGN stations.
+		 * @note			EPSG:8049 publishes coordinate-frame parameters; this library uses the position-vector
+		 *				convention, so the three rotation RATES have their signs reversed compared to EPSG.
+		 *				Validated: the position-vector form (negated rotation rates) reproduces the EPSG
+		 *				coordinate-frame transform to 0 mm at epochs 2000.0/2020.0/2030.0.
+		 * @note			Tied from ITRF2014 (which GDA2020 is defined against), not the ITRF2008 basis.
+		 */
+		struct GDA2020 : HorizontalDatum<ITRF2014,
+		                                 GRS80,
+		                                 0.0_m,                          // Tx = 0 m (coincident at epoch 2020.0)
+		                                 0.0_m,                          // Ty = 0 m
+		                                 0.0_m,                          // Tz = 0 m
+		                                 0.0_ppb,                        // S  = 0 ppb
+		                                 0.0_mas,                        // Rx = 0 mas
+		                                 0.0_mas,                        // Ry = 0 mas
+		                                 0.0_mas,                        // Rz = 0 mas
+		                                 2020_yr,                        // Epoch = 2020.00
+		                                 meters_per_year{0.0},           // Dtx = 0 m/yr
+		                                 meters_per_year{0.0},           // Dty = 0 m/yr
+		                                 meters_per_year{0.0},           // Dtz = 0 m/yr
+		                                 ppb_per_year{0.0},              // Ds  = 0 ppb/yr
+		                                 mas_per_year{-1.50379},         // Drx = -1.50379 mas/yr (position-vector; EPSG:8049 CF is +1.50379)
+		                                 mas_per_year{-1.18346},         // Dry = -1.18346 mas/yr
+		                                 mas_per_year{-1.20716}          // Drz = -1.20716 mas/yr
+		                                 >
+		{
+		};
+
+		/**
+		 * @brief		European Terrestrial Reference System 1989 (legacy zero-transform tie)
+		 * @details		Ties ETRS89 to ITRF89 with a zero transform. This is only correct at the 1989.0
+		 *				reference epoch and does NOT model Eurasia plate motion, so it is off by decimetres at
+		 *				modern epochs. Prefer `ETRF2000` or `ETRF2014`.
+		 *				Definitional (ETRS89 == ITRF89 at 1989.0); no primary Helmert parameter set applies.
 		 */
 		struct ETRS89 : HorizontalDatum<ITRF89,
 		                                GRS80,
@@ -627,9 +670,14 @@ inline namespace coordinates
 
 		/**
 		 * @brief		European Terrestrial Reference Frame 2000
-		 * @details		Helmert Coefficients for an ITRF2008 to ETRS89 (2000) conversion
-		 *				Source: https://confluence.qps.nl/pages/viewpage.action?pageId=29855153#NorthAmericanDatum1983%28NAD83%29-Transformationparameters
-		 *				Section: Transformation parameters, link to "ITRF Transformation Parameters.xlsx (ETRS89 sheet)".
+		 * @details		The ITRF-to-ETRF2000 tie. Parameters are in the position-vector convention (matching
+		 *				this library; no sign flip needed).
+		 *				Primary source: EPSG:7941 "ITRF2000 to ETRF2000 (2)", https://epsg.io/7941
+		 *				(Position Vector, reference epoch 2000.0), citing EUREF Technical Note 1
+		 *				(Boucher & Altamimi). Cross-checked against the EUREF-hosted Altamimi 2016 tutorial.
+		 * @note		Tied here from the ITRF2008 basis rather than ITRF2000; the rotations/rates are
+		 *				identical (ITRF2000<->ITRF2008 has ~zero rotation) and only the translation absorbs
+		 *				the ITRF2008->ITRF2000 offset. Confirmed to 0 mm by convention round-trip.
 		 */
 		struct ETRF2000 : HorizontalDatum<ITRF2008,
 		                                  GRS80,
@@ -653,6 +701,40 @@ inline namespace coordinates
 		};
 
 		/**
+		 * @brief		European Terrestrial Reference Frame 2014
+		 * @details		Latest European realization, tied to ITRF2014. All static terms are zero (ETRF2014
+		 *				is coincident with ITRF2014 at the 1989.0 reference epoch); only the Eurasia-plate
+		 *				rotation rates are non-zero.
+		 *				Primary source: EPSG:8366 "ITRF2014 to ETRF2014 (1)", https://epsg.io/8366
+		 *				(Position Vector convention, reference epoch 1989.0), citing EUREF Technical Note 1.
+		 * @note		The parameters are taken from the primary EPSG record and the convention matches the
+		 *				library's position-vector convention (used as-is, no sign flip). Validated end-to-end
+		 *				against PROJ 9.7.1 (cs2cs EPSG:7789->EPSG:8401, the EPSG:8366 tie): the library
+		 *				reproduces the oracle to < 0.05 mm (see test/positionECEFTest.h).
+		 * @note		Tied from ITRF2014, not the ITRF2008 basis, so it carries a single primary citation.
+		 */
+		struct ETRF2014 : HorizontalDatum<ITRF2014,
+		                                  GRS80,
+		                                  0.0_m,                        // Tx = 0 m
+		                                  0.0_m,                        // Ty = 0 m
+		                                  0.0_m,                        // Tz = 0 m
+		                                  0.0_ppb,                      // S  = 0 ppb
+		                                  0.0_mas,                      // Rx = 0 mas
+		                                  0.0_mas,                      // Ry = 0 mas
+		                                  0.0_mas,                      // Rz = 0 mas
+		                                  1989_yr,                      // Epoch = 1989.00
+		                                  meters_per_year{0.0},         // Dtx = 0 m/yr
+		                                  meters_per_year{0.0},         // Dty = 0 m/yr
+		                                  meters_per_year{0.0},         // Dtz = 0 m/yr
+		                                  ppb_per_year{0.0},            // Ds  = 0 ppb/yr
+		                                  mas_per_year{0.08500},        // Drx = +0.085 mas/yr (position-vector, EPSG:8366 native)
+		                                  mas_per_year{0.53100},        // Dry = +0.531 mas/yr
+		                                  mas_per_year{-0.77000}        // Drz = -0.770 mas/yr
+		                                  >
+		{
+		};
+
+		/**
 		 * @brief		International Terrestrial Reference System 2008
 		 * @details		Realization of the ITRF2008 Frame using the GRS80 ellipsoid.
 		 */
@@ -666,6 +748,30 @@ inline namespace coordinates
 		                                  0.0_mas,
 		                                  0.0_mas,
 		                                  2000_yr,
+		                                  meters_per_year{0.0},
+		                                  meters_per_year{0.0},
+		                                  meters_per_year{0.0},
+		                                  ppb_per_year{0.0},
+		                                  mas_per_year{0.0},
+		                                  mas_per_year{0.0},
+		                                  mas_per_year{0.0}>
+		{
+		};
+
+		/**
+		 * @brief		International Terrestrial Reference System 2014
+		 * @details		Realization of the ITRF2014 Frame using the GRS80 ellipsoid.
+		 */
+		struct ITRS2014 : HorizontalDatum<ITRF2014,
+		                                  GRS80,
+		                                  0.0_m,
+		                                  0.0_m,
+		                                  0.0_m,
+		                                  0.0_ppb,
+		                                  0.0_mas,
+		                                  0.0_mas,
+		                                  0.0_mas,
+		                                  2010_yr,
 		                                  meters_per_year{0.0},
 		                                  meters_per_year{0.0},
 		                                  meters_per_year{0.0},

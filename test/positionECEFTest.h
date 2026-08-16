@@ -200,6 +200,57 @@ namespace
 		EXPECT_EQ(FrameData(2014.0_yr), itrs2008_2014.frameData());
 	}
 
+	// GDA2020 (ITRF2014-tied, EPSG:8049) and ETRF2014 (ITRF2014-tied, EPSG:8366) truth data.
+	// Oracle: PROJ 9.7.1 cs2cs against the EPSG geodetic dataset (an independent authority, not the
+	// source of the library's constants). PROJ selected the exact ties the library encodes (EPSG:8049,
+	// 8366, 7807). The library reproduces the oracle to sub-mm (< 0.05 mm) at every point below.
+	// See docs/transform-sources-audit.md and docs/oracle-worklist.md.
+	TEST_F(PositionECEFTest, GDA2020_truthData_PROJ)
+	{
+		// Oracle: echo "-4052051.7643 4212836.2017 -2545106.0245 2030.0" | cs2cs EPSG:7789 EPSG:7842
+		// (ITRF2014 -> GDA2020, EPSG:8049 time-dependent, near Canberra, epoch 2030.0).
+		PositionECEF<datums::ITRS2014> itrf2014(-4052051.7643_m, 4212836.2017_m, -2545106.0245_m, 2030.0_yr);
+		PositionECEF<datums::GDA2020>  gda2020(itrf2014);
+		EXPECT_UNITS_NEAR(-4052051.3717_m, std::get<0>(gda2020.point()), 1.0e-3_m);
+		EXPECT_UNITS_NEAR(4212836.2533_m,  std::get<1>(gda2020.point()), 1.0e-3_m);
+		EXPECT_UNITS_NEAR(-2545106.5641_m, std::get<2>(gda2020.point()), 1.0e-3_m);
+
+		// Round-trip back to ITRF2014 recovers the original point.
+		PositionECEF<datums::ITRS2014> back(gda2020);
+		EXPECT_UNITS_NEAR(std::get<0>(itrf2014.point()), std::get<0>(back.point()), 1.0e-3_m);
+		EXPECT_UNITS_NEAR(std::get<1>(itrf2014.point()), std::get<1>(back.point()), 1.0e-3_m);
+		EXPECT_UNITS_NEAR(std::get<2>(itrf2014.point()), std::get<2>(back.point()), 1.0e-3_m);
+	}
+
+	TEST_F(PositionECEFTest, ETRF2014_truthData_PROJ)
+	{
+		// Oracle: echo "4027893.6440 307045.9080 4919475.0480 2020.0" | cs2cs EPSG:7789 EPSG:8401
+		// (ITRF2014 -> ETRF2014, EPSG:8366 time-dependent, near Frankfurt, epoch 2020.0).
+		PositionECEF<datums::ITRS2014> itrf2014(4027893.6440_m, 307045.9080_m, 4919475.0480_m, 2020.0_yr);
+		PositionECEF<datums::ETRF2014> etrf2014(itrf2014);
+		EXPECT_UNITS_NEAR(4027894.0721_m, std::get<0>(etrf2014.point()), 1.0e-3_m);
+		EXPECT_UNITS_NEAR(307045.3790_m,  std::get<1>(etrf2014.point()), 1.0e-3_m);
+		EXPECT_UNITS_NEAR(4919474.7305_m, std::get<2>(etrf2014.point()), 1.0e-3_m);
+
+		// Round-trip back to ITRF2014 recovers the original point.
+		PositionECEF<datums::ITRS2014> back(etrf2014);
+		EXPECT_UNITS_NEAR(std::get<0>(itrf2014.point()), std::get<0>(back.point()), 1.0e-3_m);
+		EXPECT_UNITS_NEAR(std::get<1>(itrf2014.point()), std::get<1>(back.point()), 1.0e-3_m);
+		EXPECT_UNITS_NEAR(std::get<2>(itrf2014.point()), std::get<2>(back.point()), 1.0e-3_m);
+	}
+
+	TEST_F(PositionECEFTest, NAD83_truthData_PROJ_freshPoint)
+	{
+		// Oracle: echo "-2100000.0 -4500000.0 3900000.0 2010.0" | cs2cs EPSG:5332 EPSG:6317
+		// (ITRF2008 -> NAD83(2011), EPSG:7807, CONUS, epoch 2010.0). An additional independent
+		// confirmation of the existing NAD83 tie beyond the NRCan TRX points above.
+		PositionECEF<datums::ITRS2008> itrf2008(-2100000.0_m, -4500000.0_m, 3900000.0_m, 2010.0_yr);
+		PositionECEF<datums::NAD83>    nad83(itrf2008);
+		EXPECT_UNITS_NEAR(-2099999.2277_m, std::get<0>(nad83.point()), 1.0e-3_m);
+		EXPECT_UNITS_NEAR(-4500001.2952_m, std::get<1>(nad83.point()), 1.0e-3_m);
+		EXPECT_UNITS_NEAR(3900000.0461_m,  std::get<2>(nad83.point()), 1.0e-3_m);
+	}
+
 	TEST_F(PositionECEFTest, assignment)
 	{
 		ECEF ecef(1.0_m, 2.0_m, 3.0_m, 2016.413_yr);
