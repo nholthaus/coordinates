@@ -29,6 +29,34 @@ include(FetchContent)
 
 option(COORDINATES_BUILD_TESTS     "Build coordinates tests"            ON)
 option(COORDINATES_FETCH_DEPS      "Fetch dependencies if not found"    ON)
+option(COORDINATES_WARNINGS_AS_ERRORS "Treat compiler warnings as errors on this project's own targets" OFF)
+
+# ----------------------------
+# Warning flags (applied per-target, so defaults like MSVC /EHsc are preserved and third-party
+# headers such as units are not held to this project's warning level).
+# ----------------------------
+function(coordinates_set_warnings target)
+	if (MSVC)
+		target_compile_options(${target} PRIVATE /W4
+				/external:anglebrackets /external:W0    # do not warn on <angle-bracket> (third-party) headers
+				# Calibrate /W4: silence MSVC-only noise that is not a defect in this project's code.
+				/wd4459    # local declaration hides a (library) global single-letter name (e.g. 't', 'b')
+				/wd4702    # unreachable code: emitted by the optimizer inside units' constexpr pow template
+				           # (a third-party header); /external:W0 cannot suppress this backend warning.
+				           # Our own unreachable code is still caught by -Wall -Werror on the GCC/Clang legs.
+		)
+		# getenv is standard C++; MSVC deprecates it as "unsafe" (C4996). We use it deliberately.
+		target_compile_definitions(${target} PRIVATE _CRT_SECURE_NO_WARNINGS)
+		if (COORDINATES_WARNINGS_AS_ERRORS)
+			target_compile_options(${target} PRIVATE /WX)
+		endif()
+	else()
+		target_compile_options(${target} PRIVATE -Wall -Wextra)
+		if (COORDINATES_WARNINGS_AS_ERRORS)
+			target_compile_options(${target} PRIVATE -Werror)
+		endif()
+	endif()
+endfunction()
 
 option(COORDINATES_ENABLE_DTED     "Enable DTED/topography support"     ON)
 option(COORDINATES_ENABLE_GEOIDS   "Enable geoid/LUT support"           ON)
@@ -58,6 +86,24 @@ if (NOT units_FOUND)
 		)
 	endif()
 endif()
+
+# Treat the units headers as system headers so this project's strict warning level (/W4 /WX,
+# -Werror) never fails on a third-party header we do not control. Applies to whichever units
+# target was provided (the imported units::units, or the FetchContent-built units).
+foreach(_units_target units::units units)
+	if (TARGET ${_units_target})
+		get_target_property(_units_aliased ${_units_target} ALIASED_TARGET)
+		if (_units_aliased)
+			set(_units_target ${_units_aliased})
+		endif()
+		get_target_property(_units_incs ${_units_target} INTERFACE_INCLUDE_DIRECTORIES)
+		if (_units_incs)
+			set_target_properties(${_units_target} PROPERTIES
+					INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_units_incs}")
+		endif()
+		break()
+	endif()
+endforeach()
 
 add_subdirectory(src)
 

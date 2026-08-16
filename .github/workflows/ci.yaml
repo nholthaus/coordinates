@@ -9,10 +9,11 @@ jobs:
   # Primary build/test matrix.
   #
   # Preserves the original three compiler entries (windows-msvc, ubuntu-gcc,
-  # ubuntu-clang-19) and multiplies them across Release and Debug. Each entry
-  # carries a per-compiler `warning_flags` value so warnings are treated as
-  # errors in CI only (injected via CMAKE_CXX_FLAGS at configure time), without
-  # forcing those flags onto downstream consumers of the installed package.
+  # ubuntu-clang-19) and multiplies them across Release and Debug.
+  # -DCOORDINATES_WARNINGS_AS_ERRORS=ON turns on warnings-as-errors on this
+  # project's own targets only (applied via target_compile_options, so compiler
+  # defaults such as MSVC /EHsc are preserved and third-party headers like units
+  # are not held to our warning level). Downstream consumers are unaffected.
   # ---------------------------------------------------------------------------
   test:
     name: ${{ matrix.name }} (${{ matrix.config }})
@@ -28,21 +29,18 @@ jobs:
             c_compiler: cl
             cxx_compiler: cl
             config: Release
-            warning_flags: "/W4 /WX"
 
           - name: ubuntu-gcc
             os: ubuntu-latest
             c_compiler: gcc
             cxx_compiler: g++
             config: Release
-            warning_flags: "-Werror -Wall -Wextra"
 
           - name: ubuntu-clang-19
             os: ubuntu-latest
             c_compiler: clang-19
             cxx_compiler: clang++-19
             config: Release
-            warning_flags: "-Werror -Wall -Wextra"
 
           # --- Debug ---
           - name: windows-msvc
@@ -50,21 +48,18 @@ jobs:
             c_compiler: cl
             cxx_compiler: cl
             config: Debug
-            warning_flags: "/W4 /WX"
 
           - name: ubuntu-gcc
             os: ubuntu-latest
             c_compiler: gcc
             cxx_compiler: g++
             config: Debug
-            warning_flags: "-Werror -Wall -Wextra"
 
           - name: ubuntu-clang-19
             os: ubuntu-latest
             c_compiler: clang-19
             cxx_compiler: clang++-19
             config: Debug
-            warning_flags: "-Werror -Wall -Wextra"
 
     steps:
       - name: Checkout
@@ -96,7 +91,7 @@ jobs:
             -DBUILD_TESTING=ON \
             -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} \
-            -DCMAKE_CXX_FLAGS="${{ matrix.warning_flags }}"
+            -DCOORDINATES_WARNINGS_AS_ERRORS=ON
 
       - name: Build
         shell: bash

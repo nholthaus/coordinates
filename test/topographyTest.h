@@ -411,7 +411,7 @@ namespace
 		DTEDTile tile;
 
 		DTEDTileManager& TILE_MANAGER = DTEDTileManager::instance();
-		EXPECT_DOUBLE_EQ(TILE_MANAGER.maxNumTiles(), TILE_MANAGER.tileLimit());
+		EXPECT_EQ(TILE_MANAGER.maxNumTiles(), TILE_MANAGER.tileLimit());
 	}
 
 	TEST_F(TileManagerTest, setTileLimit)
@@ -419,7 +419,7 @@ namespace
 		DTEDTile tile;
 
 		DTEDTileManager& TILE_MANAGER = DTEDTileManager::instance();
-		EXPECT_DOUBLE_EQ(TILE_MANAGER.maxNumTiles(), TILE_MANAGER.tileLimit());
+		EXPECT_EQ(TILE_MANAGER.maxNumTiles(), TILE_MANAGER.tileLimit());
 		TILE_MANAGER.setTileLimit(100);
 		EXPECT_EQ(100, TILE_MANAGER.tileLimit());
 	}

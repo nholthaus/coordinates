@@ -34,6 +34,8 @@ target_link_libraries(coordTest PRIVATE
         coordinates::coordinates
 )
 
+coordinates_set_warnings(coordTest)
+
 target_include_directories(coordTest PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}"
 )

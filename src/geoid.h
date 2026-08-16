@@ -185,10 +185,10 @@ inline namespace coordinates
 
                 // create surface of points to interpolate with
                 interpolationMatrix<double> surface;
-                constexpr int interpolationDimension = surface.size();
+                constexpr int interpolationDimension = static_cast<int>(surface.size());
 
-                constexpr int nrows  = EGM96LUT.size();
-                constexpr int ncols  = EGM96LUT[0].size();
+                constexpr int nrows  = static_cast<int>(EGM96LUT.size());
+                constexpr int ncols  = static_cast<int>(EGM96LUT[0].size());
                 constexpr int period = ncols - 1; // assume last column duplicates first
 
                 for (int i = 0; i < interpolationDimension; ++i)
@@ -281,8 +281,8 @@ inline namespace coordinates
                 interpolationMatrix<long double> elevationSurface;
                 constexpr std::size_t interpolationDimension = elevationSurface.size();
 
-                constexpr int numLatitudeLines  = USGG2012LUT.size();
-                constexpr int numLongitudeLines = USGG2012LUT[0].size();
+                constexpr int numLatitudeLines  = static_cast<int>(USGG2012LUT.size());
+                constexpr int numLongitudeLines = static_cast<int>(USGG2012LUT[0].size());
 
                 for (int i = 0; i < static_cast<int>(interpolationDimension); ++i)
                 {

@@ -11,6 +11,8 @@ set_target_properties(coordinates PROPERTIES
 
 target_link_libraries(coordinates PUBLIC units::units)
 
+coordinates_set_warnings(coordinates)
+
 # ----------------------------
 # Public headers
 # ----------------------------

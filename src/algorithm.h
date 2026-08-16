@@ -1040,17 +1040,19 @@ inline namespace coordinates
 				{
 					degrees lon = tile->metadata().southwestLongitude() + resolution * col;
 
-					meters a = tile->elevation(lat + resolution, lon - resolution);
-					meters b = tile->elevation(lat + resolution, lon);
-					meters c = tile->elevation(lat + resolution, lon + resolution);
-					meters d = tile->elevation(lat, lon - resolution);
-					meters f = tile->elevation(lat, lon + resolution);
-					meters g = tile->elevation(lat - resolution, lon - resolution);
-					meters h = tile->elevation(lat - resolution, lon);
-					meters i = tile->elevation(lat - resolution, lon + resolution);
+					// 3x3 elevation kernel around the sample point (z-prefixed to avoid shadowing
+					// single-letter globals). Layout: za zb zc / zd (center) zf / zg zh zi.
+					meters za = tile->elevation(lat + resolution, lon - resolution);
+					meters zb = tile->elevation(lat + resolution, lon);
+					meters zc = tile->elevation(lat + resolution, lon + resolution);
+					meters zd = tile->elevation(lat, lon - resolution);
+					meters zf = tile->elevation(lat, lon + resolution);
+					meters zg = tile->elevation(lat - resolution, lon - resolution);
+					meters zh = tile->elevation(lat - resolution, lon);
+					meters zi = tile->elevation(lat - resolution, lon + resolution);
 
-					dimensionless dz_dx((c + 2 * f + i - (a + 2 * d + g)) / (8 * cellSize));
-					dimensionless dz_dy((g + 2 * h + i - (a + 2 * b + c)) / (8 * cellSize));
+					dimensionless dz_dx((zc + 2 * zf + zi - (za + 2 * zd + zg)) / (8 * cellSize));
+					dimensionless dz_dy((zg + 2 * zh + zi - (za + 2 * zb + zc)) / (8 * cellSize));
 
 					dimensionless slope  = atan(sqrt(std::pow(dz_dx, 2.0) + std::pow(dz_dy, 2.0)));
 					dimensionless aspect = 0;

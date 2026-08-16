@@ -216,8 +216,8 @@ meters<> DTEDTile::elevation(const degrees<>& latitude, const degrees<>& longitu
 	double lonY = (longitude - m_metadata.southwestLongitude()) / m_metadata.longitudeResolution();
 
 	// find the lat/lon index (integer)
-	unsigned int latIndex = floor(latX);
-	unsigned int lonIndex = floor(lonY);
+	unsigned int latIndex = static_cast<unsigned int>(floor(latX));
+	unsigned int lonIndex = static_cast<unsigned int>(floor(lonY));
 
 	// interpolation x,y
 	double xVal = (latX - latIndex);
