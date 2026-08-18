@@ -50,6 +50,7 @@
 #include <gtest/gtest.h>
 
 #include "bodyFrame.h"
+#include "coordinates.h"
 #include "datum.h"
 #include "frameOfReference.h"
 #include "pose.h"
@@ -639,4 +640,67 @@ TEST(PoseConstexpr, OperationsEvaluateAtCompileTime)
 	static_assert(bfApprox(std::get<2>(back).to<double>(), 6.0, 1e-9), "constexpr compose/inverse Z");
 
 	SUCCEED();
+}
+
+//======================================================
+//	Pose <-> geodesy interop (the aircraft-sensor case)
+//======================================================
+
+// A pose placed at a geodesy position transforms a body-local offset back into that geodesy type: a
+// wing-mounted sensor's ECEF position from the aircraft's live pose. With no rotation the sensor sits at
+// the CG plus the raw offset; the result is an ECEF, not a bare tuple.
+TEST(PoseGeodesy, TransformPointReturnsPositionType)
+{
+	const ECEF cg(1000.0_m, 2000.0_m, 3000.0_m);
+	const Pose plane = Pose::at(cg, EulerAngles(0.0_deg, 0.0_deg, 0.0_deg));
+
+	const ECEF offset(10.0_m, -4.0_m, 2.0_m);    // sensor offset expressed in body axes (identity attitude)
+	const ECEF sensor = plane.transformPoint(offset);
+
+	EXPECT_UNITS_NEAR(1010.0_m, sensor.x(), 1e-9_m);
+	EXPECT_UNITS_NEAR(1996.0_m, sensor.y(), 1e-9_m);
+	EXPECT_UNITS_NEAR(3002.0_m, sensor.z(), 1e-9_m);
+}
+
+// A yaw of the vehicle rotates the mounting offset before translating: an offset along body +X, with the
+// vehicle yawed 90 deg about Z, lands along the parent +Y (right-handed rotation of the axes).
+TEST(PoseGeodesy, VehicleYawRotatesTheMountOffset)
+{
+	const ECEF cg(0.0_m, 0.0_m, 0.0_m);
+	const Pose plane = Pose::at(cg, EulerAngles(90.0_deg, 0.0_deg, 0.0_deg));
+
+	const ECEF sensor = plane.transformPoint(ECEF(10.0_m, 0.0_m, 0.0_m));
+	bfExpectVecNear(sensor.point(), 0.0, 10.0, 0.0, 1e-9);
+}
+
+// A fixed compile-time mount (BodyTransform) lifts into a Pose and composes onto the live vehicle pose:
+// sensorPose = vehiclePose * mountPose. This must equal placing the offset by hand through both stages.
+TEST(PoseGeodesy, FixedMountComposesOntoLiveVehiclePose)
+{
+	using Mount = Offset<0.5_m, 3.2_m, -0.1_m>;    // a fixed wing mount, no rotation
+
+	const ECEF cg(100.0_m, 200.0_m, 300.0_m);
+	const Pose plane      = Pose::at(cg, EulerAngles(90.0_deg, 0.0_deg, 0.0_deg));
+	const Pose sensorPose = plane * Pose::from<Mount>();
+
+	// The sensor origin (its local origin, transformed by the composed pose) sits at the mount offset
+	// rotated by the plane's yaw, plus the CG.
+	const ECEF           sensorOrigin = sensorPose.transformPoint(ECEF(0.0_m, 0.0_m, 0.0_m));
+	const CartesianTuple viaStages    = plane.transformPoint(Mount::offset());    // rotate+translate the mount offset
+
+	bfExpectTupleNear(sensorOrigin.point(), viaStages, 1e-9);
+}
+
+// A boresight direction fixed in body axes rotates with the vehicle's attitude but is NOT translated: a
+// pointing along body +X, vehicle yawed 90 deg, points along parent +Y regardless of the vehicle position.
+TEST(PoseGeodesy, BoresightRotatesButDoesNotTranslate)
+{
+	const ECEF cg(5000.0_m, -6000.0_m, 7000.0_m);
+	const Pose plane = Pose::at(cg, EulerAngles(90.0_deg, 0.0_deg, 0.0_deg));
+
+	const CartesianTuple boresightBody(1.0_m, 0.0_m, 0.0_m);    // unit pointing along body forward (+X)
+	const CartesianTuple pointing = plane.rotateDirection(boresightBody);
+
+	// rotated to parent +Y, and unaffected by the (large) vehicle position.
+	bfExpectVecNear(pointing, 0.0, 1.0, 0.0, 1e-9);
 }

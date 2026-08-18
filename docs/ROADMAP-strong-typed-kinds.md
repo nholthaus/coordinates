@@ -118,9 +118,13 @@ stay plain `meters<>`/`degrees<>`; only the public *boundary* is tagged.
       `orthometricHeight` unwrap with `.to<meters<T>>()`; LOS is `COORDINATES_ENABLE_LOS`-gated/unbuilt and
       still consumes other newly-tagged accessors (lat/lon) -- it needs a dedicated tag-reconciliation pass
       when re-enabled.
-- [ ] Deliver the README-advertised-but-missing APIs: `toOrthometricHeight()`/`toEllipsoidHeight()` members
-      (done, commit 1), `PositionAER::fromObserver(observer,target)` + `distanceSquared(a,b)` (done, commit
-      4), `PositionXYZ` + `x()/y()/z()` (commit 5, its own review — standalone Cartesian triple).
+- [x] Deliver the README-advertised-but-missing APIs: `toOrthometricHeight()`/`toEllipsoidHeight()` members
+      (commit 1), `PositionAER::fromObserver(observer,target)` + `distanceSquared(a,b)` (commit 4). The
+      README-advertised `PositionXYZ` was NOT built: the CO's use case (a sensor at a fixed body-axis offset
+      on a moving/rotating aircraft) is runtime attitude, which `Pose` models -- not a static Cartesian
+      triple. Instead, commit 6 added `Pose` ↔ geodesy interop (`Pose::at`, geodesy `transformPoint`,
+      `rotateDirection`, `Pose::from<Mount>()`) and the README `PositionXYZ` section was corrected to point
+      at `BodyFrame`/`Pose`.
 - [ ] Decision: whether `ECEF::x()/y()/z()` etc. (Cartesian axes) tag now or defer to C. (Lean: keep plain
       until C, since a lone axis component has no cross-kind hazard the tuple-tag doesn't already cover.)
 - [x] Full `ctest` green; the ~146 accessor assertions pass via the `as_plain` boundary unwrap in

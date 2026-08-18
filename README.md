@@ -248,7 +248,7 @@ given representation are exposed.
 ## Common Operations Across Point Types
 
 The following operations are implemented consistently across the primary point types
-(`PositionGeodetic`, `PositionECEF`, `PositionENU`, `PositionNED`, `PositionAER`, `PositionXYZ`).
+(`PositionGeodetic`, `PositionECEF`, `PositionENU`, `PositionNED`, `PositionAER`).
 
 ### Null State
 
@@ -447,17 +447,29 @@ It must be explicitly created with observer context.
 
 ---
 
-## PositionXYZ
+## Body-relative positions
 
-Represents a generic Cartesian triple with no implied Earth or local-frame semantics.
+A position expressed relative to a moving, rotating body — a sensor at a fixed offset on an aircraft, in
+the vehicle's own axes — is not a distinct coordinate type. It is modelled by the frame graph and the
+rigid-transform types:
 
-### Component Accessors
+- **`BodyFrame<Parent, Transform>`** — a Cartesian frame rigidly attached to a parent at a **compile-time**
+  offset and orientation (a static mounting). A body-local point converts through the frame graph to NED,
+  ECEF, and so on. Body frames nest to arbitrary depth (camera on a wingtip on an aircraft in local NED).
+- **`Pose`** — a **runtime** 6-DOF rigid transform (a translation plus a `Quaternion`) for a body whose
+  position and attitude vary each frame (a moving vehicle, a slewing sensor). `Pose::at(position, attitude)`
+  places it; `transformPoint` maps a body-local offset into the parent frame (returning the same position
+  type — e.g. an `ECEF` sensor location); `rotateDirection` carries a body-axis boresight into the parent
+  frame as the body slews; `Pose::from<Mount>()` lifts a fixed `BodyTransform` mount so it composes onto a
+  live vehicle pose (`sensorPose = vehiclePose * Pose::from<Mount>()`).
 
-- `x()` / `setX(...)`
-- `y()` / `setY(...)`
-- `z()` / `setZ(...)`
-
-Intended for abstract or intermediate computations.
+```cpp
+// A wing-mounted sensor on a moving aircraft.
+ECEF cg = ...;                                   // aircraft centre of gravity, updated live
+Pose plane = Pose::at(cg, EulerAngles(yaw, pitch, roll));
+using Mount = Offset<0.5_m, 3.2_m, -0.1_m>;      // fixed sensor offset in body axes
+ECEF sensor = (plane * Pose::from<Mount>()).transformPoint(ECEF(0_m, 0_m, 0_m));
+```
 
 ---
 
@@ -523,7 +535,7 @@ in different coordinate systems.
 PositionGeodetic geo = ...;
 
 PositionECEF ecef = geo;
-PositionXYZ  xyz  = ecef;
+PositionNED  ned  = ecef;
 ```
 
 Each step preserves physical meaning. The intermediate representation is explicit in the type

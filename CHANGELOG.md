@@ -12,6 +12,12 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 ### Added
 
+- **`Pose` ↔ geodesy interop**: a runtime 6-DOF pose now bridges to the position types for the
+  moving-vehicle case (an aircraft centre of gravity in ECEF carrying a fixed sensor mount). `Pose::at(position,
+  attitude)` places a pose at a geodesy position; `transformPoint` accepts and returns a Cartesian position
+  type (e.g. a wing-mounted sensor's `ECEF` location); `rotateDirection` carries a body-axis boresight into
+  the parent frame as the vehicle slews; and `Pose::from<Mount>()` lifts a compile-time `BodyTransform` mount
+  so it composes onto a live vehicle pose (`sensorPose = vehiclePose * Pose::from<Mount>()`).
 - **`PositionAER::fromObserver(observer, target)`**: a static factory for the observer-relative look angles
   (azimuth, elevation, range) of a target as seen from an observer — the observer-relative spelling of
   `PositionAER(target, observer)`. Previously advertised in the README but unimplemented.

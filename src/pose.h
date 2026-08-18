@@ -53,6 +53,7 @@
 #include <units.h>
 
 #include "frameOfReference.h"
+#include "positionECEF.h"
 #include "quaternion.h"
 #include "rotation.h"
 
@@ -116,6 +117,42 @@ inline namespace coordinates
 		/// The identity pose (no translation, no rotation).
 		static constexpr Pose identity() noexcept { return Pose(CartesianTuple(0.0_m, 0.0_m, 0.0_m), Quaternion::identity()); }
 
+		/**
+		 * @brief		A pose placed at a geodesy position with a given attitude.
+		 * @details		The translation is the position's Cartesian coordinates (its `point()`), so a moving
+		 *				body -- an aircraft centre of gravity in ECEF -- is a `Pose` at its current position and
+		 *				attitude, updated each frame. `transformPoint` then maps a body-local offset into the
+		 *				parent frame the position lives in.
+		 * @tparam		CartesianPoint	a Cartesian position type (e.g. `PositionECEF`); its `point()` is the
+		 *								translation.
+		 * @param[in]	origin		the body origin's position in the parent frame.
+		 * @param[in]	attitude	the body's orientation relative to the parent axes.
+		 * @return		the pose of the body at that position and attitude.
+		 */
+		template<class CartesianPoint>
+		    requires(traits::is_cartesian_point<CartesianPoint>)
+		static Pose at(const CartesianPoint& origin, const EulerAngles& attitude) noexcept
+		{
+			return Pose(origin.point(), attitude);
+		}
+
+		/**
+		 * @brief		A pose from a compile-time rigid mount transform.
+		 * @details		Lifts a fixed mounting -- a `BodyTransform` (offset + orientation baked into a type) --
+		 *				into a runtime `Pose`, so a static mount composes onto a live vehicle pose:
+		 *				`sensorPose = vehiclePose * Pose::from<Mount>()`. `Mount` supplies `offset()` and
+		 *				`rotation()` (as `BodyTransform` and its `Offset`/`Attitude` aliases do); it is accepted
+		 *				by structural match so this header does not depend on `bodyFrame.h`.
+		 * @tparam		Mount	a rigid-transform policy exposing static `offset()` and `rotation()`.
+		 * @return		the mount expressed as a runtime pose.
+		 */
+		template<class Mount>
+		    requires requires { Mount::offset(); Mount::rotation(); }
+		static constexpr Pose from() noexcept
+		{
+			return Pose(Mount::offset(), Mount::rotation());
+		}
+
 		//----------------------------------
 		//	OPERATIONS
 		//----------------------------------
@@ -132,6 +169,38 @@ inline namespace coordinates
 			return CartesianTuple(std::get<0>(rotated) + std::get<0>(m_translation),
 			                      std::get<1>(rotated) + std::get<1>(m_translation),
 			                      std::get<2>(rotated) + std::get<2>(m_translation));
+		}
+
+		/**
+		 * @brief		Map a body-local offset into the parent frame as a geodesy position.
+		 * @details		The geodesy counterpart of `transformPoint`: given a body-local offset (a sensor's
+		 *				mounting offset in the vehicle's axes, as a Cartesian position), returns the offset's
+		 *				position in the parent frame -- e.g. the ECEF position of a wing-mounted sensor from the
+		 *				aircraft's pose. The result carries the same position type as the offset.
+		 * @tparam		CartesianPoint	a Cartesian position type (e.g. `PositionECEF`).
+		 * @param[in]	localOffset	the offset in body-local coordinates.
+		 * @return		the offset's position in the parent frame, as the same position type.
+		 */
+		template<class CartesianPoint>
+		    requires(traits::is_cartesian_point<CartesianPoint>)
+		CartesianPoint transformPoint(const CartesianPoint& localOffset) const noexcept
+		{
+			CartesianPoint result;
+			result.setPoint(transformPoint(localOffset.point()));
+			return result;
+		}
+
+		/**
+		 * @brief		Rotate a body-local direction into the parent frame.
+		 * @details		Applies only the pose's rotation, not its translation -- a direction has no position.
+		 *				Use it to carry a fixed body-axis boresight (a sensor's pointing) into the parent/ECEF
+		 *				frame as the vehicle slews: the boresight rotates with the pose's attitude.
+		 * @param[in]	direction	a direction in body-local axes.
+		 * @return		the direction in parent axes.
+		 */
+		constexpr CartesianTuple rotateDirection(const CartesianTuple& direction) const noexcept
+		{
+			return m_rotation.rotate(direction);
 		}
 
 		/**
