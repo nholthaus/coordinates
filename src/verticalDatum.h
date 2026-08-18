@@ -35,6 +35,7 @@
 //------------------------
 
 #include <units.h>
+#include <units/kind.h>
 
 #include "ellipsoid.h"
 #include "geoid.h"
@@ -44,6 +45,27 @@
 
 inline namespace coordinates
 {
+	/// Type-tagged vertical-height values. Both an ellipsoidal (HAE) and an orthometric (MSL) height are lengths,
+	/// so nothing at the type level stops them being added or interchanged today -- yet doing so without the
+	/// geoid-undulation correction is a datum error. These `units::kind` tags make the two distinct types:
+	/// mixing them, or using one where the other is expected, is a compile error, and the ONLY bridge is
+	/// `convertToEllipsoidHeight` / `convertFromEllipsoidHeight`. (Distinct from the `traits::OrthometricHeight`
+	/// concept, which describes a *type that can produce* an orthometric height.)
+	namespace heights
+	{
+		/// A height above the reference ellipsoid (HAE / geometric height, e.g. what GPS reports).
+		using Ellipsoidal = units::kind<"ellipsoidal_height", units::length::meters<double>>;
+
+		/// A height above the geoid (orthometric / mean-sea-level height, e.g. what a map or DTED reports).
+		using Orthometric = units::kind<"orthometric_height", units::length::meters<double>>;
+
+		/// The geoid undulation N: the signed separation between the ellipsoid and the geoid at a point
+		/// (`N = ellipsoidal - orthometric`). Tagged distinct from a height so it can only enter a height
+		/// through the sanctioned `convertToEllipsoidHeight` / `convertFromEllipsoidHeight` bridge, never be
+		/// mistaken for an altitude.
+		using Undulation = units::kind<"geoid_undulation", units::length::meters<double>>;
+	} // namespace heights
+
 	inline namespace traits
 	{
 
@@ -148,22 +170,28 @@ inline namespace coordinates
 		}    // namespace detail
 	}    // namespace traits
 
-	template<VerticalDatum Datum, typename AngleUnits, typename LengthUnits>
-	static meters<> convertToEllipsoidHeight(AngleUnits latitude, AngleUnits longitude, LengthUnits height)
+	/// Convert an orthometric (MSL) height to an ellipsoidal (HAE) height for the given vertical datum, adding
+	/// the geoid undulation. The height is an `OrthometricHeight` and the result an `EllipsoidalHeight`, so the
+	/// two cannot be confused: passing an already-ellipsoidal height here, or using the result where an
+	/// orthometric height is expected, is a compile error. A plain `meters<>` still constructs into the
+	/// `OrthometricHeight` argument, so `convertToEllipsoidHeight<D>(lat, lon, 12.0_m)` remains valid.
+	template<VerticalDatum Datum, typename AngleUnits>
+	static heights::Ellipsoidal convertToEllipsoidHeight(AngleUnits latitude, AngleUnits longitude, heights::Orthometric height)
 	{
 		static_assert(units::traits::is_angle_unit_v<AngleUnits>, "Type of input argument `latitude` and `longitude` must be a unit of angle.");
-		static_assert(units::traits::is_length_unit_v<LengthUnits>, "Type of input argument `height` must be a unit of length.");
 
-		return detail::convertToEllipsoidHeight<Datum>(latitude, longitude, height);
+		return heights::Ellipsoidal(detail::convertToEllipsoidHeight<Datum>(latitude, longitude, height.template to<meters<>>()));
 	}
 
-	template<VerticalDatum Datum, typename AngleUnits, typename LengthUnits>
-	static meters<> convertFromEllipsoidHeight(AngleUnits latitude, AngleUnits longitude, LengthUnits height)
+	/// Convert an ellipsoidal (HAE) height to an orthometric (MSL) height for the given vertical datum,
+	/// subtracting the geoid undulation. Inverse of `convertToEllipsoidHeight`; the `EllipsoidalHeight` input and
+	/// `OrthometricHeight` result are tagged distinct so the two heights cannot be silently interchanged.
+	template<VerticalDatum Datum, typename AngleUnits>
+	static heights::Orthometric convertFromEllipsoidHeight(AngleUnits latitude, AngleUnits longitude, heights::Ellipsoidal height)
 	{
 		static_assert(units::traits::is_angle_unit_v<AngleUnits>, "Type of input argument `latitude` and `longitude` must be a unit of angle.");
-		static_assert(units::traits::is_length_unit_v<LengthUnits>, "Type of input argument `height` must be a unit of length.");
 
-		return detail::convertFromEllipsoidHeight<Datum>(latitude, longitude, height);
+		return heights::Orthometric(detail::convertFromEllipsoidHeight<Datum>(latitude, longitude, height.template to<meters<>>()));
 	}
 }    // namespace coordinates
 

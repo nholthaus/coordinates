@@ -34,6 +34,7 @@ set(PUBLIC_HEADERS
         bodyFrame.h
         ellipsoid.h
         frameOfReference.h
+        heights.h
         geodesicDirectResult.h
         geodesicInverseResult.h
         geoid.h

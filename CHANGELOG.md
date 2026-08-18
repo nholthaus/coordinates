@@ -12,6 +12,15 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 ### Added
 
+- **Strongly-typed heights** (`src/heights.h`, `src/verticalDatum.h`): ellipsoidal (HAE) and orthometric
+  (MSL) heights are now distinct `units::kind` types (`heights::Ellipsoidal`, `heights::Orthometric`),
+  joined by a `heights::Undulation` kind for the geoid separation. Both are lengths but mixing them in
+  arithmetic or comparison is a compile error; the only bridge is an explicit conversion. A plain length
+  still constructs into a height implicitly, so existing construction is unaffected. `heights::kind_for<Datum>`
+  deduces which height a datum measures from its vertical reference.
+- **`PositionGeodetic::toEllipsoidHeight()` / `toOrthometricHeight()`**: convert a point's stored altitude
+  between HAE and MSL through the datum's geoid, returning the tagged height kind.
+
 - **Rotation-math library** in `lib/` (`quaternion.h`, `rotation.h`): four fully
   interconvertible, `constexpr`-capable rotation representations — `Quaternion`
   (canonical, Hamilton convention, active rotation), `EulerAngles` (intrinsic Z-Y-X
@@ -33,6 +42,11 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 ### Changed
 
 - Bumped the project version to 1.2.0.
+- `PositionGeodetic::altitude()` now returns the tagged height kind the datum measures
+  (`heights::Ellipsoidal` for an ellipsoid-referenced datum, `heights::Orthometric` for a
+  geoid-referenced one) instead of a bare `meters<>`. Source-compatible for arithmetic and comparison
+  against plain lengths; code that stored the result in an explicit `meters<>` should unwrap with
+  `.to<meters<>>()`.
 - `FrameData` constructors are now `constexpr`, so body-frame conversions evaluate at
   compile time.
 - CI hardened: warnings-as-errors, Debug configurations, an AddressSanitizer +

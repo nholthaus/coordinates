@@ -346,7 +346,7 @@ inline namespace coordinates
 				auto lambda(std::get<1>(point));    // longitude
 				auto h(std::get<2>(point));         // height
 
-				h = coordinates::convertToEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h);
+				h = coordinates::convertToEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h).template to<meters<>>();
 
 				return base_tuple_type(phi, lambda, h);
 			}
@@ -358,7 +358,7 @@ inline namespace coordinates
 				auto lambda(std::get<1>(point));    // longitude
 				auto h(std::get<2>(point));         // height
 
-				h = coordinates::convertFromEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h);
+				h = coordinates::convertFromEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h).template to<meters<>>();
 
 				return tuple_type(phi, lambda, h);
 			}

@@ -47,6 +47,7 @@
 
 #include <datum.h>
 #include <frameOfReference.h>
+#include <heights.h>
 #include <topography.h>
 
 #include <point.h>

@@ -74,21 +74,49 @@ namespace gtest_units
     template <class T>
     using decay_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
+    //----------------------------------------------------------------------------------------------
+    // Unwrap a `units::kind<>` to its underlying plain unit; a plain unit passes through unchanged. A kind
+    // exposes `unit_type` and `to<PlainUnit>()`, so this drops the tag without touching the value. Once both
+    // operands are plain units, the strongly-typed comparison/subtraction below reconciles differing units
+    // (km vs m) natively -- so a tagged accessor compares correctly against a plain-unit literal.
+    //----------------------------------------------------------------------------------------------
+    template <class U>
+    constexpr auto as_plain(const U& u)
+    {
+        if constexpr (requires { typename U::unit_type; u.template to<typename U::unit_type>(); })
+            return u.template to<typename U::unit_type>();
+        else
+            return u;
+    }
+
+    // Difference of two quantities as a scalar, unit-reconciled: unwrap any kind to its plain unit, then take
+    // the strongly-typed `a - b` (which reconciles km vs m to a common unit) and reduce to a scalar.
     template <class A, class B>
-    using common_units_t = decay_t<decltype(std::declval<A>() - std::declval<B>())>;
+    constexpr double scalar_difference(const A& a, const B& b)
+    {
+        return static_cast<double>(scalar_value(as_plain(a) - as_plain(b)));
+    }
+
+    // Ordering / equality: unwrap any kind to its plain unit, then use the strongly-typed operator so units
+    // reconcile natively (a plain-vs-plain comparison is unchanged from the original behavior).
+    template <class A, class B> constexpr bool scalar_eq(const A& a, const B& b) { return as_plain(a) == as_plain(b); }
+    template <class A, class B> constexpr bool scalar_lt(const A& a, const B& b) { return as_plain(a) <  as_plain(b); }
+    template <class A, class B> constexpr bool scalar_le(const A& a, const B& b) { return as_plain(a) <= as_plain(b); }
+    template <class A, class B> constexpr bool scalar_gt(const A& a, const B& b) { return as_plain(a) >  as_plain(b); }
+    template <class A, class B> constexpr bool scalar_ge(const A& a, const B& b) { return as_plain(a) >= as_plain(b); }
 
     //----------------------------------------------------------------------------------------------
     // Assertion helpers (gtest predicate formatters)
     //----------------------------------------------------------------------------------------------
 
-    // Exact equality (uses operator==)
+    // Exact equality (scalar magnitudes, so a tagged kind compares against its plain unit)
     template <class A, class B>
     ::testing::AssertionResult UnitsEq(const char* a_expr,
                                        const char* b_expr,
                                        const A& a,
                                        const B& b)
     {
-        if (a == b) return ::testing::AssertionSuccess();
+        if (scalar_eq(a, b)) return ::testing::AssertionSuccess();
 
         return ::testing::AssertionFailure()
             << "Expected equality:\n"
@@ -104,7 +132,7 @@ namespace gtest_units
                                        const A& a,
                                        const B& b)
     {
-        if (a < b) return ::testing::AssertionSuccess();
+        if (scalar_lt(a, b)) return ::testing::AssertionSuccess();
 
         return ::testing::AssertionFailure()
             << "Expected:\n"
@@ -119,7 +147,7 @@ namespace gtest_units
                                        const A& a,
                                        const B& b)
     {
-        if (a <= b) return ::testing::AssertionSuccess();
+        if (scalar_le(a, b)) return ::testing::AssertionSuccess();
 
         return ::testing::AssertionFailure()
             << "Expected:\n"
@@ -134,7 +162,7 @@ namespace gtest_units
                                        const A& a,
                                        const B& b)
     {
-        if (a > b) return ::testing::AssertionSuccess();
+        if (scalar_gt(a, b)) return ::testing::AssertionSuccess();
 
         return ::testing::AssertionFailure()
             << "Expected:\n"
@@ -149,7 +177,7 @@ namespace gtest_units
                                        const A& a,
                                        const B& b)
     {
-        if (a >= b) return ::testing::AssertionSuccess();
+        if (scalar_ge(a, b)) return ::testing::AssertionSuccess();
 
         return ::testing::AssertionFailure()
             << "Expected:\n"
@@ -167,11 +195,8 @@ namespace gtest_units
                                             const B& b,
                                             const Tol& tol)
     {
-        using D = common_units_t<A, B>;
-
-        const D diff_units = (a - b);
-        const auto diff = std::abs(scalar_value(diff_units));
-        const auto t = std::abs(scalar_value(tol));
+        const auto diff = std::abs(scalar_difference(a, b));
+        const auto t = std::abs(scalar_value(as_plain(tol)));
 
         if (diff <= t) return ::testing::AssertionSuccess();
 
@@ -180,7 +205,6 @@ namespace gtest_units
             << "  |" << a_expr << " - " << b_expr << "| <= " << tol_expr << "\n"
             << "  " << a_expr << " = " << a << "\n"
             << "  " << b_expr << " = " << b << "\n"
-            << "  (" << a_expr << " - " << b_expr << ") = " << diff_units << "\n"
             << "  |diff| (scalar) = " << diff << "\n"
             << "  tol   (scalar)  = " << t << "\n";
     }
@@ -195,13 +219,10 @@ namespace gtest_units
                                             const B& b,
                                             double rel_tol)
     {
-        using D = common_units_t<A, B>;
+        const auto a_s = std::abs(scalar_value(as_plain(a)));
+        const auto b_s = std::abs(scalar_value(as_plain(b)));
 
-        const D diff_units = (a - b);
-        const auto diff = std::abs(scalar_value(diff_units));
-
-        const auto a_s = std::abs(scalar_value(a));
-        const auto b_s = std::abs(scalar_value(b));
+        const auto diff = std::abs(scalar_difference(a, b));
 
         // Scale: max(|a|, |b|, 1) — the "1" avoids division-by-zero style blowups near zero.
         const auto scale = std::max({a_s, b_s, 1.0});
@@ -215,7 +236,6 @@ namespace gtest_units
             << a_expr << "|, |" << b_expr << "|, 1)\n"
             << "  " << a_expr << " = " << a << "\n"
             << "  " << b_expr << " = " << b << "\n"
-            << "  (" << a_expr << " - " << b_expr << ") = " << diff_units << "\n"
             << "  |diff| (scalar) = " << diff << "\n"
             << "  scale (scalar)  = " << scale << "\n"
             << "  rel_tol         = " << rel_tol << "\n"

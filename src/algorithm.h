@@ -678,7 +678,7 @@ inline namespace coordinates
 
 		PositionGeodetic<Datum> dst(units::angle::degrees<>(units::angle::radians<>(static_cast<double>(phi2))),
 		                            units::angle::degrees<>(wrap180(units::angle::degrees<>(units::angle::radians<>(static_cast<double>(lon2))))),
-		                            start.altitude(),
+		                            start.altitude().template to<units::length::meters<>>(),
 		                            start.frameData().date);
 
 		const auto azi2_deg = wrap360(units::angle::degrees<>(static_cast<double>(alpha2 * static_cast<fp_t>(180.0) / std::numbers::pi_v<fp_t>)));

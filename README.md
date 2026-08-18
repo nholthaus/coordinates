@@ -626,9 +626,22 @@ Coordinates allows explicit conversion between datums when sufficient informatio
 
 ### Example: Converting Height Using a Geoid
 
+Height comes in two flavours that must never be silently mixed: **ellipsoidal** (HAE, what GPS reports)
+and **orthometric** (MSL, what a map reports). They differ by the geoid undulation, which depends on
+position, so the conversion needs a point, not a bare number. `PositionGeodetic` carries the point, and
+its `altitude()` is tagged with the height kind the datum measures — an ellipsoid-referenced datum yields
+an `heights::Ellipsoidal`, a geoid-referenced datum an `heights::Orthometric` — so the reference surface
+is part of the type. `toEllipsoidHeight()` and `toOrthometricHeight()` convert between them.
+
 ```cpp
-PositionGeodetic ellipsoidal = ...;
-meters<> altitudeMSL = ellipsoidal.toOrthometricHeight();
+// A point on a geoid-referenced datum stores an orthometric (MSL) height.
+PositionGeodetic<datums::NAD83_NAVD88> point(41.87917_deg, -87.62917_deg, 0.0_m);
+
+auto msl = point.altitude();            // heights::Orthometric (deduced from the datum)
+auto hae = point.toEllipsoidHeight();   // heights::Ellipsoidal (undulation added)
+
+// The two heights are distinct types: `msl + hae` is a compile error. Unwrap to operate in plain units:
+meters<> altitudeMSL = point.toOrthometricHeight().to<meters<>>();
 ```
 
 ---

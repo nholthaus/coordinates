@@ -36,6 +36,7 @@
 
 #include "algorithm.h"
 #include "frameOfReference.h"
+#include "heights.h"
 #include "point.h"
 #include <units.h>
 
@@ -77,6 +78,7 @@ inline namespace coordinates
 		using datum_type       = Datum;
 		using angle_unit_type  = LatLonUnits<T>;
 		using height_unit_type = HeightUnits<T>;
+		using height_kind      = heights::kind_for<Datum>;    ///< the tagged height kind this datum measures (HAE vs MSL)
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -301,11 +303,43 @@ inline namespace coordinates
 
 		/**
 		 * @brief		altitude-value
-		 * @details		returns the altitude-value of the point, performing a unit-conversion to <i>UnitsTo</i> if
-		 *				necessary.
-		 * @returns		altitude-value of the Point.
+		 * @details		returns the altitude of the point, tagged with the height kind the datum measures: a datum
+		 *				referenced to a bare ellipsoid yields an `heights::Ellipsoidal` (HAE), a datum referenced to
+		 *				a geoid or topography yields an `heights::Orthometric` (MSL). The tag makes the reference
+		 *				surface part of the type, so an HAE and an MSL height can never be silently interchanged.
+		 * @returns		altitude of the Point, as `heights::kind_for<Datum>`.
 		 */
-		[[nodiscard]] height_unit_type altitude() const { return m_altitude; }
+		[[nodiscard]] height_kind altitude() const { return height_kind(m_altitude); }
+
+		/**
+		 * @brief		this point's height above the reference ellipsoid (HAE).
+		 * @details		converts the stored altitude -- which is measured in the datum's own vertical reference --
+		 *				to an ellipsoidal height, adding the geoid undulation at this point's latitude/longitude
+		 *				when the datum is geoid-referenced, or returning it unchanged when the datum is already
+		 *				ellipsoid-referenced. The result is tagged `heights::Ellipsoidal` so it can never be
+		 *				mistaken for an orthometric height.
+		 * @returns		height above the ellipsoid, as `heights::Ellipsoidal`.
+		 */
+		[[nodiscard]] heights::Ellipsoidal toEllipsoidHeight() const
+		{
+			return coordinates::convertToEllipsoidHeight<typename traits::datum_traits<Datum>::vertical_datum>(
+			        m_latitude, m_longitude, m_altitude);
+		}
+
+		/**
+		 * @brief		this point's height above the geoid (orthometric / MSL height).
+		 * @details		converts the stored altitude to an orthometric height: it is first raised to an
+		 *				ellipsoidal height (`toEllipsoidHeight`), then the datum's undulation is subtracted back
+		 *				off, so a geoid-referenced datum round-trips to its stored value and an ellipsoid-referenced
+		 *				datum yields the MSL height below its stored HAE. The result is tagged `heights::Orthometric`
+		 *				so it can never be mistaken for an ellipsoidal height.
+		 * @returns		height above the geoid, as `heights::Orthometric`.
+		 */
+		[[nodiscard]] heights::Orthometric toOrthometricHeight() const
+		{
+			return coordinates::convertFromEllipsoidHeight<typename traits::datum_traits<Datum>::vertical_datum>(
+			        m_latitude, m_longitude, toEllipsoidHeight());
+		}
 
 		/**
 		 * @brief		Date of observation.
