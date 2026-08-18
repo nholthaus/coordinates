@@ -36,6 +36,8 @@
 
 #include <units.h>
 
+#include "angles.h"
+
 inline namespace coordinates
 {
 	//	----------------------------------------------------------------------------
@@ -101,9 +103,9 @@ inline namespace coordinates
 		 * @brief		Returns the forward azimuth at destination.
 		 * @return		Final bearing at destination, normalized to [0, 360).
 		 */
-		degrees<> finalBearing() const
+		angles::Azimuth finalBearing() const
 		{
-			return m_finalBearing;
+			return angles::Azimuth(m_finalBearing);
 		}
 
 	private:

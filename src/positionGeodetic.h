@@ -35,6 +35,7 @@
 //------------------------
 
 #include "algorithm.h"
+#include "angles.h"
 #include "frameOfReference.h"
 #include "heights.h"
 #include "point.h"
@@ -287,11 +288,11 @@ inline namespace coordinates
 		 * @details		returns the latitude-value of the point.
 		 * @returns		latitude-value of the Point.
 		 */
-		[[nodiscard]] angle_unit_type latitude() const
+		[[nodiscard]] angles::Latitude latitude() const
 		{
 			// remember, convert automatically uses the most efficient algorithm, including to/fromBase
 			// and directly returning values if they are the same.
-			return m_latitude;
+			return angles::Latitude(m_latitude);
 		}
 
 		/**
@@ -299,7 +300,7 @@ inline namespace coordinates
 		 * @details		returns the longitude-value of the point.
 		 * @returns		longitude-value of the Point.
 		 */
-		[[nodiscard]] angle_unit_type longitude() const { return m_longitude; }
+		[[nodiscard]] angles::Longitude longitude() const { return angles::Longitude(m_longitude); }
 
 		/**
 		 * @brief		altitude-value
@@ -475,9 +476,9 @@ inline namespace coordinates
 		 * @param[in]	other	Other geodetic point.
 		 * @return		Initial bearing at this point, normalized to [0, 360).
 		 */
-		degrees<> initialBearingTo(const PositionGeodetic& other) const
+		angles::Azimuth initialBearingTo(const PositionGeodetic& other) const
 		{
-			return initialBearing<Datum>(*this, other);
+			return angles::Azimuth(initialBearing<Datum>(*this, other));
 		}
 
 		/**
@@ -485,9 +486,9 @@ inline namespace coordinates
 		 * @param[in]	other	Other geodetic point.
 		 * @return		Final bearing at the destination point, normalized to [0, 360).
 		 */
-		degrees<> finalBearingTo(const PositionGeodetic& other) const
+		angles::Azimuth finalBearingTo(const PositionGeodetic& other) const
 		{
-			return finalBearing<Datum>(*this, other);
+			return angles::Azimuth(finalBearing<Datum>(*this, other));
 		}
 
 		/**

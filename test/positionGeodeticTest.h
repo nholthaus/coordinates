@@ -576,13 +576,13 @@ namespace
 	TEST_F(PositionGeodeticTest, latitude)
 	{
 		LLA NYC(40.7128_deg, -74.0059_deg, 30.0_km);
-		EXPECT_EQ(40.7128_deg, NYC.latitude());
+		EXPECT_UNITS_EQ(40.7128_deg, NYC.latitude());
 	}
 
 	TEST_F(PositionGeodeticTest, longitude)
 	{
 		LLA NYC(40.7128_deg, -74.0059_deg, 30.0_km);
-		EXPECT_EQ(-74.0059_deg, NYC.longitude());
+		EXPECT_UNITS_EQ(-74.0059_deg, NYC.longitude());
 	}
 
 	TEST_F(PositionGeodeticTest, altitude)
@@ -602,8 +602,8 @@ namespace
 		LLA NYC;
 		NYC.setLatitude(40.7128_deg);
 
-		EXPECT_EQ(40.7128_deg, NYC.latitude());
-		EXPECT_EQ(0.0_deg, NYC.longitude());
+		EXPECT_UNITS_EQ(40.7128_deg, NYC.latitude());
+		EXPECT_UNITS_EQ(0.0_deg, NYC.longitude());
 		EXPECT_UNITS_EQ(0.0_m, NYC.altitude());
 	}
 
@@ -612,8 +612,8 @@ namespace
 		LLA NYC;
 		NYC.setLongitude(-74.0059_deg);
 
-		EXPECT_EQ(0.0_deg, NYC.latitude());
-		EXPECT_EQ(-74.0059_deg, NYC.longitude());
+		EXPECT_UNITS_EQ(0.0_deg, NYC.latitude());
+		EXPECT_UNITS_EQ(-74.0059_deg, NYC.longitude());
 		EXPECT_UNITS_EQ(0.0_m, NYC.altitude());
 	}
 
@@ -622,8 +622,8 @@ namespace
 		LLA NYC;
 		NYC.setAltitude(30.0_km);
 
-		EXPECT_EQ(0.0_deg, NYC.latitude());
-		EXPECT_EQ(0.0_deg, NYC.longitude());
+		EXPECT_UNITS_EQ(0.0_deg, NYC.latitude());
+		EXPECT_UNITS_EQ(0.0_deg, NYC.longitude());
 		EXPECT_UNITS_EQ(30.0_km, NYC.altitude());
 	}
 

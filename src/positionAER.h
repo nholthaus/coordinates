@@ -34,6 +34,7 @@
 //	INCLUDES
 //------------------------
 
+#include "angles.h"
 #include "frameOfReference.h"
 #include "point.h"
 #include "positionGeodetic.h"
@@ -496,11 +497,11 @@ inline namespace coordinates
 		 *				necessary.
 		 * @returns		azimuth-value of the Point.
 		 */
-		[[nodiscard]] angle_unit_type azimuth() const
+		[[nodiscard]] angles::Azimuth azimuth() const
 		{
 			// remember, convert automatically uses the most efficient algorithm, including to/fromBase
 			// and directly returning values if they are the same.
-			return m_azimuth;
+			return angles::Azimuth(m_azimuth);
 		}
 
 		/**
@@ -509,7 +510,7 @@ inline namespace coordinates
 		 *				necessary.
 		 * @returns		elevation-value of the Point.
 		 */
-		[[nodiscard]] angle_unit_type elevation() const { return m_elevation; }
+		[[nodiscard]] angles::Elevation elevation() const { return angles::Elevation(m_elevation); }
 
 		/**
 		 * @brief		range-value

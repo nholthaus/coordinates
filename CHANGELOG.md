@@ -12,6 +12,13 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 ### Added
 
+- **Strongly-typed angles** (`src/angles.h`): latitude, longitude, azimuth, elevation, and the three
+  orientation angles (yaw/pitch/roll) are now distinct `units::kind` types in the `angles::` namespace.
+  They are all `degrees<>` but semantically incommensurable, so mixing them is a compile error — most
+  importantly, a latitude and an azimuth (which previously shared both a type and a `SphericalTuple` slot)
+  can no longer be silently confused. `PositionGeodetic::latitude()`/`longitude()`,
+  `PositionAER::azimuth()`/`elevation()`, and every geodesic bearing accessor now return their tagged kind;
+  AER azimuth, geodesic bearings, and any North-referenced heading unify as one `angles::Azimuth`.
 - **Strongly-typed heights** (`src/heights.h`, `src/verticalDatum.h`): ellipsoidal (HAE) and orthometric
   (MSL) heights are now distinct `units::kind` types (`heights::Ellipsoidal`, `heights::Orthometric`),
   joined by a `heights::Undulation` kind for the geoid separation. Both are lengths but mixing them in
@@ -42,6 +49,11 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 ### Changed
 
 - Bumped the project version to 1.2.0.
+- Position accessors now return tagged geodesy kinds instead of bare `units` quantities:
+  `latitude()`/`longitude()` → `angles::Latitude`/`Longitude`, `azimuth()`/`elevation()` →
+  `angles::Azimuth`/`Elevation`, and the geodesic bearing accessors → `angles::Azimuth`. Source-compatible
+  for arithmetic and comparison against plain angles; code that stored a result in an explicit `degrees<>`
+  should unwrap with `.to<degrees<>>()`.
 - `PositionGeodetic::altitude()` now returns the tagged height kind the datum measures
   (`heights::Ellipsoidal` for an ellipsoid-referenced datum, `heights::Orthometric` for a
   geoid-referenced one) instead of a bare `meters<>`. Source-compatible for arithmetic and comparison

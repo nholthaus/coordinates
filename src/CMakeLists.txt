@@ -23,6 +23,7 @@ set(PUBLIC_HEADERS
         abstractTile.h
         abstractTileManager.h
         algorithm.h
+        angles.h
         coordinate_traits.h
         coordinates.h
         coordinates_fwd.h

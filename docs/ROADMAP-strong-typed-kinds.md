@@ -98,6 +98,10 @@ stay plain `meters<>`/`degrees<>`; only the public *boundary* is tagged.
       `src/CMakeLists.txt` `PUBLIC_HEADERS` and `#include`d from `coordinates.h` before the position headers.
       (One header per dimension: `angles.h` lands in commit 2, `ranges.h` in commit 3 -- no monolithic
       catch-all header.)
+- [x] `src/angles.h` — the seven angle kinds (`Latitude`, `Longitude`, `Azimuth`, `Elevation`, `Yaw`,
+      `Pitch`, `Roll`; AER azimuth + geodesic bearing + sun azimuth unified as one `Azimuth`). Tagged
+      `PositionGeodetic::latitude()/longitude()`, `PositionAER::azimuth()/elevation()`, and every geodesic
+      bearing accessor. `test/anglesTest.h` proves the lat!=azimuth distinction. Commit `4e1c8c8`.
 - [ ] Tag public accessors + matching setters/ctor params:
       `LLA::latitude()/longitude()/altitude()`, `AER::azimuth()/elevation()/range()`,
       `distance()/magnitude()` family, geodesic `distanceTo()/initialBearingTo()/finalBearingTo()` and the

@@ -627,29 +627,29 @@ TEST_F(PositionAERTest, distance)
 	TEST_F(PositionAERTest, azimuth)
 	{
 		AER aer;
-		EXPECT_EQ(0_deg, aer.azimuth());
+		EXPECT_UNITS_EQ(0_deg, aer.azimuth());
 
 		AER aer1(5_deg, 6_deg, 7_km, LLA());
 
-		EXPECT_EQ(5_deg, aer1.azimuth());
+		EXPECT_UNITS_EQ(5_deg, aer1.azimuth());
 
 		AER aer2(radians(2.0), radians(3.0), 4_km, LLA());
 
-		EXPECT_EQ(radians(2.0), aer2.azimuth());
+		EXPECT_UNITS_EQ(radians(2.0), aer2.azimuth());
 	}
 
 	TEST_F(PositionAERTest, elevation)
 	{
 		AER aer;
-		EXPECT_EQ(0_deg, aer.elevation());
+		EXPECT_UNITS_EQ(0_deg, aer.elevation());
 
 		AER aer1(5_deg, 6_deg, 7_km, LLA());
 
-		EXPECT_EQ(6_deg, aer1.elevation());
+		EXPECT_UNITS_EQ(6_deg, aer1.elevation());
 
 		AER aer2(radians(2.0), radians(3.0), 4_km, LLA());
 
- 		EXPECT_EQ(radians(3.0), aer2.elevation());
+ 		EXPECT_UNITS_EQ(radians(3.0), aer2.elevation());
 	}
 
 	TEST_F(PositionAERTest, range)
@@ -728,13 +728,13 @@ TEST_F(PositionAERTest, setElevation)
 		EXPECT_EQ(0_m, aer.range());
 
 		aer.setRange(7_m);
-		EXPECT_EQ(0_deg, aer.azimuth());
-		EXPECT_EQ(0_deg, aer.elevation());
+		EXPECT_UNITS_EQ(0_deg, aer.azimuth());
+		EXPECT_UNITS_EQ(0_deg, aer.elevation());
 		EXPECT_EQ(7_m, aer.range());
 
 		aer.setRange(7_mm);
-		EXPECT_EQ(0_deg, aer.azimuth());
-		EXPECT_EQ(0_deg, aer.elevation());
+		EXPECT_UNITS_EQ(0_deg, aer.azimuth());
+		EXPECT_UNITS_EQ(0_deg, aer.elevation());
 		EXPECT_EQ(0.007_m, aer.range());
 	}
 

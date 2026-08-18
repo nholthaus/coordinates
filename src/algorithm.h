@@ -455,10 +455,11 @@ inline namespace coordinates
 		using units::angle::radians;
 		using units::length::meters;
 
-		// Convert inputs to radians (typed), then immediately extract scalars for trig.
-		const auto phi1_q = radians<>(a.latitude());
-		const auto phi2_q = radians<>(b.latitude());
-		const auto L_q    = radians<>(wrap180(b.longitude() - a.longitude()));
+		// Convert inputs to radians (typed), then immediately extract scalars for trig. The tagged
+		// latitude/longitude accessors are unwrapped to plain angles here at the math boundary.
+		const auto phi1_q = radians<>(a.latitude().template to<units::angle::degrees<>>());
+		const auto phi2_q = radians<>(b.latitude().template to<units::angle::degrees<>>());
+		const auto L_q    = radians<>(wrap180(b.longitude().template to<units::angle::degrees<>>() - a.longitude().template to<units::angle::degrees<>>()));
 
 		const double phi1 = phi1_q.template to<double>();
 		const double phi2 = phi2_q.template to<double>();
@@ -614,8 +615,8 @@ inline namespace coordinates
 		const fp_t a_m = static_cast<fp_t>(EllipsoidType::a().template to<long double>());
 		const fp_t b_m = static_cast<fp_t>(EllipsoidType::b().template to<long double>());
 
-		const fp_t phi1   = units::angle::radians<>(start.latitude()).to<long double>();
-		const fp_t L1     = units::angle::radians<>(start.longitude()).to<long double>();
+		const fp_t phi1   = units::angle::radians<>(start.latitude().template to<units::angle::degrees<>>()).to<long double>();
+		const fp_t L1     = units::angle::radians<>(start.longitude().template to<units::angle::degrees<>>()).to<long double>();
 		const fp_t alpha1 = units::angle::radians<>(wrap360(initialBearing)).to<long double>();
 
 		const fp_t sinAlpha1 = std::sin(alpha1);
