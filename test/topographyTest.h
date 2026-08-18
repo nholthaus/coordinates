@@ -360,6 +360,38 @@ namespace
 		EXPECT_EQ(goldenData, generatedData);
 	}
 
+	// Hillshade over K2 / the Karakoram (e076_n35, real SRTM 1-arcsec data, 2.3-8.5 km of relief). The e141_s13
+	// tile is nearly flat, so its shading is dominated by slope magnitude and barely exercises the aspect (slope
+	// facing direction) term -- a hillshade aspect bug is invisible there. This tile has extreme relief, so the
+	// aspect term dominates and the test actually covers it.
+	TEST_F(TileTest, hillshadeK2)
+	{
+		DTEDTile tile(test_data_file("e076_n35.dt2"));
+
+		{
+			auto          data = hillshade(&tile, arcseconds(9.0));
+			std::ofstream image("./e076_n35_shade.pgm", std::ios::binary);
+			if (!image)
+				throw std::runtime_error("Failed to open ./e076_n35_shade.pgm for write");
+
+			const std::string header = "P5\n# Generated from coordTest.exe\n" + std::to_string(data[0].size()) + " " + std::to_string(data.size()) + "\n255\n";
+			image.write(header.data(), static_cast<std::streamsize>(header.size()));
+
+			for (const auto& row : data)
+			{
+				image.write(reinterpret_cast<const char*>(row.data()), static_cast<std::streamsize>(row.size()));
+			}
+		}
+
+		// compare to golden image
+		EXPECT_TRUE(fs::exists(fs::path("./e076_n35_shade.pgm")));
+		EXPECT_TRUE(fs::exists(test_data_file("e076_n35_shade.pgm")));
+
+		const auto generatedData = read_file_bytes(fs::path("./e076_n35_shade.pgm"));
+		const auto goldenData    = read_file_bytes(test_data_file("e076_n35_shade.pgm"));
+		EXPECT_EQ(goldenData, generatedData);
+	}
+
 	TEST_F(TileManagerTest, NumTiles)
 	{
 		const auto& TILE_MANAGER = DTEDTileManager::instance();

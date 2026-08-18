@@ -995,6 +995,47 @@ inline namespace coordinates
 				return 0.00005156_m;
 		}
 
+		/// Per-cell hillshade computation: the ESRI slope/aspect/shade math for one sample point, over its 3x3
+		/// elevation window. A `constexpr`-marked free function of its inputs — no captures, no threading — so it is
+		/// compile-time-provable where its operations are constant-evaluable and runs normally otherwise (the trig
+		/// is `units`' runtime trig). Extracting it out of the threaded row lambda keeps that lambda a plain runtime
+		/// callable: it merely calls this function, so it is never promoted to an immediate (`consteval`) function by
+		/// a `consteval` `units` construct in the math, which would make it uninvocable through the thread pool.
+		/// za..zi are the 3x3 elevation window (zd/zf flank the center; the center elevation is unused, matching the
+		/// ESRI kernel), `cellSize` the ground sample distance, `zenith_r`/`azimuth_r` the sun geometry.
+		constexpr uint8_t hillshadeCell(meters<> za, meters<> zb, meters<> zc,
+		                                meters<> zd, meters<> zf,
+		                                meters<> zg, meters<> zh, meters<> zi,
+		                                meters<> cellSize, radians<> zenith_r, radians<> azimuth_r)
+		{
+			const dimensionless<> dz_dx((zc + 2 * zf + zi - (za + 2 * zd + zg)) / (8 * cellSize));
+			const dimensionless<> dz_dy((zg + 2 * zh + zi - (za + 2 * zb + zc)) / (8 * cellSize));
+
+			const dimensionless<> slope = atan(sqrt(std::pow(dz_dx, 2.0) + std::pow(dz_dy, 2.0)));
+			dimensionless<>       aspect = 0.0;
+			if (dz_dx != 0)
+			{
+				aspect = atan2(dz_dy.value(), -1.0 * dz_dx.value());
+				if (aspect < 0)
+					aspect = aspect + pi * 2;
+			}
+			else if (dz_dy > 0)
+			{
+				aspect = pi / 2;
+			}
+			else if (dz_dy < 0)
+			{
+				aspect = 2 * pi - pi / 2;
+			}
+			else
+			{
+				aspect = 0.0;
+			}
+
+			return static_cast<uint8_t>(abs(255.0 * ((cos(zenith_r.value()) * cos(slope.value())) +
+			                                         (sin(zenith_r.value()) * sin(slope.value()) * cos(azimuth_r.value() - aspect.value())))));
+		}
+
 		inline std::vector<std::vector<uint8_t>>
 		hillshade(const AbstractTile* tile, degrees<> resolution = 0.0_deg, const degrees<> sunAltitude = 45.0_deg, const degrees<> sunAzimuth = 315.0_deg)
 		{
@@ -1051,36 +1092,7 @@ inline namespace coordinates
 					meters zh = tile->elevation(lat - resolution, lon);
 					meters zi = tile->elevation(lat - resolution, lon + resolution);
 
-					dimensionless dz_dx((zc + 2 * zf + zi - (za + 2 * zd + zg)) / (8 * cellSize));
-					dimensionless dz_dy((zg + 2 * zh + zi - (za + 2 * zb + zc)) / (8 * cellSize));
-
-					dimensionless slope  = atan(sqrt(std::pow(dz_dx, 2.0) + std::pow(dz_dy, 2.0)));
-					dimensionless aspect = 0;
-					if (dz_dx != 0)
-					{
-						aspect = atan2(dz_dy.value(), -1.0 * dz_dx.value());
-						if (aspect < 0)
-							aspect = aspect + pi * 2;
-					}
-					else if (dz_dx == 0)
-					{
-						if (dz_dy > 0)
-						{
-							aspect = pi / 2;
-						}
-						else if (dz_dy < 0)
-						{
-							aspect = 2 * pi - pi / 2;
-						}
-						else
-						{
-							aspect = 0;
-						}
-					}
-
-					shade[row][col] =
-					        static_cast<uint8_t>(abs(255.0 * ((cos(zenith_r.value()) * cos(slope.value())) +
-					                                          (sin(zenith_r.value()) * sin(slope.value()) * cos(azimuth_r.value() - aspect.value())))));
+					shade[row][col] = hillshadeCell(za, zb, zc, zd, zf, zg, zh, zi, cellSize, zenith_r, azimuth_r);
 				}
 				return row;
 			};

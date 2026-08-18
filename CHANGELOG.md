@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Modernization on `units` 3.5.1: a reusable rotation-math library, plus latent
+Modernization on `units` 3.6.1: a reusable rotation-math library, plus latent
 numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 ### Added
@@ -41,6 +41,11 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 ### Fixed
 
+- Fixed the hillshade aspect computation, which used an integer-backed `dimensionless` accumulator and so
+  truncated the aspect angle (radians) to whole integers, discarding almost all of the slope-facing-direction
+  signal. Aspect is now a floating-point value. The effect is invisible on near-flat terrain (the previous
+  golden tile) but corrupts the directional shading across real relief; a new `hillshadeK2` test over the
+  Karakoram exercises the aspect term that the flat tile never did.
 - Corrected the `IGS08_MSL` datum, which incorrectly referenced `NAD83`.
 - Fixed a `PositionAER` constructor typo referencing `sphericalTuple`.
 - Removed a false `constexpr` marking on the geoid-undulation lookup-table lookups.

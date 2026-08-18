@@ -70,14 +70,18 @@ option(COORDINATES_ENABLE_USGG2012 "Enable USGG2012 LUT"                ON)
 # Dependency: units
 # Prefer find_package, fallback to FetchContent if requested.
 # ----------------------------
-find_package(units 3.5.1 CONFIG QUIET)
+find_package(units 3.6.1 CONFIG QUIET)
 
 if (NOT units_FOUND)
 	if (COORDINATES_FETCH_DEPS)
+		# coordinates re-exports its own target (install(EXPORT coordinatesTargets)) and that target links
+		# units::units, so units must be in an export set. From units 3.6.0 a FetchContent'd units generates no
+		# install/export rules by default; opt in so units::units is exportable alongside coordinates.
+		set(UNITS_INSTALL ON CACHE BOOL "" FORCE)
 		FetchContent_Declare(
 				units
 				GIT_REPOSITORY https://github.com/nholthaus/units.git
-				GIT_TAG        v3.5.1
+				GIT_TAG        v3.6.1
 		)
 		FetchContent_MakeAvailable(units)
 	else()
