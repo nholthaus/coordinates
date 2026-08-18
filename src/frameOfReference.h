@@ -721,36 +721,37 @@ inline namespace coordinates
 
 		namespace detail
 		{
+			/// The parent-accessor for a frame node: its `base_frame_type`. This is the graph edge the generic
+			/// `depth`/`least_common_ancestor` climb. A different node graph (e.g. a kind graph whose parent is
+			/// its base kind) supplies its own accessor with the same `::type` shape, and the SAME algorithm
+			/// below serves both.
 			template<typename U>
+			struct frame_parent
+			{
+				using type = typename frame_traits<U>::base_frame_type;
+			};
+
+			/// Depth of a node above the graph root, generic over a `Parent` accessor. A node is the root when
+			/// its parent is itself (`Parent<U>::type == U`); otherwise the depth is one more than its parent's.
+			template<typename U, template<class> class Parent = frame_parent>
 			struct depth
 			{
-				static_assert(is_frame_of_reference<U>, "traits::detail::depth<U>: U must satisfy is_frame_of_reference.");
-			};
-
-			// base case: base_frame_type == U
-			template<typename U>
-			    requires(is_frame_of_reference<U> && std::same_as<typename frame_traits<U>::base_frame_type, U>)
-			struct depth<U>
-			{
-				static constexpr int value = 0;
-			};
-
-			// recursive case: climb base_frame_type
-			template<typename U>
-			    requires(is_frame_of_reference<U> && !std::same_as<typename frame_traits<U>::base_frame_type, U>)
-			struct depth<U>
-			{
-				using base_t = frame_traits<U>::base_frame_type;
-				static_assert(is_frame_of_reference<base_t>, "frame_traits<U>::base_frame_type must itself satisfy is_frame_of_reference.");
-				static constexpr int value = depth<base_t>::value + 1;
+				static constexpr int value = std::same_as<typename Parent<U>::type, U> ? 0 : depth<typename Parent<U>::type, Parent>::value + 1;
 			};
 
 			/**
-			 * @brief		Computes the least common ancestor of two frame types.
-			 * @details		This is purely a type-level computation. The `Trait<T>::value` predicate
-			 *				determines which nodes in the inheritance tree are considered "valid" ancestors.
+			 * @brief		Least common ancestor of two nodes, generic over a parent graph.
+			 * @details		A purely type-level computation over ANY single-parent tree: the `Parent` accessor
+			 *				supplies each node's parent edge, so one algorithm serves both the frame graph
+			 *				(`Parent = frame_parent`) and a same-dimension kind graph. `Trait<T>::value` selects
+			 *				which nodes count as valid ancestors (e.g. any frame, or only Cartesian frames), so a
+			 *				meeting node that fails the predicate keeps climbing.
+			 * @tparam		U		first node.
+			 * @tparam		V		second node.
+			 * @tparam		Trait	predicate a node must satisfy to be an accepted ancestor.
+			 * @tparam		Parent	the parent-accessor defining the graph edges.
 			 */
-			template<typename U, typename V, template<class> class Trait>
+			template<typename U, typename V, template<class> class Trait, template<class> class Parent = frame_parent>
 			struct least_common_ancestor
 			{
 			private:
@@ -774,7 +775,7 @@ inline namespace coordinates
 				    requires(!Trait<A>::value)
 				struct impl<A, A>
 				{
-					using A_base = frame_traits<A>::base_frame_type;
+					using A_base = Parent<A>::type;
 					using type   = impl<A_base, A_base>::type;
 				};
 
@@ -782,18 +783,18 @@ inline namespace coordinates
 				// Case 2: depths differ, climb the deeper one
 				//-------------------------------------------------------------------------
 				template<typename A, typename B>
-				    requires(depth<A>::value < depth<B>::value)
+				    requires(depth<A, Parent>::value < depth<B, Parent>::value)
 				struct impl<A, B>
 				{
-					using B_base = frame_traits<B>::base_frame_type;
+					using B_base = Parent<B>::type;
 					using type   = impl<A, B_base>::type;
 				};
 
 				template<typename A, typename B>
-				    requires(depth<B>::value < depth<A>::value)
+				    requires(depth<B, Parent>::value < depth<A, Parent>::value)
 				struct impl<A, B>
 				{
-					using A_base = frame_traits<A>::base_frame_type;
+					using A_base = Parent<A>::type;
 					using type   = impl<A_base, B>::type;
 				};
 
@@ -801,11 +802,11 @@ inline namespace coordinates
 				// Case 3: same depth, not equal: climb both
 				//-------------------------------------------------------------------------
 				template<typename A, typename B>
-				    requires(!std::is_same_v<A, B> && (depth<A>::value == depth<B>::value))
+				    requires(!std::is_same_v<A, B> && (depth<A, Parent>::value == depth<B, Parent>::value))
 				struct impl<A, B>
 				{
-					using A_base = frame_traits<A>::base_frame_type;
-					using B_base = frame_traits<B>::base_frame_type;
+					using A_base = Parent<A>::type;
+					using B_base = Parent<B>::type;
 					using type   = impl<A_base, B_base>::type;
 				};
 

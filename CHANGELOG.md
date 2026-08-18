@@ -67,6 +67,11 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 ### Changed
 
+- The type-level least-common-ancestor machinery (`traits::detail::depth`,
+  `traits::detail::least_common_ancestor`) is now generic over a `Parent` accessor rather than hard-wired to
+  a frame's `base_frame_type`, so one algorithm serves any single-parent node graph. The frame graph is
+  unchanged (it uses the default `frame_parent` accessor); the generalization is the foundation for routing
+  conversions between same-dimension kinds through their own parent graph.
 - Bumped the project version to 1.2.0.
 - Position accessors now return tagged geodesy kinds instead of bare `units` quantities:
   `latitude()`/`longitude()` → `angles::Latitude`/`Longitude`, `azimuth()`/`elevation()` →
