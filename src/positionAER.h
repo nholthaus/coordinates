@@ -264,6 +264,27 @@ inline namespace coordinates
 		}
 
 		/**
+		 * @brief		Look angles of a target as seen from an observer.
+		 * @details		Azimuth, elevation, and range are defined relative to an observer, so they cannot be
+		 *				computed without one. This factory makes that observer explicit: it builds the AER
+		 *				position of `target` in the local frame whose origin is `observer`, running the full
+		 *				conversion pipeline (through ECEF, honoring datums). Equivalent to constructing a
+		 *				`PositionAER(target, observer)`, but reads as the observer-relative operation it is.
+		 * @tparam		ObserverPoint	observer point type (any point convertible to the origin geodetic).
+		 * @tparam		TargetPoint		target point type (any point convertible into this AER frame).
+		 * @param[in]	observer	the point the look angles are measured from (becomes the AER origin).
+		 * @param[in]	target		the point the look angles are measured to.
+		 * @return		a `PositionAER` giving the azimuth, elevation, and range of `target` from `observer`.
+		 */
+		template<class ObserverPoint, class TargetPoint>
+		    requires(traits::is_point<ObserverPoint> && traits::is_point<TargetPoint>)
+		static PositionAER fromObserver(const ObserverPoint& observer, const TargetPoint& target)
+		{
+			const origin_type origin(observer);
+			return PositionAER(target, origin, origin.date());
+		}
+
+		/**
 		 * @brief		assignment operator
 		 * @details		performs unit conversions if necessary
 		 * @param[in]	other Point value to assign to this point

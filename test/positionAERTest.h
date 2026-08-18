@@ -284,6 +284,25 @@ TEST_F(PositionAERTest, implicitConversionConstructor_fromGeo)
 	EXPECT_UNITS_EQ(2005_yr, aer3.frameData().date);
 }
 
+// fromObserver(observer, target) is the observer-relative spelling of AER(target, observer): the look
+// angles of the target as seen from the observer. It must match the constructor's truth data, and the
+// az()/el()/range() accessors read the same values.
+TEST_F(PositionAERTest, fromObserver)
+{
+	// LA observing Boston: fromObserver(LA, Boston) == AER(Boston, LA) (== aer2 above).
+	AER aer = AER::fromObserver(LA, Boston);
+	EXPECT_UNITS_NEAR(63.522735932827878_deg,   aer.azimuth(),   1.0e-8_deg);
+	EXPECT_UNITS_NEAR(-18.707489622725706_deg,  aer.elevation(), 1.0e-8_deg);
+	EXPECT_UNITS_NEAR(4094891.087804174_m,      aer.range(),     1.0e-3_m);
+	EXPECT_UNITS_EQ(2005_yr, aer.frameData().date);
+
+	// An observer looking at itself has zero range and zero look angles.
+	AER self = AER::fromObserver(Boston, Boston);
+	EXPECT_UNITS_EQ(0_deg, self.azimuth());
+	EXPECT_UNITS_EQ(0_deg, self.elevation());
+	EXPECT_UNITS_EQ(0_m,   self.range());
+}
+
 
 TEST_F(PositionAERTest, implicitConversionConstructor_fromENU)
 {

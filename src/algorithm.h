@@ -258,6 +258,48 @@ inline namespace coordinates
 	}
 
 	/**
+	 * @brief		Calculates the squared straight-line distance between two points.
+	 * @details		The squared straight-line (slant) distance from lhs to rhs, skipping the square root of
+	 *				`distance`. For relative comparisons (nearest-neighbour, range gating) the square root is
+	 *				wasted work; comparing squared distances against a squared threshold gives the same ordering
+	 *				at lower cost. The result is an area (`distance_unit` squared, e.g. `m^2`).
+	 * @tparam		PointLhs		point type to measure from.
+	 * @tparam		PointRhs		point type to measure to.
+	 * @tparam		distance_unit	length unit the points are reduced to before squaring; defaults to meters.
+	 * @param[in]	lhs	Point to calculate the distance from.
+	 * @param[in]	rhs	Point to calculate the distance to.
+	 * @return		squared distance between the two points, as an area.
+	 */
+	template<class PointLhs, class PointRhs, class distance_unit = meters<>>
+	auto distanceSquared(const PointLhs& lhs, const PointRhs& rhs) -> decltype(pow<2>(distance_unit{}))
+	{
+		static_assert(is_point<PointLhs>, "Template parameter `PointLhs` does not satisfy the `point` concept.");
+		static_assert(is_point<PointRhs>, "Template parameter `PointRhs` does not satisfy the `point` concept.");
+		static_assert(is_convertible_point<PointLhs, PointRhs>, "No known conversion between types `PointLhs` and `PointRhs`.");
+
+		// Reduce both points to their nearest common Cartesian frame, then sum the squared axis differences.
+		// A matching frame origin permits the nearest cartesian ancestor; otherwise both route through ECEF.
+		const auto squaredSeparation = [](const auto& l, const auto& r) -> decltype(pow<2>(distance_unit{}))
+		{
+			const distance_unit x0 = std::get<0>(l), y0 = std::get<1>(l), z0 = std::get<2>(l);
+			const distance_unit x1 = std::get<0>(r), y1 = std::get<1>(r), z1 = std::get<2>(r);
+			return pow<2>(x1 - x0) + pow<2>(y1 - y0) + pow<2>(z1 - z0);
+		};
+
+		if (lhs.frameData() == rhs.frameData())
+		{
+			using LCA =
+			        least_common_cartesian_ancestor<typename point_traits<PointLhs>::reference_frame, typename point_traits<PointRhs>::reference_frame>::type;
+			return squaredSeparation(convert<typename point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData()),
+			                         convert<typename point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData()));
+		}
+
+		using LCA = lowest_base_frame<typename point_traits<PointLhs>::reference_frame>::type;
+		return squaredSeparation(convert<typename point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData()),
+		                         convert<typename point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData()));
+	}
+
+	/**
 	 * @brief		Calculates the magnitude of a point/vector
 	 * @details
 	 * @param[in]	point	Point to calculate the magnitude of

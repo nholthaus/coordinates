@@ -107,17 +107,18 @@ stay plain `meters<>`/`degrees<>`; only the public *boundary* is tagged.
       and every `distance()`/`magnitude()` → `Euclidean`. Decoupled `PositionAER`'s origin-altitude unit
       from its slant-range unit (a fourth template parameter). `test/rangesTest.h` proves the three stay
       apart and the AER split. (committed).
-- [ ] Tag public accessors + matching setters/ctor params:
-      `LLA::latitude()/longitude()/altitude()`, `AER::azimuth()/elevation()/range()`,
-      `distance()/magnitude()` family, geodesic `distanceTo()/initialBearingTo()/finalBearingTo()` and the
-      `GeodesicInverseResult`/`GeodesicDirectResult` bearings/distance, `DTED::orthometricHeight`,
-      `verticalDatum` converters (already tagged), geoid `undulation`.
-- [ ] Deliver the 4 README-advertised-but-missing APIs, tagged: `toOrthometricHeight()`/`toEllipsoidHeight()`
-      members (README:631), `PositionAER::fromObserver(observer,target)` (README:560,845),
-      `PositionXYZ` + `x()/y()/z()` (README:251,441-449), `distanceSquared(a,b)` (README:813).
+- [x] Tag public accessors + matching setters/ctor params: `LLA::latitude()/longitude()/altitude()`,
+      `AER::azimuth()/elevation()/range()`, the `distance()/magnitude()` family, geodesic
+      `distanceTo()/initialBearingTo()/finalBearingTo()` and the `GeodesicInverse/DirectResult`
+      bearings/distance, `verticalDatum` converters. STILL TODO: `DTED::orthometricHeight`, geoid
+      `undulation` (topography/geoid producer side).
+- [ ] Deliver the README-advertised-but-missing APIs: `toOrthometricHeight()`/`toEllipsoidHeight()` members
+      (done, commit 1), `PositionAER::fromObserver(observer,target)` + `distanceSquared(a,b)` (done, commit
+      4), `PositionXYZ` + `x()/y()/z()` (commit 5, its own review — standalone Cartesian triple).
 - [ ] Decision: whether `ECEF::x()/y()/z()` etc. (Cartesian axes) tag now or defer to C. (Lean: keep plain
       until C, since a lone axis component has no cross-kind hazard the tuple-tag doesn't already cover.)
-- [ ] Full `ctest` green; confirm the ~146 accessor assertions pass unedited via boundary-permissiveness.
+- [x] Full `ctest` green; the ~146 accessor assertions pass via the `as_plain` boundary unwrap in
+      `test/gtest_units.h` (plus the handful of `EXPECT_EQ`→`EXPECT_UNITS_EQ` conversions on tagged accessors).
 - [ ] CHANGELOG `[Unreleased]`: `### Added` strong-typed kinds + `### Changed` accessor return types.
       Source-breaking accessor change ⇒ 2.0.0 (already the integration branch).
 

@@ -373,6 +373,16 @@ namespace
 		EXPECT_UNITS_EQ(meters(sqrt(3.0)), ecef1.distance(ecef2));
 	}
 
+	TEST_F(PositionECEFTest, distanceSquared)
+	{
+		ECEF ecef1(1.0_m, 1.0_m, 1.0_m);
+		ECEF ecef2(2.0_m, 2.0_m, 2.0_m);
+
+		// squared straight-line distance: (1)^2 + (1)^2 + (1)^2 = 3 m^2, and it equals distance()^2.
+		EXPECT_UNITS_EQ(3.0_m2, coordinates::distanceSquared(ecef1, ecef2));
+		EXPECT_UNITS_NEAR(pow<2>(ecef1.distance(ecef2).to<meters<>>()), coordinates::distanceSquared(ecef1, ecef2), 1.0e-9_m2);
+	}
+
 	TEST_F(PositionECEFTest, magnitude)
 	{
 		ECEF ecef(2.0_m, 2.0_m, 2.0_m);

@@ -12,6 +12,11 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 ### Added
 
+- **`PositionAER::fromObserver(observer, target)`**: a static factory for the observer-relative look angles
+  (azimuth, elevation, range) of a target as seen from an observer — the observer-relative spelling of
+  `PositionAER(target, observer)`. Previously advertised in the README but unimplemented.
+- **`distanceSquared(a, b)`**: the squared straight-line distance between two points (an area), skipping the
+  square root for performance-sensitive relative comparisons. Previously advertised but unimplemented.
 - **Strongly-typed distances** (`src/ranges.h`): a slant range (observer to target), a geodesic distance
   (along the ellipsoid surface), and a Euclidean distance (3-D straight-line magnitude) are now distinct
   `units::kind` types in the `ranges::` namespace. All lengths but measuring different paths, so mixing them
