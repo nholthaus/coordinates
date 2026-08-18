@@ -43,10 +43,10 @@ With raw doubles, this would compile and silently produce meaningless results.
 
 - **Language standard:** C++23
 - **CMake:** 3.28 or newer
-- **Required dependency:** `units` 3.5.1
+- **Required dependency:** `units` 3.6.1
 - **Optional runtime data:** DTED elevation tiles
 
-If `units` is not found on the system, CMake will fetch and build `units` 3.5.1 automatically (this is on by default via `COORDINATES_FETCH_DEPS`).
+If `units` is not found on the system, CMake will fetch and build `units` 3.6.1 automatically (this is on by default via `COORDINATES_FETCH_DEPS`).
 
 ### Example: Dependency Resolution
 
