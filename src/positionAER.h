@@ -38,6 +38,7 @@
 #include "frameOfReference.h"
 #include "point.h"
 #include "positionGeodetic.h"
+#include "ranges.h"
 
 inline namespace coordinates
 {
@@ -61,7 +62,7 @@ inline namespace coordinates
 	///						substitute this with m/s to attain a velocity vector.
 	/// @tparam		T		underlying storage type of the point vector. Defaults to double.
 	//  ----------------------------------------------------------------------------
-	template<class Datum, template<class> class AzElUnits = degrees, template<class> class RangeUnits = meters, typename T = double>
+	template<class Datum, template<class> class AzElUnits = degrees, template<class> class RangeUnits = meters, template<class> class OriginHeightUnits = meters, typename T = double>
 	class PositionAER : public Point<AERFrame<Datum>, SphericalTuple, FrameData>
 	{
 	public:
@@ -71,6 +72,7 @@ inline namespace coordinates
 
 		static_assert(units::traits::is_unit_v<AzElUnits<T>>, "Template parameter `AzElUnits` template parameter must be a unit type.");
 		static_assert(units::traits::is_unit_v<RangeUnits<T>>, "Template parameter `RangeUnits` template parameter must be a unit type.");
+		static_assert(units::traits::is_length_unit_v<OriginHeightUnits<T>>, "Template parameter `OriginHeightUnits` template parameter must be a length unit type.");
 		static_assert(traits::is_datum<Datum>, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(std::is_arithmetic_v<T>, "`T` template parameter must be an arithmetic type.");
 
@@ -78,14 +80,15 @@ inline namespace coordinates
 		//		PUBLIC TYPES
 		//////////////////////////////////////////////////////////////////////////
 
-		using origin_type     = PositionGeodetic<Datum, AzElUnits, RangeUnits, T>;
+		using origin_type     = PositionGeodetic<Datum, AzElUnits, OriginHeightUnits, T>;
 		using tuple_type      = Point<AERFrame<Datum>, SphericalTuple, FrameData>::tuple_type;
 		using frame_data_type = Point<AERFrame<Datum>, SphericalTuple, FrameData>::frame_data_type;
 		using reference_frame = Point<AERFrame<Datum>, SphericalTuple, FrameData>::reference_frame;
 
-		using datum_type      = Datum;
-		using angle_unit_type = AzElUnits<T>;
-		using range_unit_type = RangeUnits<T>;
+		using datum_type       = Datum;
+		using angle_unit_type  = AzElUnits<T>;
+		using range_unit_type  = RangeUnits<T>;
+		using height_unit_type = OriginHeightUnits<T>;    ///< unit of the origin's geodetic altitude (a height, not the range)
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -117,13 +120,13 @@ inline namespace coordinates
 		 *									the position value will be converted between different
 		 *									datums.
 		 */
-		PositionAER(angle_unit_type azimuth,
-		            angle_unit_type elevation,
-		            range_unit_type range,
-		            angle_unit_type latitude0,
-		            angle_unit_type longitude0,
-		            range_unit_type altitude0,
-		            years<>         dateOfObservation = Datum::epoch())
+		PositionAER(angle_unit_type  azimuth,
+		            angle_unit_type  elevation,
+		            range_unit_type  range,
+		            angle_unit_type  latitude0,
+		            angle_unit_type  longitude0,
+		            height_unit_type altitude0,
+		            years<>          dateOfObservation = Datum::epoch())
 		    : m_azimuth(azimuth)
 		    , m_elevation(elevation)
 		    , m_range(range)
@@ -372,7 +375,7 @@ inline namespace coordinates
 		~PositionAER() override = default;
 
 		// friend other specializations of the template.
-		template<class D, template<class> class ATy, template<class> class RTy, typename DU>
+		template<class D, template<class> class ATy, template<class> class RTy, template<class> class HTy, typename DU>
 		friend class PositionAER;
 
 	public:
@@ -440,8 +443,8 @@ inline namespace coordinates
 		 */
 		template<class Point>
 		    requires(traits::is_point<Point>)
-		[[nodiscard]] range_unit_type distance(const Point& p) const
-		{ return coordinates::distance(*this, p); }
+		[[nodiscard]] ranges::Euclidean distance(const Point& p) const
+		{ return ranges::Euclidean(coordinates::distance(*this, p)); }
 
 		//////////////////////////////////////////////////////////////////////////
 		//		ACCESSORS
@@ -518,7 +521,7 @@ inline namespace coordinates
 		 *				necessary.
 		 * @returns		range-value of the Point.
 		 */
-		[[nodiscard]] range_unit_type range() const { return m_range; }
+		[[nodiscard]] ranges::Slant range() const { return ranges::Slant(m_range); }
 
 		/**
 		 * @brief		Origin

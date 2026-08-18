@@ -306,10 +306,13 @@ and epoch information.
 Accessors return **strongly-typed geodesy kinds**, not bare `units` quantities: `latitude()` is an
 `angles::Latitude`, `longitude()` an `angles::Longitude`, `altitude()` the height kind the datum measures
 (`heights::Ellipsoidal` or `heights::Orthometric`). Likewise `PositionAER::azimuth()`/`elevation()` are
-`angles::Azimuth`/`angles::Elevation`, and geodesic bearings are `angles::Azimuth`. Each is a `units::kind`
-tag over a plain unit, so a latitude and an azimuth — both `degrees<>` — can never be silently interchanged;
-mixing two different kinds is a compile error. A plain unit still constructs into a kind implicitly (so
-`LLA p(34_deg, -118_deg, 100_m)` is unchanged), and `.to<PlainUnit>()` unwraps when you need the raw value.
+`angles::Azimuth`/`angles::Elevation` and geodesic bearings are `angles::Azimuth`; `range()` is a
+`ranges::Slant`, `distanceTo()` a `ranges::Geodesic`, and `distance()`/`magnitude()` a `ranges::Euclidean`.
+Each is a `units::kind` tag over a plain unit, so quantities that share a dimension but not a meaning — a
+latitude and an azimuth (both `degrees<>`), or a slant range and a surface distance (both `meters<>`) — can
+never be silently interchanged; mixing two different kinds is a compile error. A plain unit still constructs
+into a kind implicitly (so `LLA p(34_deg, -118_deg, 100_m)` is unchanged), and `.to<PlainUnit>()` unwraps
+when you need the raw value.
 
 ---
 

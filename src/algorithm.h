@@ -696,7 +696,7 @@ inline namespace coordinates
 	 */
 	template<class Datum>
 	meters<> geodesicDistance(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
-	{ return geodesicInverse<Datum>(a, b).distance(); }
+	{ return geodesicInverse<Datum>(a, b).distance().template to<meters<>>(); }
 
 	/**
 	 * @brief		Convenience wrapper returning the initial bearing.

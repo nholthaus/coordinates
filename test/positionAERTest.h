@@ -655,15 +655,15 @@ TEST_F(PositionAERTest, distance)
 	TEST_F(PositionAERTest, range)
 	{
 		AER aer;
-		EXPECT_EQ(0_m, aer.range());
+		EXPECT_UNITS_EQ(0_m, aer.range());
 
 		AER aer1(5_deg, 6_deg, 7_km, LLA());
 
-		EXPECT_EQ(7_km, aer1.range());
+		EXPECT_UNITS_EQ(7_km, aer1.range());
 
 		AER aer2(radians(2.0), radians(3.0), 4_km, LLA());
 
-		EXPECT_EQ(4_km, aer2.range());
+		EXPECT_UNITS_EQ(4_km, aer2.range());
 	}
 
 	TEST_F(PositionAERTest, origin)
@@ -725,17 +725,17 @@ TEST_F(PositionAERTest, setElevation)
 	TEST_F(PositionAERTest, setRange)
 	{
 		AER aer;
-		EXPECT_EQ(0_m, aer.range());
+		EXPECT_UNITS_EQ(0_m, aer.range());
 
 		aer.setRange(7_m);
 		EXPECT_UNITS_EQ(0_deg, aer.azimuth());
 		EXPECT_UNITS_EQ(0_deg, aer.elevation());
-		EXPECT_EQ(7_m, aer.range());
+		EXPECT_UNITS_EQ(7_m, aer.range());
 
 		aer.setRange(7_mm);
 		EXPECT_UNITS_EQ(0_deg, aer.azimuth());
 		EXPECT_UNITS_EQ(0_deg, aer.elevation());
-		EXPECT_EQ(0.007_m, aer.range());
+		EXPECT_UNITS_EQ(0.007_m, aer.range());
 	}
 
 

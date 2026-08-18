@@ -460,10 +460,10 @@ TEST_F(PositionENUTest, assignment)
 		ENU enul1(1.0_m, 1.0_m, 1.0_m, origin2);
 
 		// same origin
-		EXPECT_EQ(meters(sqrt(3.0)), enub0.distance(enub1));
-		EXPECT_EQ(meters(sqrt(3.0)), enub1.distance(enub0));
-		EXPECT_EQ(meters(sqrt(3.0)), enul0.distance(enul1));
-		EXPECT_EQ(meters(sqrt(3.0)), enul1.distance(enul0));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), enub0.distance(enub1));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), enub1.distance(enub0));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), enul0.distance(enul1));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), enul1.distance(enul0));
 
 		// different point types
 		EXPECT_UNITS_NEAR(meters(sqrt(3.0)), enub1.distance(origin1), 5.0e-10_m);

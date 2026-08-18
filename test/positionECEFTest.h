@@ -370,14 +370,14 @@ namespace
 		ECEF ecef1(1.0_m, 1.0_m, 1.0_m);
 		ECEF ecef2(2.0_m, 2.0_m, 2.0_m);
 
-		EXPECT_EQ(meters(sqrt(3.0)), ecef1.distance(ecef2));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), ecef1.distance(ecef2));
 	}
 
 	TEST_F(PositionECEFTest, magnitude)
 	{
 		ECEF ecef(2.0_m, 2.0_m, 2.0_m);
 
-		EXPECT_EQ(meters(2 * sqrt(3.0)), ecef.magnitude());
+		EXPECT_UNITS_EQ(meters(2 * sqrt(3.0)), ecef.magnitude());
 	}
 
 	TEST_F(PositionECEFTest, dotProduct)

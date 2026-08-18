@@ -101,7 +101,12 @@ stay plain `meters<>`/`degrees<>`; only the public *boundary* is tagged.
 - [x] `src/angles.h` — the seven angle kinds (`Latitude`, `Longitude`, `Azimuth`, `Elevation`, `Yaw`,
       `Pitch`, `Roll`; AER azimuth + geodesic bearing + sun azimuth unified as one `Azimuth`). Tagged
       `PositionGeodetic::latitude()/longitude()`, `PositionAER::azimuth()/elevation()`, and every geodesic
-      bearing accessor. `test/anglesTest.h` proves the lat!=azimuth distinction. Commit `4e1c8c8`.
+      bearing accessor. `test/anglesTest.h` proves the lat!=azimuth distinction. (committed).
+- [x] `src/ranges.h` — the three distance kinds (`Slant`, `Geodesic`, `Euclidean`). Tagged
+      `PositionAER::range()` → `Slant`, `distanceTo()`/`GeodesicInverseResult::distance()` → `Geodesic`,
+      and every `distance()`/`magnitude()` → `Euclidean`. Decoupled `PositionAER`'s origin-altitude unit
+      from its slant-range unit (a fourth template parameter). `test/rangesTest.h` proves the three stay
+      apart and the AER split. (committed).
 - [ ] Tag public accessors + matching setters/ctor params:
       `LLA::latitude()/longitude()/altitude()`, `AER::azimuth()/elevation()/range()`,
       `distance()/magnitude()` family, geodesic `distanceTo()/initialBearingTo()/finalBearingTo()` and the

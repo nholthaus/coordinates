@@ -37,6 +37,7 @@
 #include "frameOfReference.h"
 #include "point.h"
 #include "positionGeodetic.h"
+#include "ranges.h"
 
 #include <cassert>
 #include <stdexcept>
@@ -380,8 +381,8 @@ inline namespace coordinates
 		 */
 		template<class Point>
 		    requires(traits::is_point<Point>)
-		[[nodiscard]] length_unit_type distance(const Point& p) const
-		{ return coordinates::distance(*this, p); }
+		[[nodiscard]] ranges::Euclidean distance(const Point& p) const
+		{ return ranges::Euclidean(coordinates::distance(*this, p)); }
 
 		/**
 		 * @brief		Calculates the dot product of two points.
@@ -400,7 +401,7 @@ inline namespace coordinates
 		 * @param[in]	p Point to calculate the magnitude of
 		 * @returns		magnitude of the point vector wrt its origin.
 		 */
-		[[nodiscard]] length_unit_type magnitude() const { return coordinates::magnitude(*this); }
+		[[nodiscard]] ranges::Euclidean magnitude() const { return ranges::Euclidean(coordinates::magnitude(*this)); }
 
 		//////////////////////////////////////////////////////////////////////////
 		//		ACCESSORS

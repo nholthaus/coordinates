@@ -26,60 +26,43 @@
 // Copyright (c) 2016 Nic Holthaus
 //
 //--------------------------------------------------------------------------------------------------
+//
+// Strongly-typed distances. A slant range (straight line from an observer to a target), a geodesic
+// distance (along the curved surface of the ellipsoid), and a Euclidean distance (the 3-D straight-line
+// magnitude of a difference vector) are all lengths, yet they measure different paths and must not be
+// silently interchanged -- a slant range is not a surface distance, and neither is a coordinate height.
+// Each is a `units::kind` tag so the type system keeps them apart: mixing two different range kinds is a
+// compile error. The tags are boundary-permissive: a plain length constructs into a range implicitly and
+// `.to<PlainUnit>()` unwraps.
+//
+//--------------------------------------------------------------------------------------------------
 
-#ifndef coordinate_h
-#define coordinate_h
-
-#if defined(_MSC_VER)
-#pragma warning(disable : 4503)    // decorated name length exceeded, name was truncated. This only affects debugging.
-#endif
+#ifndef ranges_h
+#define ranges_h
 
 //------------------------
 //	INCLUDES
 //------------------------
-#include <CAS.h>
-#include <threadPool.h>
+
 #include <units.h>
-
-#include <abstractTile.h>
-#include <abstractTileManager.h>
-#include <algorithm.h>
-#include <angles.h>
-
-#include <datum.h>
-#include <frameOfReference.h>
-#include <heights.h>
-#include <ranges.h>
-#include <topography.h>
-
-#include <point.h>
-#include <positionAER.h>
-#include <positionECEF.h>
-#include <positionENU.h>
-#include <positionGeodetic.h>
-#include <positionNED.h>
-
-#include <vectorECEF.h>
-#include <vectorENU.h>
-#include <vectorNED.h>
-
-#include <bodyFrame.h>
-#include <pose.h>
+#include <units/kind.h>
 
 inline namespace coordinates
 {
-	//----------------------------------
-	//	CONVENIENCE CLASSES
-	//----------------------------------
-	using ITRS    = PositionECEF<ITRS2008>;
-	using ECEF    = PositionECEF<WGS84_G1674>;
-	using LLA     = PositionGeodetic<WGS84_G1674>;
-	using ENU     = PositionENU<WGS84_G1674>;
-	using NED     = PositionNED<WGS84_G1674>;
-	using AER     = PositionAER<WGS84_G1674>;
-	using VecECEF = VectorECEF<WGS84_G1674>;
-	using VecENU  = VectorENU<WGS84_G1674>;
-	using VecNED  = VectorNED<WGS84_G1674>;
+	namespace ranges
+	{
+		/// A slant range: the straight-line distance from an observer origin to a target (the range
+		/// component of an azimuth/elevation/range position).
+		using Slant = units::kind<"slant_range", units::length::meters<double>>;
+
+		/// A geodesic distance: the shortest distance along the curved surface of the reference ellipsoid
+		/// between two points (the result of an inverse geodesic solve).
+		using Geodesic = units::kind<"geodesic_distance", units::length::meters<double>>;
+
+		/// A Euclidean distance: the 3-D straight-line magnitude of the difference between two Cartesian
+		/// positions (the result of `distance` / `magnitude`).
+		using Euclidean = units::kind<"euclidean_distance", units::length::meters<double>>;
+	}    // namespace ranges
 }    // namespace coordinates
 
-#endif    // coordinate_h
+#endif    // ranges_h

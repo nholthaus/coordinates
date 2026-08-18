@@ -526,10 +526,10 @@ TEST_F(PositionNEDTest, implicitConversionConstructor_fromNEDsameOrigin)
 		NED nedl1(1.0_m, 1.0_m, 1.0_m, origin2);
 
 		// same origin
-		EXPECT_EQ(meters(sqrt(3.0)), nedb0.distance(nedb1));
-		EXPECT_EQ(meters(sqrt(3.0)), nedb1.distance(nedb0));
-		EXPECT_EQ(meters(sqrt(3.0)), nedl0.distance(nedl1));
-		EXPECT_EQ(meters(sqrt(3.0)), nedl1.distance(nedl0));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), nedb0.distance(nedb1));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), nedb1.distance(nedb0));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), nedl0.distance(nedl1));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), nedl1.distance(nedl0));
 
 		// different point types
 		EXPECT_UNITS_NEAR(meters(sqrt(3.0)), nedb1.distance(origin1), 5.0e-10_m);

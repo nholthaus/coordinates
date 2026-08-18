@@ -49,6 +49,7 @@ set(PUBLIC_HEADERS
         positionENU.h
         positionGeodetic.h
         positionNED.h
+        ranges.h
         tileException.h
         tileMetadata.h
         topography.h

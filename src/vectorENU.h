@@ -299,7 +299,7 @@ inline namespace coordinates
 			const OriginAngleUnits<T> az(azimuth);
 			const OriginAngleUnits<T> el(elevation);
 
-			const PositionAER<Datum, OriginAngleUnits, meters, T> aer(az, el, range, origin, origin.date());
+			const PositionAER<Datum, OriginAngleUnits, meters, OriginHeightUnits, T> aer(az, el, range, origin, origin.date());
 			const PositionENU<Datum, DistanceUnits, T>            enu(aer);
 
 			return VectorENU(enu.east(), enu.north(), enu.up(), origin_type(origin.point(), origin.date()), origin.date());

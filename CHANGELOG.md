@@ -12,6 +12,11 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 ### Added
 
+- **Strongly-typed distances** (`src/ranges.h`): a slant range (observer to target), a geodesic distance
+  (along the ellipsoid surface), and a Euclidean distance (3-D straight-line magnitude) are now distinct
+  `units::kind` types in the `ranges::` namespace. All lengths but measuring different paths, so mixing them
+  is a compile error. `PositionAER::range()` → `ranges::Slant`; `distanceTo()` / `GeodesicInverseResult::distance()`
+  → `ranges::Geodesic`; the `distance()` / `magnitude()` accessors on every position → `ranges::Euclidean`.
 - **Strongly-typed angles** (`src/angles.h`): latitude, longitude, azimuth, elevation, and the three
   orientation angles (yaw/pitch/roll) are now distinct `units::kind` types in the `angles::` namespace.
   They are all `degrees<>` but semantically incommensurable, so mixing them is a compile error — most
@@ -51,9 +56,13 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 - Bumped the project version to 1.2.0.
 - Position accessors now return tagged geodesy kinds instead of bare `units` quantities:
   `latitude()`/`longitude()` → `angles::Latitude`/`Longitude`, `azimuth()`/`elevation()` →
-  `angles::Azimuth`/`Elevation`, and the geodesic bearing accessors → `angles::Azimuth`. Source-compatible
-  for arithmetic and comparison against plain angles; code that stored a result in an explicit `degrees<>`
-  should unwrap with `.to<degrees<>>()`.
+  `angles::Azimuth`/`Elevation`, the geodesic bearing accessors → `angles::Azimuth`, `range()` →
+  `ranges::Slant`, `distanceTo()` → `ranges::Geodesic`, and `distance()`/`magnitude()` → `ranges::Euclidean`.
+  Source-compatible for arithmetic and comparison against plain units; code that stored a result in an
+  explicit `degrees<>`/`meters<>` should unwrap with `.to<...>()`.
+- `PositionAER` gained a fourth template parameter for the origin's altitude unit, decoupling it from the
+  slant-range unit (they were previously forced to share one `RangeUnits` parameter -- a range is not a
+  height). Defaults leave the `AER` alias unchanged.
 - `PositionGeodetic::altitude()` now returns the tagged height kind the datum measures
   (`heights::Ellipsoidal` for an ellipsoid-referenced datum, `heights::Orthometric` for a
   geoid-referenced one) instead of a bare `meters<>`. Source-compatible for arithmetic and comparison

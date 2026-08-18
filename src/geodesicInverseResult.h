@@ -37,6 +37,7 @@
 #include <units.h>
 
 #include "angles.h"
+#include "ranges.h"
 
 inline namespace coordinates
 {
@@ -89,9 +90,9 @@ inline namespace coordinates
 		 * @brief		Returns the surface distance.
 		 * @return		Surface distance between the two points.
 		 */
-		constexpr meters<> distance() const
+		constexpr ranges::Geodesic distance() const
 		{
-			return m_distance;
+			return ranges::Geodesic(m_distance);
 		}
 
 		/**

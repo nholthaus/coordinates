@@ -39,6 +39,7 @@
 #include "frameOfReference.h"
 #include "heights.h"
 #include "point.h"
+#include "ranges.h"
 #include <units.h>
 
 inline namespace coordinates
@@ -253,8 +254,8 @@ inline namespace coordinates
 		 * @returns		distance between this Point and <i>p</i> in units of distance_units.
 		 */
 		template<is_point Point>
-		[[nodiscard]] height_unit_type distance(const Point& p) const
-		{ return coordinates::distance(*this, p); }
+		[[nodiscard]] ranges::Euclidean distance(const Point& p) const
+		{ return ranges::Euclidean(coordinates::distance(*this, p)); }
 
 		//////////////////////////////////////////////////////////////////////////
 		//		ACCESSORS
@@ -466,9 +467,9 @@ inline namespace coordinates
 		 * @param[in]	other	Other geodetic point.
 		 * @return		Surface distance along the ellipsoid.
 		 */
-		meters<> distanceTo(const PositionGeodetic& other) const
+		ranges::Geodesic distanceTo(const PositionGeodetic& other) const
 		{
-			return geodesicDistance<Datum>(*this, other);
+			return ranges::Geodesic(geodesicDistance<Datum>(*this, other));
 		}
 
 		/**
