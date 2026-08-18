@@ -52,7 +52,15 @@ inline namespace coordinates
 	namespace angles
 	{
 		/// A geodetic latitude: the angle from the equatorial plane to the ellipsoid normal, in [-90, 90].
+		/// This is the latitude reported by GPS and stored in a geodetic position; it is the canonical latitude
+		/// kind, from which the others are derived.
 		using Latitude = units::kind<"latitude", units::angle::degrees<double>>;
+
+		/// A geocentric latitude: the angle from the equatorial plane to the line joining the point and the
+		/// centre of the ellipsoid, in [-90, 90]. It differs from the geodetic latitude by up to ~0.19 deg
+		/// (mid-latitudes on Earth); the two relate through the ellipsoid's eccentricity. Convert with
+		/// `convertLatitude` -- mixing a geocentric and a geodetic latitude is otherwise a compile error.
+		using Geocentric = units::kind<"geocentric_latitude", units::angle::degrees<double>>;
 
 		/// A longitude: the angle east of the prime meridian.
 		using Longitude = units::kind<"longitude", units::angle::degrees<double>>;

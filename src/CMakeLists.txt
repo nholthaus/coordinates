@@ -37,6 +37,7 @@ set(PUBLIC_HEADERS
         frameOfReference.h
         heightKinds.h
         heights.h
+        latitudeConversion.h
         geodesicDirectResult.h
         geodesicInverseResult.h
         geoid.h

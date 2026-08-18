@@ -12,6 +12,13 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 ### Added
 
+- **Geodetic ↔ geocentric latitude conversion** (`src/latitudeConversion.h`): a new `angles::Geocentric`
+  kind and `convertLatitude<ToNode, Ellipsoid>(from)` that converts between geodetic latitude (the ellipsoid
+  normal, what GPS reports) and geocentric latitude (the ellipsoid centre) via the ellipsoid's eccentricity
+  — a conversion the library did not previously provide. The two are distinct kinds that cannot be silently
+  mixed. It is built as a small kind graph (geodetic latitude is the root, geocentric derives from it) routed
+  by the same generic `least_common_ancestor` the frame graph uses, so a third latitude kind (conformal,
+  reduced) would be one more node with no dispatcher change.
 - **`Pose` ↔ geodesy interop**: a runtime 6-DOF pose now bridges to the position types for the
   moving-vehicle case (an aircraft centre of gravity in ECEF carrying a fixed sensor mount). `Pose::at(position,
   attitude)` places a pose at a geodesy position; `transformPoint` accepts and returns a Cartesian position

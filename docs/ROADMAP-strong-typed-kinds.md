@@ -134,12 +134,17 @@ stay plain `meters<>`/`degrees<>`; only the public *boundary* is tagged.
 
 ## Phase B — unify type-level LCA + the NEW conversions
 
-- [ ] Generalize `depth<>` / `least_common_ancestor<>` over a `Parent` accessor (keep the `Trait` hook);
-      re-express the frame graph and the vertical-datum walk on the one algorithm.
-- [ ] Add the kind-conversion dispatcher with a `(lat,lon)` context (parallel to the frame dispatcher).
-- [ ] NEW conversions as kind edges: `angles::Latitude` ↔ `angles::Geocentric` (via the ellipsoid; the
-      design hole), `ranges::Slant` ↔ `ranges::Geodesic`. Truth-data tests for each.
-- [ ] Full `ctest` green.
+- [x] Generalize `depth<>` / `least_common_ancestor<>` over a `Parent` accessor (keep the `Trait` hook)
+      (committed). Frame graph unchanged (default `frame_parent`); generic-graph test proves it routes a
+      non-frame graph.
+- [x] Kind-conversion dispatcher with the ellipsoid as context (parallel to the frame dispatcher), in
+      `latitudeConversion.h`: `climbToAncestor`/`descendToTarget` over the `kind_parent` graph.
+- [x] `angles::Latitude` ↔ `angles::Geocentric` — the design-hole conversion — as kind-graph nodes routed by
+      the generic `least_common_ancestor`; truth-data + round-trip + identity + ellipsoid-dependence tests
+      (committed).
+- [ ] `ranges::Slant` ↔ `ranges::Geodesic` (the remaining NEW conversion; note the context differs — it needs
+      the observer/endpoints, not just the ellipsoid).
+- [x] Full `ctest` green.
 
 ## Phase C — tag the internal tuple slots (frame-graph type-checking)
 
