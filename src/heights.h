@@ -50,7 +50,7 @@
 #include <units/kind.h>
 
 #include "datum.h"
-#include "verticalDatum.h"
+#include "heightKinds.h"
 
 inline namespace coordinates
 {
@@ -58,8 +58,8 @@ inline namespace coordinates
 	{
 		//------------------------------------------------------------------------------------------------------
 		//	The tagged height kinds themselves (`Ellipsoidal`, `Orthometric`, `Undulation`) are defined in
-		//	verticalDatum.h, which sits below datum.h in the include graph. `kind_for` needs `datum_traits`
-		//	and so lives here, above datum.h.
+		//	heightKinds.h, at the bottom of the include graph. `kind_for` needs `datum_traits` and so lives
+		//	here, above datum.h.
 		//------------------------------------------------------------------------------------------------------
 
 		/// The height kind a position stores for a given datum, deduced from the datum's vertical reference: a

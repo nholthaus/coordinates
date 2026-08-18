@@ -158,7 +158,7 @@ inline namespace coordinates
 		 */
 		[[nodiscard]] meters<T> observerAGL() const
 		{
-			const auto ground = TopographyModel::orthometricHeight(m_observerGeodetic.latitude(), m_observerGeodetic.longitude());
+			const auto ground = TopographyModel::orthometricHeight(m_observerGeodetic.latitude(), m_observerGeodetic.longitude()).template to<units::length::meters<T>>();
 			const auto lat    = degrees<T>{m_observerGeodetic.latitude().value()};
 			const auto lon    = degrees<T>{m_observerGeodetic.longitude().value()};
 			const auto h      = m_observerGeodetic.altitude().to<meters<T>>();
@@ -331,7 +331,7 @@ inline namespace coordinates
 				for (std::size_t col = 0; col < width; ++col)
 				{
 					const degrees<> lon = lonSW + resolution * static_cast<int>(col);
-					const auto      gnd = TopographyModel::orthometricHeight(lat, lon);
+					const auto      gnd = TopographyModel::orthometricHeight(lat, lon).template to<units::length::meters<T>>();
 
 					// Target is the ground pixel (MSL).
 					const LLA  tgt(lat, lon, gnd);
@@ -609,7 +609,7 @@ inline namespace coordinates
 				const auto direct = coordinates::geodesicDirect(m_observerGeodetic, azimuth, s1);
 				const auto p      = direct.destination();
 
-				const auto ground = TopographyModel::orthometricHeight(p.latitude(), p.longitude());
+				const auto ground = TopographyModel::orthometricHeight(p.latitude(), p.longitude()).template to<units::length::meters<T>>();
 				const auto rayH   = obsMSL + s1 * slope;
 				const T    f1     = (rayH - ground).value();
 
@@ -642,7 +642,7 @@ inline namespace coordinates
 				const auto      direct = coordinates::geodesicDirect(m_observerGeodetic, azi, sMid);
 				const auto      p      = direct.destination();
 
-				const auto ground = TopographyModel::orthometricHeight(p.latitude(), p.longitude());
+				const auto ground = TopographyModel::orthometricHeight(p.latitude(), p.longitude()).template to<units::length::meters<T>>();
 				const auto rayH   = obsMSL + units::length::meters<T>{sMid.value() * slope};
 				const T    fMid   = (rayH - ground).value();
 
@@ -654,7 +654,7 @@ inline namespace coordinates
 
 			const auto direct = coordinates::geodesicDirect(m_observerGeodetic, azi, sHi);
 			const auto p      = direct.destination();
-			const auto ground = TopographyModel::orthometricHeight(p.latitude(), p.longitude());
+			const auto ground = TopographyModel::orthometricHeight(p.latitude(), p.longitude()).template to<units::length::meters<T>>();
 			const auto rayH   = obsMSL + units::length::meters<T>{sHi.value() * slope};
 
 			TerrainHit hit;

@@ -29,12 +29,15 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
   can no longer be silently confused. `PositionGeodetic::latitude()`/`longitude()`,
   `PositionAER::azimuth()`/`elevation()`, and every geodesic bearing accessor now return their tagged kind;
   AER azimuth, geodesic bearings, and any North-referenced heading unify as one `angles::Azimuth`.
-- **Strongly-typed heights** (`src/heights.h`, `src/verticalDatum.h`): ellipsoidal (HAE) and orthometric
-  (MSL) heights are now distinct `units::kind` types (`heights::Ellipsoidal`, `heights::Orthometric`),
-  joined by a `heights::Undulation` kind for the geoid separation. Both are lengths but mixing them in
-  arithmetic or comparison is a compile error; the only bridge is an explicit conversion. A plain length
-  still constructs into a height implicitly, so existing construction is unaffected. `heights::kind_for<Datum>`
-  deduces which height a datum measures from its vertical reference.
+- **Strongly-typed heights** (`src/heightKinds.h`, `src/heights.h`, `src/verticalDatum.h`): ellipsoidal
+  (HAE) and orthometric (MSL) heights are now distinct `units::kind` types (`heights::Ellipsoidal`,
+  `heights::Orthometric`), joined by a `heights::Undulation` kind for the geoid separation. Both are lengths
+  but mixing them in arithmetic or comparison is a compile error; the only bridge is an explicit conversion.
+  A plain length still constructs into a height implicitly, so existing construction is unaffected.
+  `heights::kind_for<Datum>` deduces which height a datum measures from its vertical reference. The
+  topography producer side is tagged too: `DTED::orthometricHeight` / `NULL_TOPOGRAPHY::orthometricHeight`
+  now return `heights::Orthometric`, and the `OrthometricHeight` concept accepts a length kind (via the new
+  `is_length_quantity` predicate) as well as a plain length.
 - **`PositionGeodetic::toEllipsoidHeight()` / `toOrthometricHeight()`**: convert a point's stored altitude
   between HAE and MSL through the datum's geoid, returning the tagged height kind.
 

@@ -110,8 +110,14 @@ stay plain `meters<>`/`degrees<>`; only the public *boundary* is tagged.
 - [x] Tag public accessors + matching setters/ctor params: `LLA::latitude()/longitude()/altitude()`,
       `AER::azimuth()/elevation()/range()`, the `distance()/magnitude()` family, geodesic
       `distanceTo()/initialBearingTo()/finalBearingTo()` and the `GeodesicInverse/DirectResult`
-      bearings/distance, `verticalDatum` converters. STILL TODO: `DTED::orthometricHeight`, geoid
-      `undulation` (topography/geoid producer side).
+      bearings/distance, `verticalDatum` converters, and `DTED::orthometricHeight` /
+      `NULL_TOPOGRAPHY::orthometricHeight` (producer side; required making the `OrthometricHeight` concept
+      kind-aware via `is_length_quantity`, since `is_length_unit_v<kind>` is false). Geoid `undulation` left
+      plain: it is the internal separation N consumed only by the `correctionValue` walker's `height ± N`
+      arithmetic (tagging it would poison that plain arithmetic for no external benefit). LOS callers of
+      `orthometricHeight` unwrap with `.to<meters<T>>()`; LOS is `COORDINATES_ENABLE_LOS`-gated/unbuilt and
+      still consumes other newly-tagged accessors (lat/lon) -- it needs a dedicated tag-reconciliation pass
+      when re-enabled.
 - [ ] Deliver the README-advertised-but-missing APIs: `toOrthometricHeight()`/`toEllipsoidHeight()` members
       (done, commit 1), `PositionAER::fromObserver(observer,target)` + `distanceSquared(a,b)` (done, commit
       4), `PositionXYZ` + `x()/y()/z()` (commit 5, its own review — standalone Cartesian triple).

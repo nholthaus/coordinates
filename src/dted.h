@@ -60,9 +60,9 @@ inline namespace coordinates
 		class DTED : public Topography<geoids::EGM96>
 		{
 		public:
-			static meters<> orthometricHeight(const degrees<>& latitude, const degrees<>& longitude)
+			static heights::Orthometric orthometricHeight(const degrees<>& latitude, const degrees<>& longitude)
 			{
-				return DTEDTileManager::instance().elevation(latitude, longitude);
+				return heights::Orthometric(DTEDTileManager::instance().elevation(latitude, longitude));
 			}
 		};
 	}

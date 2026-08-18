@@ -212,6 +212,19 @@ namespace
 		}
 	};
 
+	// The OrthometricHeight concept accepts a producer whose orthometricHeight() returns a tagged height
+	// kind, not only a plain length. DTED now returns heights::Orthometric; if the concept had not been
+	// made kind-aware, DTED would fail has_orthometricHeight / is_topography and these would break.
+	static_assert(coordinates::traits::is_length_quantity<units::length::meters<double>>,
+	              "a plain length is a length quantity");
+	static_assert(coordinates::traits::is_length_quantity<coordinates::heights::Orthometric>,
+	              "a tagged orthometric height is a length quantity");
+	static_assert(!coordinates::traits::is_length_quantity<units::angle::degrees<double>>,
+	              "an angle is not a length quantity");
+	static_assert(std::is_same_v<decltype(coordinates::topography::DTED::orthometricHeight(0.0_deg, 0.0_deg)),
+	                             coordinates::heights::Orthometric>,
+	              "DTED::orthometricHeight must return a tagged orthometric height");
+
 	TEST_F(TopographyTest, has_orthometricHeight)
 	{
 		EXPECT_TRUE(coordinates::traits::has_orthometricHeight<topography::NULL_TOPOGRAPHY>);

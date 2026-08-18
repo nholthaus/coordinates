@@ -39,33 +39,13 @@
 
 #include "ellipsoid.h"
 #include "geoid.h"
+#include "heightKinds.h"
 #include "topography.h"
 
 #include <verticalDatum.h>
 
 inline namespace coordinates
 {
-	/// Type-tagged vertical-height values. Both an ellipsoidal (HAE) and an orthometric (MSL) height are lengths,
-	/// so nothing at the type level stops them being added or interchanged today -- yet doing so without the
-	/// geoid-undulation correction is a datum error. These `units::kind` tags make the two distinct types:
-	/// mixing them, or using one where the other is expected, is a compile error, and the ONLY bridge is
-	/// `convertToEllipsoidHeight` / `convertFromEllipsoidHeight`. (Distinct from the `traits::OrthometricHeight`
-	/// concept, which describes a *type that can produce* an orthometric height.)
-	namespace heights
-	{
-		/// A height above the reference ellipsoid (HAE / geometric height, e.g. what GPS reports).
-		using Ellipsoidal = units::kind<"ellipsoidal_height", units::length::meters<double>>;
-
-		/// A height above the geoid (orthometric / mean-sea-level height, e.g. what a map or DTED reports).
-		using Orthometric = units::kind<"orthometric_height", units::length::meters<double>>;
-
-		/// The geoid undulation N: the signed separation between the ellipsoid and the geoid at a point
-		/// (`N = ellipsoidal - orthometric`). Tagged distinct from a height so it can only enter a height
-		/// through the sanctioned `convertToEllipsoidHeight` / `convertFromEllipsoidHeight` bridge, never be
-		/// mistaken for an altitude.
-		using Undulation = units::kind<"geoid_undulation", units::length::meters<double>>;
-	} // namespace heights
-
 	inline namespace traits
 	{
 
@@ -126,7 +106,8 @@ inline namespace coordinates
 			using base_datum          = topography_traits<T>::reference_geoid;
 			using reference_ellipsoid = geoid_traits<base_datum>::reference_ellipsoid;
 
-			static meters<> correctionValue(degrees<> lat, degrees<> lon) { return T::orthometricHeight(lat, lon); }
+			// orthometricHeight returns a tagged height; unwrap to the plain length the recursive walker sums.
+			static meters<> correctionValue(degrees<> lat, degrees<> lon) { return T::orthometricHeight(lat, lon).template to<meters<>>(); }
 		};
 	}    // namespace traits
 

@@ -34,8 +34,10 @@
 //	INCLUDES
 //------------------------
 #include <units.h>
+#include <units/kind.h>
 
 #include "geoid.h"
+#include "heightKinds.h"
 
 inline namespace coordinates
 {
@@ -69,7 +71,7 @@ inline namespace coordinates
 			 *				level, as represented by the topography's reference geoid.
 			 * @returns		0 meters for all inputs.
 			 */
-			static meters<> orthometricHeight(const degrees<>, const degrees<>&) { return 0.0_m; }
+			static heights::Orthometric orthometricHeight(const degrees<>, const degrees<>&) { return heights::Orthometric(0.0_m); }
 		};
 	}    // namespace topography
 
@@ -105,15 +107,21 @@ inline namespace coordinates
 
 	inline namespace traits
 	{
-		/// Concept that ensures a conforming `orthometricHeight(lat, lon)` static function is present
+		/// A length "quantity": either a plain `units` length unit, or a `units::kind` whose wrapped unit is a
+		/// length (e.g. `heights::Orthometric`). A tagged height is not itself a `units` unit, so a producer
+		/// that returns one must still count as returning a length here.
+		template<typename T>
+		concept is_length_quantity =
+		        units::traits::is_length_unit_v<T> || (units::traits::is_kind_v<T> && units::traits::is_length_unit_v<typename T::unit_type>);
+
+		/// Concept that ensures a conforming `orthometricHeight(lat, lon)` static function is present, returning
+		/// a length quantity (a plain length or a tagged height kind).
 		template<typename T>
 		concept OrthometricHeight = requires(degrees<> lat, degrees<> lon)
 		{
-			// Enforces a static call form (T::...), not an instance method.
-			{
-				T::orthometricHeight(lat, lon)
-			};
-		} && units::traits::is_length_unit_v<decltype(T::orthometricHeight(deg, deg))>;
+			// Enforces a static call form (T::...), not an instance method, returning a length quantity.
+			{ T::orthometricHeight(lat, lon) } -> is_length_quantity;
+		};
 
 		/// boolean constant to test `has_orthometricHeight`
 		template<typename T>
