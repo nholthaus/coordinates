@@ -38,6 +38,7 @@
 #include "angles.h"
 #include "frameOfReference.h"
 #include "heights.h"
+#include "latitudeConversion.h"
 #include "point.h"
 #include "ranges.h"
 #include <units.h>
@@ -297,6 +298,26 @@ inline namespace coordinates
 		}
 
 		/**
+		 * @brief		this point's geodetic latitude (the stored latitude, angle to the ellipsoid normal).
+		 * @details		The explicit-named companion to `geocentricLatitude()`; identical to `latitude()`.
+		 * @return		the geodetic latitude, as `angles::Latitude`.
+		 */
+		[[nodiscard]] angles::Latitude geodeticLatitude() const { return angles::Latitude(m_latitude); }
+
+		/**
+		 * @brief		this point's geocentric latitude (the angle to the ellipsoid centre).
+		 * @details		Converts the stored geodetic latitude to geocentric using the datum's reference
+		 *				ellipsoid (via its eccentricity). The position carries its datum, so no ellipsoid
+		 *				argument is needed. The result is tagged `angles::Geocentric` so it can never be
+		 *				mistaken for a geodetic latitude.
+		 * @return		the geocentric latitude, as `angles::Geocentric`.
+		 */
+		[[nodiscard]] angles::Geocentric geocentricLatitude() const
+		{
+			return convertLatitude<GeocentricLatitude, typename traits::datum_traits<Datum>::reference_ellipsoid>(angles::Latitude(m_latitude));
+		}
+
+		/**
 		 * @brief		longitude-value
 		 * @details		returns the longitude-value of the point.
 		 * @returns		longitude-value of the Point.
@@ -491,6 +512,54 @@ inline namespace coordinates
 		{
 			return angles::Azimuth(finalBearing<Datum>(*this, other));
 		}
+
+		//======================================================
+		//	TWO-POINT MEASUREMENTS (a.measureTo(b))
+		//======================================================
+		//	The directional measurement family: each computes a relationship FROM this point TO another,
+		//	returning the distinctly-tagged kind so a surface distance, a slant range, and a straight-line
+		//	distance can never be confused. Thin forwarders over the free two-argument engine.
+
+		/**
+		 * @brief		Straight-line (Euclidean) distance from this point to another.
+		 * @tparam		Point	point type of the target.
+		 * @param[in]	other	the point to measure to.
+		 * @return		the straight-line distance, as `ranges::Euclidean`.
+		 */
+		template<is_point Point>
+		[[nodiscard]] ranges::Euclidean euclideanDistanceTo(const Point& other) const
+		{ return ranges::Euclidean(coordinates::distance(*this, other)); }
+
+		/**
+		 * @brief		Slant range from this point (as observer) to a target.
+		 * @details		The straight-line range from observer to target -- the same straight-line magnitude as
+		 *				the Euclidean distance, tagged as an observer-relative slant range.
+		 * @tparam		Point	point type of the target.
+		 * @param[in]	other	the target point.
+		 * @return		the slant range, as `ranges::Slant`.
+		 */
+		template<is_point Point>
+		[[nodiscard]] ranges::Slant slantRangeTo(const Point& other) const
+		{ return ranges::Slant(coordinates::distance(*this, other)); }
+
+		/**
+		 * @brief		Geodesic (great-circle surface) distance from this point to another geodetic point.
+		 * @details		Uniform-named companion to `distanceTo`; the surface distance along the ellipsoid.
+		 * @param[in]	other	the other geodetic point.
+		 * @return		the geodesic surface distance, as `ranges::Geodesic`.
+		 */
+		[[nodiscard]] ranges::Geodesic geodesicDistanceTo(const PositionGeodetic& other) const
+		{ return ranges::Geodesic(geodesicDistance<Datum>(*this, other)); }
+
+		/**
+		 * @brief		Initial bearing (forward azimuth) from this point to another geodetic point.
+		 * @details		The common bearing; `initialBearingTo` and `finalBearingTo` give the two endpoints'
+		 *				azimuths explicitly.
+		 * @param[in]	other	the other geodetic point.
+		 * @return		the initial bearing, as `angles::Azimuth`.
+		 */
+		[[nodiscard]] angles::Azimuth bearingTo(const PositionGeodetic& other) const
+		{ return angles::Azimuth(initialBearing<Datum>(*this, other)); }
 
 		/**
 		 * @brief		Computes a destination point given an initial bearing and distance.

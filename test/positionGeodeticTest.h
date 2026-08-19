@@ -573,6 +573,28 @@ namespace
 		EXPECT_UNITS_NEAR(3900253.57184229_m, NYC.distance(LA), 5.0e-9_m);
 	}
 
+	// The directional two-point measurement family (a.measureTo(b)): each returns its distinctly-tagged
+	// kind and agrees with the existing accessor / free function it forwards to.
+	TEST_F(PositionGeodeticTest, measurementMembers)
+	{
+		LLA NYC(40.7128_deg, -74.0059_deg, 30.0_km);
+		LLA LA(34.0522_deg, -118.2437_deg, 30.0_km);
+
+		// euclidean and slant range are the same straight-line magnitude, differently tagged.
+		static_assert(std::is_same_v<decltype(NYC.euclideanDistanceTo(LA)), ranges::Euclidean>);
+		static_assert(std::is_same_v<decltype(NYC.slantRangeTo(LA)), ranges::Slant>);
+		EXPECT_UNITS_NEAR(NYC.distance(LA), NYC.euclideanDistanceTo(LA), 5.0e-9_m);
+		EXPECT_UNITS_NEAR(NYC.euclideanDistanceTo(LA), NYC.slantRangeTo(LA), 5.0e-9_m);
+
+		// geodesicDistanceTo is the uniform-named companion to distanceTo (surface distance).
+		static_assert(std::is_same_v<decltype(NYC.geodesicDistanceTo(LA)), ranges::Geodesic>);
+		EXPECT_UNITS_NEAR(NYC.distanceTo(LA), NYC.geodesicDistanceTo(LA), 5.0e-9_m);
+
+		// bearingTo is the initial bearing.
+		static_assert(std::is_same_v<decltype(NYC.bearingTo(LA)), angles::Azimuth>);
+		EXPECT_UNITS_NEAR(NYC.initialBearingTo(LA), NYC.bearingTo(LA), 1.0e-9_deg);
+	}
+
 	TEST_F(PositionGeodeticTest, latitude)
 	{
 		LLA NYC(40.7128_deg, -74.0059_deg, 30.0_km);

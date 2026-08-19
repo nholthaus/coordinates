@@ -749,7 +749,7 @@ inline namespace coordinates
 	 */
 	template<class Datum>
 	degrees<> initialBearing(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
-	{ return geodesicInverse<Datum>(a, b).initialBearing(); }
+	{ return geodesicInverse<Datum>(a, b).initialBearing().template to<degrees<>>(); }
 
 	/**
 	 * @brief		Convenience wrapper returning the final bearing.
@@ -760,7 +760,7 @@ inline namespace coordinates
 	 */
 	template<class Datum>
 	degrees<> finalBearing(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
-	{ return geodesicInverse<Datum>(a, b).finalBearing(); }
+	{ return geodesicInverse<Datum>(a, b).finalBearing().template to<degrees<>>(); }
 
 	//------------------------
 	//	ELLIPSOID INTERSECTION

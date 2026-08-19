@@ -39,6 +39,7 @@
 #include <angles.h>
 #include <ellipsoid.h>
 #include <latitudeConversion.h>
+#include <positionGeodetic.h>
 
 using namespace coordinates;
 using namespace units;
@@ -108,6 +109,22 @@ namespace
 		// Both are valid geocentric latitudes near 44.8076 deg; the point is the API takes the ellipsoid.
 		EXPECT_UNITS_NEAR(44.8075767840_deg, onWgs84, 1.0e-6_deg);
 		EXPECT_UNITS_NEAR(44.8075767840_deg, onGrs80, 1.0e-6_deg);
+	}
+
+	// The position-member front door: pos.geocentricLatitude() supplies its own datum's ellipsoid, so the
+	// call is zero-argument and matches the free convertLatitude with that ellipsoid. geodeticLatitude()
+	// returns the stored latitude unchanged.
+	TEST_F(LatitudeConversionTest, positionMembers)
+	{
+		LLA p(45.0_deg, -71.0_deg, 0.0_m);    // WGS84_G1674 datum
+
+		static_assert(std::is_same_v<decltype(p.geocentricLatitude()), angles::Geocentric>,
+		              "geocentricLatitude() must return a geocentric latitude");
+		static_assert(std::is_same_v<decltype(p.geodeticLatitude()), angles::Latitude>,
+		              "geodeticLatitude() must return a geodetic latitude");
+
+		EXPECT_UNITS_NEAR(45.0_deg, p.geodeticLatitude(), 1.0e-12_deg);
+		EXPECT_UNITS_NEAR(44.8075767840_deg, p.geocentricLatitude(), 1.0e-8_deg);
 	}
 }
 

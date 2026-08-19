@@ -527,6 +527,18 @@ PositionECEF     ecef = geo;
 This conversion is unambiguous: both representations describe the same absolute physical location
 in different coordinate systems.
 
+A conversion (one point re-expressed) is distinct from a **measurement** (a relationship between two
+points). Measurements read as directional members returning their distinctly-typed kind, so a surface
+distance, a slant range, and a straight-line distance cannot be confused:
+
+```cpp
+LLA a = ..., b = ...;
+ranges::Geodesic  surface = a.geodesicDistanceTo(b);   // along the ellipsoid
+ranges::Slant     slant   = a.slantRangeTo(b);         // straight line, observer->target
+ranges::Euclidean euclid  = a.euclideanDistanceTo(b);  // straight line, 3-D
+angles::Azimuth   bearing = a.bearingTo(b);            // forward azimuth
+```
+
 ---
 
 ### Example: Chained Implicit Conversions

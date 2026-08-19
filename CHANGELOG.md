@@ -12,6 +12,12 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 ### Added
 
+- **Ergonomic member API** (per `docs/API-form-policy.md`). Two-point measurements now read as directional
+  members returning their distinctly-tagged kind: `a.euclideanDistanceTo(b)` (`ranges::Euclidean`),
+  `a.slantRangeTo(b)` (`ranges::Slant`), `a.geodesicDistanceTo(b)` (`ranges::Geodesic`), and `a.bearingTo(b)`
+  (`angles::Azimuth`), alongside the existing `distance`/`distanceTo`/`initialBearingTo`. Latitude conversion
+  gains a position front door: `pos.geocentricLatitude()` / `pos.geodeticLatitude()`, which use the
+  position's own datum ellipsoid (no argument).
 - **Geodetic ↔ geocentric latitude conversion** (`src/latitudeConversion.h`): a new `angles::Geocentric`
   kind and `convertLatitude<ToNode, Ellipsoid>(from)` that converts between geodetic latitude (the ellipsoid
   normal, what GPS reports) and geocentric latitude (the ellipsoid centre) via the ellipsoid's eccentricity
