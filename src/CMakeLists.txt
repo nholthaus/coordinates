@@ -34,6 +34,7 @@ set(PUBLIC_HEADERS
         dtedTileManager.h
         bodyFrame.h
         ellipsoid.h
+        frameAxes.h
         frameOfReference.h
         heightKinds.h
         heights.h

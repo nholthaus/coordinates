@@ -703,6 +703,23 @@ inline namespace coordinates
 		template<typename T>
 		concept is_cartesian_frame = std::is_same_v<CartesianTuple, std::decay_t<typename frame_traits<T>::tuple_type>>;
 
+		/**
+		 * @brief		Whether a frame is a LOCAL (tangent) frame -- one anchored at an origin it carries in
+		 *				`FrameData.origin`, as opposed to a global frame (ECEF, geodetic) that has no origin.
+		 * @details		The local frames (ENU, NED, AER) read `f.origin` in their `convertToBaseFrame`; a point
+		 *				in one of them adopts an origin and converts through an ECEF intermediate, whereas a point
+		 *				in a global frame converts in one hop. `Coordinate`'s converting constructor branches on
+		 *				this trait. `false` by default; `true` for the tangent frames.
+		 */
+		template<typename Frame>
+		inline constexpr bool is_local_frame = false;
+		template<class HorizontalDatum>
+		inline constexpr bool is_local_frame<coordinateFrames::ENUFrame<HorizontalDatum>> = true;
+		template<class HorizontalDatum>
+		inline constexpr bool is_local_frame<coordinateFrames::NEDFrame<HorizontalDatum>> = true;
+		template<class HorizontalDatum>
+		inline constexpr bool is_local_frame<coordinateFrames::AERFrame<HorizontalDatum>> = true;
+
 		// Adapters for concept predicates used where a trait class template is required.
 		template<class T>
 		struct is_frame_of_reference_trait : std::bool_constant<is_frame_of_reference<T>>
