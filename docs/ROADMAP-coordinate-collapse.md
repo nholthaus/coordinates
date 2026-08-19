@@ -70,14 +70,37 @@ one genuinely non-uniform piece, isolated to that hook rather than smeared acros
 - **C-0 — scaffolding, no behavior change.** Add `frame_traits<Frame>::is_local`, the `frame_axes<Frame>`
   trait (accessor name/return-type table), and the `convert_fast_path<From,To>` hook, alongside the existing
   classes. Nothing collapses yet; prove the traits compile + a unit test of `frame_axes` for each frame.
-- **C-1 — the `Coordinate` body.** Introduce `Coordinate<Frame,Tuple>` with tuple storage + the full shared
-  member surface (point/setPoint/frameData, converting ctor/`operator=` with the `is_local` branch, arithmetic,
-  the forwarders) + the free-function accessors driven by `frame_axes`. Do NOT delete the old classes yet.
-- **C-2..C-6 — migrate frame-family by family.** For each of ECEF, Geodetic, ENU/NED, AER (and the vectors):
-  re-alias the position name to `Coordinate<…>`, delete the old class body, run that family's truth test +
-  MSVC build. One family per commit, each independently green. Order: ECEF first (simplest, the LCA root),
-  then Geodetic, then ENU/NED (the axis-swap pair), then AER (the trickiest — origin + fast paths + tagged
-  az/el/range), then the three vectors.
+- **C-1 (DONE — landed C-1a/b/c/d).** `Coordinate<Frame,Tuple,FrameData>` with tuple storage + the full shared
+  member surface (point/setPoint/frameData, converting ctor/`operator=` with the `is_local` branch + the
+  `convert_fast_path` shortcuts, arithmetic, the forwarders, `operator<<`) + the `AxisAccessors<Frame,Derived,
+  Tuple>` CRTP-lite mixin giving each frame its named member accessors with tagged returns. Fully generic: axis
+  types come from the `Tuple` (`std::tuple_element_t`), so an `inches`-backed ECEF instantiates and converts.
+  The old classes are untouched; `Coordinate` is proven by direct instantiation. gcc + MSVC green.
+- **C-2..C-6 — migrate frame-family by family (the fresh focused pass).** Two coupled sub-steps, then the
+  per-family aliasing:
+  - **C-2a — break the `algorithm.h` forward-declaration cycle.** `algorithm.h` names `PositionGeodetic<Datum>`
+    / `PositionECEF<Datum>` as params/returns in the geodesic + intersection functions (`geodesicInverse`,
+    `geodesicDirect`, `geodesicDistance`, `initialBearing`/`finalBearing`, `intersectEllipsoid`,
+    `isLineOfSight`) and forward-includes `coordinates_fwd.h`. Because `Coordinate` includes `algorithm.h`, a
+    pure `using` alias of these names cannot be forward-declared (a cycle). Resolve by making those functions
+    **generic over the point type** (template on the geodetic/ECEF point, constrained by concept) rather than
+    naming the concrete class — so no forward declaration is needed. The one snag: `geodesicDirect` *constructs*
+    a `PositionGeodetic<Datum>` result (and `GeodesicDirectResult<PositionGeodetic<Datum>>`); give it the
+    destination point type as a template parameter (defaulted) or a small factory so it builds the alias
+    without naming it pre-definition.
+  - **C-2b — convert `coordinates_fwd.h` (+ `vectorECEF.h`'s `VectorENU`/`VectorNED` fwd-decls) to alias
+    templates.** Once C-2a removes the fwd-*need*, replace the `class` forward-declarations with the `using`
+    alias templates (or drop `coordinates_fwd.h` entirely if nothing else needs it).
+  - **C-3..C-6 — alias each family.** For ECEF, Geodetic, ENU/NED, AER (and the three vectors): replace the old
+    class with `template<class Datum, template<class> class Units = meters, typename T = double> using
+    PositionECEF = Coordinate<ECEFFrame<...>, std::tuple<Units<T>,Units<T>,Units<T>>>;` (each frame's own tuple
+    element types), delete the old class body, run that family's truth test + MSVC. One family per commit.
+    Order: ECEF first (simplest, LCA root), then Geodetic, then ENU/NED (axis-swap pair), then AER (trickiest —
+    origin ctors + `fromObserver` + `origin()`/`setOrigin` + tagged az/el/range), then the vectors (a separate
+    hierarchy: `vector()`/`setVector`, `vector_tag`, no `frame_data` on the free ECEF vector). The
+    origin-carrying ctors (`PositionENU(e,n,u,origin)`, `fromObserver`, `origin()`, `setOrigin`) are the
+    local-frame surface the shared body does not yet host — add them to `Coordinate` (guarded by
+    `is_local_frame`) or a local-frame accessor mixin during C-5/C-6.
 - **C-7 — delete the `Point` ABC.** Once all five positions are `Coordinate` aliases, remove the pure-virtual
   `Point` base (concepts are structural, nothing stores `Point*`); add the `is_coordinate` concept and make
   `is_point`/`is_vector` aliases of it for back-compat. Grep-verify no `virtual`/vtable remains on the

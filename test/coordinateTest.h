@@ -111,7 +111,6 @@ namespace
 	{
 		using EnuCoord = Coordinate<ENUFrame<WgsHoriz>, CartesianTuple>;
 		using NedCoord = Coordinate<NEDFrame<WgsHoriz>, CartesianTuple>;
-		using AerCoord = Coordinate<AERFrame<WgsHoriz>, CartesianTuple>;    // AER stores its SphericalTuple
 
 		static_assert(coordinates::traits::is_local_frame<ENUFrame<WgsHoriz>>);
 
