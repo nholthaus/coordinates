@@ -57,7 +57,7 @@ inline namespace coordinates
 	namespace heights
 	{
 		//------------------------------------------------------------------------------------------------------
-		//	The tagged height kinds themselves (`Ellipsoidal`, `Orthometric`, `Undulation`) are defined in
+		//	The tagged height kinds themselves (`Ellipsoidal`, `Orthometric`) are defined in
 		//	heightKinds.h, at the bottom of the include graph. `kind_for` needs `datum_traits` and so lives
 		//	here, above datum.h.
 		//------------------------------------------------------------------------------------------------------

@@ -63,12 +63,10 @@ namespace
 	//	inequality below is the sound, testable guarantee.)
 	//------------------------------------------------------------------------------------------------------
 
-	// The seven angle kinds are all distinct types ...
+	// The position-angle kinds are all distinct types ...
 	static_assert(!std::is_same_v<angles::Latitude, angles::Longitude>);
 	static_assert(!std::is_same_v<angles::Latitude, angles::Azimuth>);
 	static_assert(!std::is_same_v<angles::Azimuth, angles::Elevation>);
-	static_assert(!std::is_same_v<angles::Yaw, angles::Pitch>);
-	static_assert(!std::is_same_v<angles::Pitch, angles::Roll>);
 
 	// ... carrying different tags, which is what makes mixing them a compile error. THE headline: a
 	// latitude and an azimuth (both `degrees<>`, both `SphericalTuple` slot 0) can no longer be confused.

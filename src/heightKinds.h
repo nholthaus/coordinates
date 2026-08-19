@@ -62,12 +62,6 @@ inline namespace coordinates
 
 		/// A height above the geoid (orthometric / mean-sea-level height, e.g. what a map or DTED reports).
 		using Orthometric = units::kind<"orthometric_height", units::length::meters<double>>;
-
-		/// The geoid undulation N: the signed separation between the ellipsoid and the geoid at a point
-		/// (`N = ellipsoidal - orthometric`). Tagged distinct from a height so it can only enter a height
-		/// through the sanctioned `convertToEllipsoidHeight` / `convertFromEllipsoidHeight` bridge, never be
-		/// mistaken for an altitude.
-		using Undulation = units::kind<"geoid_undulation", units::length::meters<double>>;
 	}    // namespace heights
 }    // namespace coordinates
 

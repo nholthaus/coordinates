@@ -27,13 +27,13 @@
 //
 //--------------------------------------------------------------------------------------------------
 //
-// Strongly-typed angles. Latitude, longitude, azimuth, elevation, and the three orientation angles are
-// all plain angles, yet they are semantically distinct and must not be silently interchanged -- a latitude
-// and an azimuth are both `degrees<>`, so nothing at the type level stops an azimuth of 315 degrees being
-// consumed as a latitude of 315 degrees. Each is a `units::kind` tag so the type system keeps them apart:
-// mixing two different angle kinds is a compile error. The tags are boundary-permissive: a plain angle
-// constructs into an angle kind implicitly (so `LLA p(34_deg, -118_deg, 100_m)` still compiles) and
-// `.to<PlainUnit>()` unwraps.
+// Strongly-typed position angles. Latitude, longitude, azimuth, and elevation are all plain angles, yet
+// they are semantically distinct and must not be silently interchanged -- a latitude and an azimuth are
+// both `degrees<>`, so nothing at the type level stops an azimuth of 315 degrees being consumed as a
+// latitude of 315 degrees. Each is a `units::kind` tag so the type system keeps them apart: mixing two
+// different angle kinds is a compile error. The tags are boundary-permissive: a plain angle constructs into
+// an angle kind implicitly (so `LLA p(34_deg, -118_deg, 100_m)` still compiles) and `.to<PlainUnit>()`
+// unwraps. Orientation angles (yaw/pitch/roll) are deliberately left plain -- see the note by `Elevation`.
 //
 //--------------------------------------------------------------------------------------------------
 
@@ -73,14 +73,11 @@ inline namespace coordinates
 		/// An elevation angle above the local horizon, in [-90, 90].
 		using Elevation = units::kind<"elevation", units::angle::degrees<double>>;
 
-		/// A yaw (heading) orientation angle about the body Z axis.
-		using Yaw = units::kind<"yaw", units::angle::degrees<double>>;
-
-		/// A pitch orientation angle about the body Y axis.
-		using Pitch = units::kind<"pitch", units::angle::degrees<double>>;
-
-		/// A roll orientation angle about the body X axis.
-		using Roll = units::kind<"roll", units::angle::degrees<double>>;
+		// Orientation angles (yaw/pitch/roll) are intentionally NOT tagged here: they compose through the
+		// rotation math as a coupled triple (they are not freely added or compared like the position angles
+		// above), and tagging them would earn no conversion, routing, or user-facing ergonomics -- only
+		// friction against the rotation library. They stay plain `degrees<>` in `EulerAngles` / the
+		// `OrientationTuple`. Add tags here if a future orientation API would genuinely benefit.
 	}    // namespace angles
 }    // namespace coordinates
 

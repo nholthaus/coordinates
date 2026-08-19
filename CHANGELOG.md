@@ -45,17 +45,18 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
   straight-line distances interoperate freely. `PositionAER::range()` and the `distance()` / `magnitude()`
   accessors return `ranges::Euclidean`; `distanceTo()` / `GeodesicInverseResult::distance()` return
   `ranges::Geodesic`.
-- **Strongly-typed angles** (`src/angles.h`): latitude, longitude, azimuth, elevation, and the three
-  orientation angles (yaw/pitch/roll) are now distinct `units::kind` types in the `angles::` namespace.
-  They are all `degrees<>` but semantically incommensurable, so mixing them is a compile error — most
-  importantly, a latitude and an azimuth (which previously shared both a type and a `SphericalTuple` slot)
-  can no longer be silently confused. `PositionGeodetic::latitude()`/`longitude()`,
-  `PositionAER::azimuth()`/`elevation()`, and every geodesic bearing accessor now return their tagged kind;
-  AER azimuth, geodesic bearings, and any North-referenced heading unify as one `angles::Azimuth`.
+- **Strongly-typed position angles** (`src/angles.h`): latitude, longitude, azimuth, and elevation are now
+  distinct `units::kind` types in the `angles::` namespace. They are all `degrees<>` but semantically
+  incommensurable, so mixing them is a compile error — most importantly, a latitude and an azimuth (which
+  previously shared both a type and a `SphericalTuple` slot) can no longer be silently confused.
+  `PositionGeodetic::latitude()`/`longitude()`, `PositionAER::azimuth()`/`elevation()`, and every geodesic
+  bearing accessor now return their tagged kind; AER azimuth, geodesic bearings, and any North-referenced
+  heading unify as one `angles::Azimuth`. Orientation angles (yaw/pitch/roll) are left plain: they compose
+  through the rotation math as a coupled triple, so tagging them would earn nothing.
 - **Strongly-typed heights** (`src/heightKinds.h`, `src/heights.h`, `src/verticalDatum.h`): ellipsoidal
   (HAE) and orthometric (MSL) heights are now distinct `units::kind` types (`heights::Ellipsoidal`,
-  `heights::Orthometric`), joined by a `heights::Undulation` kind for the geoid separation. Both are lengths
-  but mixing them in arithmetic or comparison is a compile error; the only bridge is an explicit conversion.
+  `heights::Orthometric`). Both are lengths but mixing them in arithmetic or comparison is a compile error;
+  the only bridge is an explicit conversion.
   A plain length still constructs into a height implicitly, so existing construction is unaffected.
   `heights::kind_for<Datum>` deduces which height a datum measures from its vertical reference. The
   topography producer side is tagged too: `DTED::orthometricHeight` / `NULL_TOPOGRAPHY::orthometricHeight`
