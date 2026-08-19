@@ -72,22 +72,28 @@ inline namespace coordinates
 		///	@tparam		Frame	the frame of reference.
 		///	@tparam		Derived	the CRTP-derived coordinate type.
 		//  ----------------------------------------------------------------------------
-		template<class Frame, class Derived>
+		template<class Frame, class Derived, class Tuple>
 		struct AxisAccessors
 		{
 		};
 
 		//------------------------------------------------------------------------------------------------------
-		//	Shared CRTP plumbing: derive an accessor mixin from AxisAccessorBase to get self()/get<I>()/set<I>().
+		//	Shared CRTP plumbing: derive an accessor mixin from AxisAccessorBase to get self()/slot<I>()/set<I>().
 		//------------------------------------------------------------------------------------------------------
-		template<class Derived>
+		template<class Derived, class Tuple>
 		struct AxisAccessorBase
 		{
 		protected:
+			/// The stored type of axis `I`, taken from the frame's `Tuple` (which is complete here, unlike the
+			/// still-being-defined CRTP `Derived`) -- so an accessor returns exactly what the tuple stores,
+			/// whether that is `meters<double>` or a non-default unit like `inches<double>`.
+			template<std::size_t I>
+			using slot_type = std::tuple_element_t<I, Tuple>;
+
 			[[nodiscard]] const Derived& self() const { return static_cast<const Derived&>(*this); }
 
 			template<std::size_t I>
-			[[nodiscard]] auto slot() const
+			[[nodiscard]] slot_type<I> slot() const
 			{
 				return std::get<I>(self().point());
 			}
@@ -95,7 +101,7 @@ inline namespace coordinates
 			template<std::size_t I, class Value>
 			void setSlot(const Value& value)
 			{
-				auto point       = static_cast<Derived&>(*this).point();
+				auto point         = static_cast<Derived&>(*this).point();
 				std::get<I>(point) = value;
 				static_cast<Derived&>(*this).setPoint(point);
 			}
@@ -104,34 +110,34 @@ inline namespace coordinates
 		//------------------------------------------------------------------------------------------------------
 		//	ECEF: x / y / z (raw lengths).
 		//------------------------------------------------------------------------------------------------------
-		template<class HorizontalDatum, class Derived>
-		struct AxisAccessors<coordinateFrames::ECEFFrame<HorizontalDatum>, Derived> : AxisAccessorBase<Derived>
+		template<class HorizontalDatum, class Derived, class Tuple>
+		struct AxisAccessors<coordinateFrames::ECEFFrame<HorizontalDatum>, Derived, Tuple> : AxisAccessorBase<Derived, Tuple>
 		{
-			using base = AxisAccessorBase<Derived>;
+			using base = AxisAccessorBase<Derived, Tuple>;
 			[[nodiscard]] auto x() const { return base::template slot<0>(); }
 			[[nodiscard]] auto y() const { return base::template slot<1>(); }
 			[[nodiscard]] auto z() const { return base::template slot<2>(); }
-			void               setX(const meters<>& v) { base::template setSlot<0>(v); }
-			void               setY(const meters<>& v) { base::template setSlot<1>(v); }
-			void               setZ(const meters<>& v) { base::template setSlot<2>(v); }
+			void               setX(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
+			void               setY(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
+			void               setZ(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
 		};
 
 		//------------------------------------------------------------------------------------------------------
 		//	Geodetic: latitude / longitude / altitude (tagged), plus the geocentric + ortho/ellipsoidal verbs.
 		//------------------------------------------------------------------------------------------------------
-		template<class Datum, class Derived>
-		struct AxisAccessors<coordinateFrames::Geodetic3DFrame<Datum>, Derived> : AxisAccessorBase<Derived>
+		template<class Datum, class Derived, class Tuple>
+		struct AxisAccessors<coordinateFrames::Geodetic3DFrame<Datum>, Derived, Tuple> : AxisAccessorBase<Derived, Tuple>
 		{
-			using base = AxisAccessorBase<Derived>;
+			using base = AxisAccessorBase<Derived, Tuple>;
 
 			[[nodiscard]] angles::Latitude  latitude() const { return angles::Latitude(base::template slot<0>()); }
 			[[nodiscard]] angles::Latitude  geodeticLatitude() const { return angles::Latitude(base::template slot<0>()); }
 			[[nodiscard]] angles::Longitude longitude() const { return angles::Longitude(base::template slot<1>()); }
 			[[nodiscard]] heights::kind_for<Datum> altitude() const { return heights::kind_for<Datum>(base::template slot<2>()); }
 
-			void setLatitude(const degrees<>& v) { base::template setSlot<0>(v); }
-			void setLongitude(const degrees<>& v) { base::template setSlot<1>(v); }
-			void setAltitude(const meters<>& v) { base::template setSlot<2>(v); }
+			void setLatitude(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
+			void setLongitude(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
+			void setAltitude(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
 
 			/// This point's geocentric latitude, via the datum's reference ellipsoid.
 			[[nodiscard]] angles::Geocentric geocentricLatitude() const
@@ -157,46 +163,46 @@ inline namespace coordinates
 		//------------------------------------------------------------------------------------------------------
 		//	ENU: east / north / up (raw lengths).
 		//------------------------------------------------------------------------------------------------------
-		template<class HorizontalDatum, class Derived>
-		struct AxisAccessors<coordinateFrames::ENUFrame<HorizontalDatum>, Derived> : AxisAccessorBase<Derived>
+		template<class HorizontalDatum, class Derived, class Tuple>
+		struct AxisAccessors<coordinateFrames::ENUFrame<HorizontalDatum>, Derived, Tuple> : AxisAccessorBase<Derived, Tuple>
 		{
-			using base = AxisAccessorBase<Derived>;
+			using base = AxisAccessorBase<Derived, Tuple>;
 			[[nodiscard]] auto east() const { return base::template slot<0>(); }
 			[[nodiscard]] auto north() const { return base::template slot<1>(); }
 			[[nodiscard]] auto up() const { return base::template slot<2>(); }
-			void               setEast(const meters<>& v) { base::template setSlot<0>(v); }
-			void               setNorth(const meters<>& v) { base::template setSlot<1>(v); }
-			void               setUp(const meters<>& v) { base::template setSlot<2>(v); }
+			void               setEast(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
+			void               setNorth(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
+			void               setUp(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
 		};
 
 		//------------------------------------------------------------------------------------------------------
 		//	NED: north / east / down (raw lengths).
 		//------------------------------------------------------------------------------------------------------
-		template<class HorizontalDatum, class Derived>
-		struct AxisAccessors<coordinateFrames::NEDFrame<HorizontalDatum>, Derived> : AxisAccessorBase<Derived>
+		template<class HorizontalDatum, class Derived, class Tuple>
+		struct AxisAccessors<coordinateFrames::NEDFrame<HorizontalDatum>, Derived, Tuple> : AxisAccessorBase<Derived, Tuple>
 		{
-			using base = AxisAccessorBase<Derived>;
+			using base = AxisAccessorBase<Derived, Tuple>;
 			[[nodiscard]] auto north() const { return base::template slot<0>(); }
 			[[nodiscard]] auto east() const { return base::template slot<1>(); }
 			[[nodiscard]] auto down() const { return base::template slot<2>(); }
-			void               setNorth(const meters<>& v) { base::template setSlot<0>(v); }
-			void               setEast(const meters<>& v) { base::template setSlot<1>(v); }
-			void               setDown(const meters<>& v) { base::template setSlot<2>(v); }
+			void               setNorth(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
+			void               setEast(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
+			void               setDown(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
 		};
 
 		//------------------------------------------------------------------------------------------------------
 		//	AER: azimuth / elevation / range (tagged).
 		//------------------------------------------------------------------------------------------------------
-		template<class HorizontalDatum, class Derived>
-		struct AxisAccessors<coordinateFrames::AERFrame<HorizontalDatum>, Derived> : AxisAccessorBase<Derived>
+		template<class HorizontalDatum, class Derived, class Tuple>
+		struct AxisAccessors<coordinateFrames::AERFrame<HorizontalDatum>, Derived, Tuple> : AxisAccessorBase<Derived, Tuple>
 		{
-			using base = AxisAccessorBase<Derived>;
+			using base = AxisAccessorBase<Derived, Tuple>;
 			[[nodiscard]] angles::Azimuth   azimuth() const { return angles::Azimuth(base::template slot<0>()); }
 			[[nodiscard]] angles::Elevation elevation() const { return angles::Elevation(base::template slot<1>()); }
 			[[nodiscard]] ranges::Euclidean range() const { return ranges::Euclidean(base::template slot<2>()); }
-			void                            setAzimuth(const degrees<>& v) { base::template setSlot<0>(v); }
-			void                            setElevation(const degrees<>& v) { base::template setSlot<1>(v); }
-			void                            setRange(const meters<>& v) { base::template setSlot<2>(v); }
+			void setAzimuth(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
+			void setElevation(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
+			void setRange(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
 		};
 	}    // namespace traits
 }    // namespace coordinates

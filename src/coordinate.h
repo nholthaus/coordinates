@@ -46,6 +46,7 @@
 //	INCLUDES
 //------------------------
 
+#include <ostream>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -73,7 +74,8 @@ inline namespace coordinates
 	///	@tparam		FrameDataType	the ancillary frame data type (defaults to `FrameData`).
 	//  ----------------------------------------------------------------------------
 	template<class Frame, class Tuple, class FrameDataType = FrameData>
-	class Coordinate : public Point<Frame, Tuple, FrameDataType>, public traits::AxisAccessors<Frame, Coordinate<Frame, Tuple, FrameDataType>>
+	class Coordinate : public Point<Frame, Tuple, FrameDataType>,
+	                   public traits::AxisAccessors<Frame, Coordinate<Frame, Tuple, FrameDataType>, Tuple>
 	{
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -190,6 +192,85 @@ inline namespace coordinates
 
 		/// Date of observation (relevant only when converting between datums).
 		[[nodiscard]] years<> date() const { return m_frameData.date; }
+
+		//////////////////////////////////////////////////////////////////////////
+		//		QUERIES / MEASUREMENTS (shared forwarders over the free-function engine)
+		//////////////////////////////////////////////////////////////////////////
+
+		/// True if this is the zero value of its representation.
+		[[nodiscard]] bool isNull() const { return coordinates::isNull(*this); }
+
+		/// Whether another point equals this one within a scalar tolerance.
+		template<traits::is_point P, class Tol>
+		[[nodiscard]] bool isSame(const P& p, const Tol& tolerance) const
+		{ return coordinates::isSame(*this, p, tolerance); }
+
+		/// Straight-line (Euclidean) distance from this point to another.
+		template<traits::is_point P>
+		[[nodiscard]] ranges::Euclidean distance(const P& p) const
+		{ return ranges::Euclidean(coordinates::distance(*this, p)); }
+
+		/// Magnitude of this point as a vector from its origin.
+		[[nodiscard]] ranges::Euclidean magnitude() const
+		{ return ranges::Euclidean(coordinates::magnitude(*this)); }
+
+		/// Dot product with another point (an area).
+		template<traits::is_point P>
+		[[nodiscard]] auto dotProduct(const P& p) const { return coordinates::dotProduct(*this, p); }
+
+		//////////////////////////////////////////////////////////////////////////
+		//		ARITHMETIC (Cartesian frames)
+		//////////////////////////////////////////////////////////////////////////
+
+		/// Add a vector's components to this point.
+		template<class Vector>
+		    requires(traits::is_vector<Vector> && requires(const Vector& v) { v.x(); v.y(); v.z(); })
+		Coordinate& operator+=(const Vector& v)
+		{
+			std::get<0>(m_point) = std::get<0>(m_point) + v.x();
+			std::get<1>(m_point) = std::get<1>(m_point) + v.y();
+			std::get<2>(m_point) = std::get<2>(m_point) + v.z();
+			return *this;
+		}
+
+		/// Subtract a vector's components from this point.
+		template<class Vector>
+		    requires(traits::is_vector<Vector> && requires(const Vector& v) { v.x(); v.y(); v.z(); })
+		Coordinate& operator-=(const Vector& v)
+		{
+			std::get<0>(m_point) = std::get<0>(m_point) - v.x();
+			std::get<1>(m_point) = std::get<1>(m_point) - v.y();
+			std::get<2>(m_point) = std::get<2>(m_point) - v.z();
+			return *this;
+		}
+
+		/// Scale each component.
+		Coordinate& operator*=(units::dimensionless<> factor)
+		{
+			std::get<0>(m_point) = std::get<0>(m_point) * factor;
+			std::get<1>(m_point) = std::get<1>(m_point) * factor;
+			std::get<2>(m_point) = std::get<2>(m_point) * factor;
+			return *this;
+		}
+
+		/// Divide each component.
+		Coordinate& operator/=(units::dimensionless<> divisor)
+		{
+			std::get<0>(m_point) = std::get<0>(m_point) / divisor;
+			std::get<1>(m_point) = std::get<1>(m_point) / divisor;
+			std::get<2>(m_point) = std::get<2>(m_point) / divisor;
+			return *this;
+		}
+
+		/// Stream as `(c0, c1, c2)`, appending ` @ (lat, lon, alt)` for a local (origin-carrying) frame.
+		friend std::ostream& operator<<(std::ostream& os, const Coordinate& c)
+		{
+			os << "(" << std::get<0>(c.m_point) << ", " << std::get<1>(c.m_point) << ", " << std::get<2>(c.m_point) << ")";
+			if constexpr (traits::is_local_frame<Frame>)
+				os << " @ (" << std::get<0>(c.m_frameData.origin) << ", " << std::get<1>(c.m_frameData.origin) << ", "
+				   << std::get<2>(c.m_frameData.origin) << ")";
+			return os;
+		}
 
 	private:
 		Tuple           m_point;        ///< the frame's tuple value (the storage, uniform across frames)
