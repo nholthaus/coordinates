@@ -58,28 +58,26 @@ namespace
 	};
 
 	//------------------------------------------------------------------------------------------------------
-	//	Compile-time proof that the three distance kinds stay apart. A slant range, a geodesic surface
-	//	distance, and a Euclidean straight-line distance are all lengths but measure different paths.
+	//	Compile-time proof of the range-kind distinction -- and of NON-distinction where the quantity is the
+	//	same. A straight-line distance through 3-space (Euclidean, and equally a "slant range") carries no
+	//	reference surface, so it is ONE kind. A geodesic distance measures an arc along the surface, so it is
+	//	a distinct kind: a surface distance and a straight-line distance must not be silently interchanged.
 	//------------------------------------------------------------------------------------------------------
 
-	static_assert(!std::is_same_v<ranges::Slant, ranges::Geodesic>);
 	static_assert(!std::is_same_v<ranges::Geodesic, ranges::Euclidean>);
-	static_assert(!std::is_same_v<ranges::Slant, ranges::Euclidean>);
-
-	static_assert(ranges::Slant::tag() != ranges::Geodesic::tag(),
-	              "a slant range and a geodesic distance must be distinguishable at the type level");
 	static_assert(ranges::Geodesic::tag() != ranges::Euclidean::tag(),
-	              "a geodesic distance and a Euclidean distance must be distinguishable at the type level");
+	              "a geodesic (surface) distance and a straight-line distance must be distinguishable");
 
 	// A plain length constructs into a range implicitly, and unwraps explicitly.
-	static_assert(std::is_constructible_v<ranges::Slant, meters<double>>);
-	static_assert(std::is_same_v<decltype(std::declval<ranges::Slant>().to<meters<double>>()), meters<double>>);
+	static_assert(std::is_constructible_v<ranges::Euclidean, meters<double>>);
+	static_assert(std::is_same_v<decltype(std::declval<ranges::Euclidean>().to<meters<double>>()), meters<double>>);
 
 	TEST_F(RangesTest, accessorsAreTagged)
 	{
+		// A slant range is a straight-line distance: AER::range() is a Euclidean, not a distinct kind.
 		AER aer(30.0_deg, 45.0_deg, 1000.0_m, 40.0_deg, -75.0_deg, 0.0_m);
-		static_assert(std::is_same_v<decltype(aer.range()), ranges::Slant>,
-		              "PositionAER::range() must be a slant range");
+		static_assert(std::is_same_v<decltype(aer.range()), ranges::Euclidean>,
+		              "PositionAER::range() (a slant range) is a straight-line Euclidean distance");
 		EXPECT_UNITS_EQ(1000.0_m, aer.range());
 
 		ECEF a(1.0_m, 0.0_m, 0.0_m);
@@ -104,7 +102,7 @@ namespace
 		// Range in kilometers, origin altitude in feet -- previously impossible (one shared unit param).
 		PositionAER<datums::WGS84_G1674, degrees, kilometers, feet> aer(
 		        10.0_deg, 20.0_deg, 5.0_km, 40.0_deg, -75.0_deg, 100.0_ft);
-		static_assert(std::is_same_v<decltype(aer.range()), ranges::Slant>);
+		static_assert(std::is_same_v<decltype(aer.range()), ranges::Euclidean>);
 		EXPECT_UNITS_EQ(5.0_km, aer.range());
 	}
 }

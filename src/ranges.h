@@ -27,13 +27,15 @@
 //
 //--------------------------------------------------------------------------------------------------
 //
-// Strongly-typed distances. A slant range (straight line from an observer to a target), a geodesic
-// distance (along the curved surface of the ellipsoid), and a Euclidean distance (the 3-D straight-line
-// magnitude of a difference vector) are all lengths, yet they measure different paths and must not be
-// silently interchanged -- a slant range is not a surface distance, and neither is a coordinate height.
-// Each is a `units::kind` tag so the type system keeps them apart: mixing two different range kinds is a
-// compile error. The tags are boundary-permissive: a plain length constructs into a range implicitly and
-// `.to<PlainUnit>()` unwraps.
+// Strongly-typed distances -- but ONLY where the reference genuinely differs. A straight-line distance
+// through 3-space (the magnitude of a difference vector, whether you call it a Euclidean distance or a
+// slant range from an observer) is just a length: it carries no reference surface, so a slant range and a
+// Euclidean distance are the SAME kind and are not distinguished. A geodesic distance is different -- it is
+// measured ALONG the curved surface of the ellipsoid, so a 1000 m arc is not the same measurement as a
+// 1000 m chord; the surface is an implicit reference the chord does not have. Only that genuine difference
+// is a distinct `units::kind`, so mixing a surface distance with a straight-line distance is a compile
+// error while two straight-line distances interoperate freely. The tags are boundary-permissive: a plain
+// length constructs into a range implicitly and `.to<PlainUnit>()` unwraps.
 //
 //--------------------------------------------------------------------------------------------------
 
@@ -51,17 +53,15 @@ inline namespace coordinates
 {
 	namespace ranges
 	{
-		/// A slant range: the straight-line distance from an observer origin to a target (the range
-		/// component of an azimuth/elevation/range position).
-		using Slant = units::kind<"slant_range", units::length::meters<double>>;
-
-		/// A geodesic distance: the shortest distance along the curved surface of the reference ellipsoid
-		/// between two points (the result of an inverse geodesic solve).
-		using Geodesic = units::kind<"geodesic_distance", units::length::meters<double>>;
-
-		/// A Euclidean distance: the 3-D straight-line magnitude of the difference between two Cartesian
-		/// positions (the result of `distance` / `magnitude`).
+		/// A straight-line distance through 3-space: the magnitude of the difference between two positions.
+		/// A "slant range" from an observer to a target is exactly this quantity -- it carries no reference
+		/// surface, so it is not a distinct kind from a Euclidean distance.
 		using Euclidean = units::kind<"euclidean_distance", units::length::meters<double>>;
+
+		/// A geodesic distance: the shortest distance ALONG the curved surface of the reference ellipsoid
+		/// between two points (the result of an inverse geodesic solve). Distinct from a straight-line
+		/// distance because it measures an arc, not a chord -- the surface is its implicit reference.
+		using Geodesic = units::kind<"geodesic_distance", units::length::meters<double>>;
 	}    // namespace ranges
 }    // namespace coordinates
 

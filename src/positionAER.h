@@ -542,7 +542,7 @@ inline namespace coordinates
 		 *				necessary.
 		 * @returns		range-value of the Point.
 		 */
-		[[nodiscard]] ranges::Slant range() const { return ranges::Slant(m_range); }
+		[[nodiscard]] ranges::Euclidean range() const { return ranges::Euclidean(m_range); }
 
 		/**
 		 * @brief		Origin

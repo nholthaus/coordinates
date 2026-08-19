@@ -532,15 +532,17 @@ inline namespace coordinates
 
 		/**
 		 * @brief		Slant range from this point (as observer) to a target.
-		 * @details		The straight-line range from observer to target -- the same straight-line magnitude as
-		 *				the Euclidean distance, tagged as an observer-relative slant range.
+		 * @details		The straight-line range from observer to target. A slant range is a straight-line
+		 *				distance through 3-space -- it carries no reference surface -- so it is a
+		 *				`ranges::Euclidean`, the same kind as any other straight-line distance; "slant range"
+		 *				names the use, not a distinct quantity.
 		 * @tparam		Point	point type of the target.
 		 * @param[in]	other	the target point.
-		 * @return		the slant range, as `ranges::Slant`.
+		 * @return		the slant range, as `ranges::Euclidean`.
 		 */
 		template<is_point Point>
-		[[nodiscard]] ranges::Slant slantRangeTo(const Point& other) const
-		{ return ranges::Slant(coordinates::distance(*this, other)); }
+		[[nodiscard]] ranges::Euclidean slantRangeTo(const Point& other) const
+		{ return ranges::Euclidean(coordinates::distance(*this, other)); }
 
 		/**
 		 * @brief		Geodesic (great-circle surface) distance from this point to another geodetic point.

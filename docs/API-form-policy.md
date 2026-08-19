@@ -56,10 +56,13 @@ point class would never use `to` for a range). The natural, discoverable form is
 3. **Symmetric** relationships with no privileged receiver (a plain point-to-point `distance` where neither
    is "from"), and constructions where *neither* operand is a natural `this` (`AER::fromObserver(obs,tgt)`),
    stay free functions / static factories — a member would arbitrarily privilege one operand.
-4. Consistency of naming across the trio: today `distance()` (Euclidean), `distanceTo()` (Geodesic), and a
-   *stored* `range()` (Slant on AER) read inconsistently. The measurement family should be uniform —
-   `euclideanDistanceTo` / `geodesicDistanceTo` / `slantRangeTo` — each returning its distinct `ranges::`
-   kind, so the caller cannot confuse a surface distance with a slant range.
+4. Consistency of naming: the measurement family is uniform — `euclideanDistanceTo`, `slantRangeTo`,
+   `geodesicDistanceTo`, `bearingTo` — each returning the kind its quantity genuinely is. A slant range and
+   a Euclidean distance are the SAME quantity (a straight-line distance through 3-space carries no reference
+   surface), so both return `ranges::Euclidean`; `slantRangeTo` is a use-name, not a distinct kind. Only a
+   geodesic distance (a surface arc) is a distinct `ranges::Geodesic`, so the caller cannot confuse a surface
+   distance with a straight-line one. This is the "don't over-kind things that are the same" discipline: tag
+   a distinct kind only where the reference genuinely differs.
 5. DRY: like Plan A, these members are thin forwarders. They collapse to one body under
    `Coordinate<Frame,Tuple>`; until then they match the existing per-class forwarder style.
 

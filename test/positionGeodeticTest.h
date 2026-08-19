@@ -582,7 +582,7 @@ namespace
 
 		// euclidean and slant range are the same straight-line magnitude, differently tagged.
 		static_assert(std::is_same_v<decltype(NYC.euclideanDistanceTo(LA)), ranges::Euclidean>);
-		static_assert(std::is_same_v<decltype(NYC.slantRangeTo(LA)), ranges::Slant>);
+		static_assert(std::is_same_v<decltype(NYC.slantRangeTo(LA)), ranges::Euclidean>);
 		EXPECT_UNITS_NEAR(NYC.distance(LA), NYC.euclideanDistanceTo(LA), 5.0e-9_m);
 		EXPECT_UNITS_NEAR(NYC.euclideanDistanceTo(LA), NYC.slantRangeTo(LA), 5.0e-9_m);
 

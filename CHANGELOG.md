@@ -14,7 +14,8 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 
 - **Ergonomic member API** (per `docs/API-form-policy.md`). Two-point measurements now read as directional
   members returning their distinctly-tagged kind: `a.euclideanDistanceTo(b)` (`ranges::Euclidean`),
-  `a.slantRangeTo(b)` (`ranges::Slant`), `a.geodesicDistanceTo(b)` (`ranges::Geodesic`), and `a.bearingTo(b)`
+  `a.slantRangeTo(b)` (`ranges::Euclidean` -- a slant range is a straight-line distance),
+  `a.geodesicDistanceTo(b)` (`ranges::Geodesic`), and `a.bearingTo(b)`
   (`angles::Azimuth`), alongside the existing `distance`/`distanceTo`/`initialBearingTo`. Latitude conversion
   gains a position front door: `pos.geocentricLatitude()` / `pos.geodeticLatitude()`, which use the
   position's own datum ellipsoid (no argument).
@@ -36,11 +37,14 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
   `PositionAER(target, observer)`. Previously advertised in the README but unimplemented.
 - **`distanceSquared(a, b)`**: the squared straight-line distance between two points (an area), skipping the
   square root for performance-sensitive relative comparisons. Previously advertised but unimplemented.
-- **Strongly-typed distances** (`src/ranges.h`): a slant range (observer to target), a geodesic distance
-  (along the ellipsoid surface), and a Euclidean distance (3-D straight-line magnitude) are now distinct
-  `units::kind` types in the `ranges::` namespace. All lengths but measuring different paths, so mixing them
-  is a compile error. `PositionAER::range()` → `ranges::Slant`; `distanceTo()` / `GeodesicInverseResult::distance()`
-  → `ranges::Geodesic`; the `distance()` / `magnitude()` accessors on every position → `ranges::Euclidean`.
+- **Strongly-typed distances** (`src/ranges.h`): a distance is distinctly typed only where its reference
+  genuinely differs. A straight-line distance through 3-space -- a Euclidean distance, or equally a slant
+  range from an observer -- carries no reference surface, so it is one kind (`ranges::Euclidean`). A geodesic
+  distance is measured along the ellipsoid surface (an arc, not a chord), so it is a distinct kind
+  (`ranges::Geodesic`); mixing a surface distance with a straight-line distance is a compile error, while two
+  straight-line distances interoperate freely. `PositionAER::range()` and the `distance()` / `magnitude()`
+  accessors return `ranges::Euclidean`; `distanceTo()` / `GeodesicInverseResult::distance()` return
+  `ranges::Geodesic`.
 - **Strongly-typed angles** (`src/angles.h`): latitude, longitude, azimuth, elevation, and the three
   orientation angles (yaw/pitch/roll) are now distinct `units::kind` types in the `angles::` namespace.
   They are all `degrees<>` but semantically incommensurable, so mixing them is a compile error — most
@@ -88,8 +92,8 @@ numeric and packaging fixes, CI hardening, and licensing/documentation.
 - Bumped the project version to 1.2.0.
 - Position accessors now return tagged geodesy kinds instead of bare `units` quantities:
   `latitude()`/`longitude()` → `angles::Latitude`/`Longitude`, `azimuth()`/`elevation()` →
-  `angles::Azimuth`/`Elevation`, the geodesic bearing accessors → `angles::Azimuth`, `range()` →
-  `ranges::Slant`, `distanceTo()` → `ranges::Geodesic`, and `distance()`/`magnitude()` → `ranges::Euclidean`.
+  `angles::Azimuth`/`Elevation`, the geodesic bearing accessors → `angles::Azimuth`, `range()` and
+  `distance()`/`magnitude()` → `ranges::Euclidean`, and `distanceTo()` → `ranges::Geodesic`.
   Source-compatible for arithmetic and comparison against plain units; code that stored a result in an
   explicit `degrees<>`/`meters<>` should unwrap with `.to<...>()`.
 - `PositionAER` gained a fourth template parameter for the origin's altitude unit, decoupling it from the

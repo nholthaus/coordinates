@@ -306,10 +306,11 @@ and epoch information.
 Accessors return **strongly-typed geodesy kinds**, not bare `units` quantities: `latitude()` is an
 `angles::Latitude`, `longitude()` an `angles::Longitude`, `altitude()` the height kind the datum measures
 (`heights::Ellipsoidal` or `heights::Orthometric`). Likewise `PositionAER::azimuth()`/`elevation()` are
-`angles::Azimuth`/`angles::Elevation` and geodesic bearings are `angles::Azimuth`; `range()` is a
-`ranges::Slant`, `distanceTo()` a `ranges::Geodesic`, and `distance()`/`magnitude()` a `ranges::Euclidean`.
-Each is a `units::kind` tag over a plain unit, so quantities that share a dimension but not a meaning — a
-latitude and an azimuth (both `degrees<>`), or a slant range and a surface distance (both `meters<>`) — can
+`angles::Azimuth`/`angles::Elevation` and geodesic bearings are `angles::Azimuth`; `range()`,
+`distance()`, and `magnitude()` are a `ranges::Euclidean` (a straight-line distance -- a slant range is
+this same quantity), while `distanceTo()` is a `ranges::Geodesic` (a surface distance). Each is a
+`units::kind` tag over a plain unit, so quantities that share a dimension but not a meaning — a latitude and
+an azimuth (both `degrees<>`), or a surface distance and a straight-line distance (both `meters<>`) — can
 never be silently interchanged; mixing two different kinds is a compile error. A plain unit still constructs
 into a kind implicitly (so `LLA p(34_deg, -118_deg, 100_m)` is unchanged), and `.to<PlainUnit>()` unwraps
 when you need the raw value.
@@ -529,13 +530,14 @@ in different coordinate systems.
 
 A conversion (one point re-expressed) is distinct from a **measurement** (a relationship between two
 points). Measurements read as directional members returning their distinctly-typed kind, so a surface
-distance, a slant range, and a straight-line distance cannot be confused:
+distance cannot be confused with a straight-line distance (a slant range is a straight-line distance --
+`ranges::Euclidean` -- not a distinct kind):
 
 ```cpp
 LLA a = ..., b = ...;
-ranges::Geodesic  surface = a.geodesicDistanceTo(b);   // along the ellipsoid
-ranges::Slant     slant   = a.slantRangeTo(b);         // straight line, observer->target
-ranges::Euclidean euclid  = a.euclideanDistanceTo(b);  // straight line, 3-D
+ranges::Geodesic  surface = a.geodesicDistanceTo(b);   // arc along the ellipsoid surface
+ranges::Euclidean slant   = a.slantRangeTo(b);         // straight line, observer->target
+ranges::Euclidean euclid  = a.euclideanDistanceTo(b);  // straight line, 3-D (same kind as slant)
 angles::Azimuth   bearing = a.bearingTo(b);            // forward azimuth
 ```
 
