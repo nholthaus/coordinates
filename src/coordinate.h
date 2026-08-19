@@ -118,24 +118,55 @@ inline namespace coordinates
 		~Coordinate() override                   = default;
 
 		/// Converting constructor: build this frame's coordinate from any other point, running the conversion
-		/// pipeline. A global frame (ECEF, geodetic) converts in one hop; a local (origin-carrying) frame
-		/// adopts the source's origin and converts through the frame graph. The origin-adoption + pairwise
-		/// fast-path elaboration lands with the local-frame migration; the general path serves both.
+		/// pipeline. Delegates to the converting assignment so the two share one implementation.
 		template<class P>
 		    requires(traits::is_point<P> && !std::same_as<std::remove_cvref_t<P>, Coordinate>)
 		Coordinate(const P& point)
-		    : m_frameData(point.frameData())
+		    : Coordinate()
 		{
-			coordinates::convert(point, *this);
+			*this = point;
 		}
 
-		/// Converting assignment: the assignment counterpart of the converting constructor.
+		/// Converting assignment: the single conversion implementation. A global frame (ECEF, geodetic)
+		/// converts in one hop. A local (origin-carrying) frame adopts the source's origin, then takes a
+		/// closed-form shortcut when `convert_fast_path` provides one for the source/destination pair (e.g.
+		/// the NED<->ENU axis swap), else routes through an ECEF intermediate.
 		template<class P>
 		    requires(traits::is_point<P> && !std::same_as<std::remove_cvref_t<P>, Coordinate>)
 		Coordinate& operator=(const P& point)
 		{
-			m_frameData = point.frameData();
-			coordinates::convert(point, *this);
+			if constexpr (traits::is_local_frame<Frame>)
+			{
+				// Adopt the source's origin only if this coordinate has no origin of its own yet.
+				if (m_frameData.origin == NULL_ORIGIN)
+					m_frameData = point.frameData();
+				else
+					m_frameData.date = point.frameData().date;
+
+				using SourceFrame = typename traits::point_traits<P>::reference_frame;
+				using FastPath    = traits::convert_fast_path<SourceFrame, Frame>;
+				if constexpr (FastPath::has_shortcut)
+				{
+					if (point.frameData().origin == m_frameData.origin)
+					{
+						m_point = FastPath::apply(point.point());
+						return *this;
+					}
+				}
+
+				// General path: convert through an ECEF intermediate at this coordinate's date. A local frame's
+				// datum_type is its horizontal datum, so the intermediate is `ECEFFrame<datum_type>`.
+				using ecef_type = Coordinate<coordinateFrames::ECEFFrame<datum_type>, CartesianTuple>;
+				ecef_type intermediate;
+				intermediate.setFrameData(frame_data_type(m_frameData.date));
+				coordinates::convert(point, intermediate);
+				coordinates::convert(intermediate, *this);
+			}
+			else
+			{
+				m_frameData = point.frameData();
+				coordinates::convert(point, *this);
+			}
 			return *this;
 		}
 

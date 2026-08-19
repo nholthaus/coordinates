@@ -104,6 +104,40 @@ namespace
 		EXPECT_UNITS_NEAR(-71.268002_deg, std::get<1>(back.point()), 1.0e-8_deg);
 		EXPECT_UNITS_NEAR(50.0_m, std::get<2>(back.point()), 1.0e-6_m);
 	}
+
+	// A local (origin-carrying) frame converts through the is_local branch. Build an ENU Coordinate with an
+	// origin, then a NED Coordinate from it: the NED<->ENU shortcut is a pure axis swap (E,N,U)->(N,E,-U).
+	TEST_F(CoordinateTest, localFrameConversionAndFastPath)
+	{
+		using EnuCoord = Coordinate<ENUFrame<WgsHoriz>, CartesianTuple>;
+		using NedCoord = Coordinate<NEDFrame<WgsHoriz>, CartesianTuple>;
+		using AerCoord = Coordinate<AERFrame<WgsHoriz>, CartesianTuple>;    // AER stores its SphericalTuple
+
+		static_assert(coordinates::traits::is_local_frame<ENUFrame<WgsHoriz>>);
+
+		// An ENU point relative to a Boston-ish origin, expressed via a legacy PositionENU with the same origin
+		// so both share the identical FrameData.origin (the fast-path precondition).
+		LLA origin(42.3601_deg, -71.0589_deg, 0.0_m);
+		ENU legacyEnu(100.0_m, 200.0_m, 300.0_m, origin);    // (E,N,U) about origin
+
+		// Build the unified ENU Coordinate from the legacy ENU (adopts its origin), then swap to NED. ENU->ENU
+		// is a different C++ type but the same frame, so it round-trips through ECEF (as the legacy code also
+		// does -- no ENU->ENU shortcut exists), hence the ~nm float drift, not exact.
+		EnuCoord enu(legacyEnu);
+		EXPECT_UNITS_NEAR(100.0_m, std::get<0>(enu.point()), 5.0e-6_m);
+		EXPECT_UNITS_NEAR(200.0_m, std::get<1>(enu.point()), 5.0e-6_m);
+		EXPECT_UNITS_NEAR(300.0_m, std::get<2>(enu.point()), 5.0e-6_m);
+
+		NedCoord ned(enu);    // NED<->ENU fast path: (E,N,U) -> (N,E,-U), exact
+		EXPECT_UNITS_NEAR(200.0_m, std::get<0>(ned.point()), 5.0e-6_m);     // N
+		EXPECT_UNITS_NEAR(100.0_m, std::get<1>(ned.point()), 5.0e-6_m);     // E
+		EXPECT_UNITS_NEAR(-300.0_m, std::get<2>(ned.point()), 5.0e-6_m);    // D = -U
+
+		// And the unified NED Coordinate matches the legacy PositionNED-from-ENU for the same input.
+		NED legacyNed(legacyEnu);
+		EXPECT_UNITS_NEAR(std::get<0>(legacyNed.point()), std::get<0>(ned.point()), 5.0e-9_m);
+		EXPECT_UNITS_NEAR(std::get<2>(legacyNed.point()), std::get<2>(ned.point()), 5.0e-9_m);
+	}
 }
 
 #endif    // coordinateTest_h__

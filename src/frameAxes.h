@@ -147,6 +147,71 @@ inline namespace coordinates
 		{
 			static constexpr bool has_shortcut = false;
 		};
+
+		/// NED -> ENU: pure axis swap `(N,E,D) -> (E,N,-D)`.
+		template<class D0, class D1>
+		struct convert_fast_path<coordinateFrames::NEDFrame<D0>, coordinateFrames::ENUFrame<D1>>
+		{
+			static constexpr bool has_shortcut = true;
+			static CartesianTuple apply(const CartesianTuple& ned) noexcept
+			{
+				return CartesianTuple(std::get<1>(ned), std::get<0>(ned), -std::get<2>(ned));
+			}
+		};
+
+		/// ENU -> NED: pure axis swap `(E,N,U) -> (N,E,-U)`.
+		template<class D0, class D1>
+		struct convert_fast_path<coordinateFrames::ENUFrame<D0>, coordinateFrames::NEDFrame<D1>>
+		{
+			static constexpr bool has_shortcut = true;
+			static CartesianTuple apply(const CartesianTuple& enu) noexcept
+			{
+				return CartesianTuple(std::get<1>(enu), std::get<0>(enu), -std::get<2>(enu));
+			}
+		};
+
+		namespace detail
+		{
+			/// Shared closed-form for a local Cartesian vector (given its east/north/up components) to
+			/// azimuth/elevation/range: azimuth CW from North in [0,360), elevation above horizon, range the
+			/// 3-D magnitude. Used by the ENU->AER and NED->AER shortcuts.
+			inline SphericalTuple enuToAer(units::length::meters<> east, units::length::meters<> north, units::length::meters<> up) noexcept
+			{
+				const auto horiz = sqrt(pow<2>(east) + pow<2>(north));
+				const auto range = sqrt(pow<2>(horiz) + pow<2>(up));
+
+				units::angle::degrees<> azimuth(atan2(east, north));
+				if (azimuth < units::angle::degrees<>{0.0})
+					azimuth += units::angle::degrees<>{360.0};
+
+				const units::angle::degrees<> elevation =
+				        (range != units::length::meters<>{0.0}) ? units::angle::degrees<>(atan2(up, horiz)) : units::angle::degrees<>{0.0};
+
+				return SphericalTuple(azimuth, elevation, range);
+			}
+		}    // namespace detail
+
+		/// ENU -> AER: direct look-angle trig `(E,N,U) -> (az,el,range)`.
+		template<class D0, class D1>
+		struct convert_fast_path<coordinateFrames::ENUFrame<D0>, coordinateFrames::AERFrame<D1>>
+		{
+			static constexpr bool has_shortcut = true;
+			static SphericalTuple apply(const CartesianTuple& enu) noexcept
+			{
+				return detail::enuToAer(std::get<0>(enu), std::get<1>(enu), std::get<2>(enu));
+			}
+		};
+
+		/// NED -> AER: direct look-angle trig `(N,E,D) -> (az,el,range)` with `U = -D`.
+		template<class D0, class D1>
+		struct convert_fast_path<coordinateFrames::NEDFrame<D0>, coordinateFrames::AERFrame<D1>>
+		{
+			static constexpr bool has_shortcut = true;
+			static SphericalTuple apply(const CartesianTuple& ned) noexcept
+			{
+				return detail::enuToAer(std::get<1>(ned), std::get<0>(ned), -std::get<2>(ned));
+			}
+		};
 	}    // namespace traits
 }    // namespace coordinates
 
