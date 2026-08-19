@@ -106,6 +106,31 @@ one genuinely non-uniform piece, isolated to that hook rather than smeared acros
   `is_point`/`is_vector` aliases of it for back-compat. Grep-verify no `virtual`/vtable remains on the
   coordinate types.
 
+## Migration findings (from a spike; must be handled in the fresh pass)
+
+A first migration attempt (reverted to keep the foundation green) surfaced three concrete facts the pass
+must design for — none are blockers, but each needs a real decision, which is why the migration is its own
+focused effort, not a mechanical alias swap:
+
+1. **An alias template to a forward-declared `Coordinate` is legal C++** (verified). So `coordinates_fwd.h`
+   can forward-declare `template<class,class,class> class Coordinate;` and define the position aliases against
+   it; no `algorithm.h` include cycle results, because consumers only name the aliases by value/reference.
+   The `class` forward-declaration was the only thing that couldn't become an alias — the alias itself is fine.
+2. **Aliases break `Datum` deduction in function signatures.** `intersectEllipsoid`, `isLineOfSight`, and the
+   geodesic functions deduce `Datum` from a `PositionECEF<Datum>`/`PositionGeodetic<Datum>` parameter — which
+   STOPS working once those are aliases (the alias transformation is not invertible by template argument
+   deduction). Each such function must be re-templated on the point type `P` with `Datum` derived internally
+   (`point_traits<P>::reference_frame::datum_type`).
+3. **An ECEF point cannot recover a full 3-D `Datum`** — `ECEFFrame<HorizontalDatum>`'s `datum_type` is the
+   *horizontal* datum, but `intersectEllipsoid`/`Intersection<Datum>` were parameterized on the full datum.
+   This is a genuine semantic question: an ECEF-based intersection needs an *ellipsoid*, not a 3-D datum.
+   Resolve by parameterizing `Intersection` (and these functions) on the ellipsoid or horizontal datum
+   recoverable from the point, not the full datum — a small `Intersection` API adjustment.
+
+The foundation additions that ARE sound and can be reused verbatim in the pass: a variadic
+`setPoint(Components...)` on `Coordinate` (converts each component into the tuple's stored unit, needed by the
+arithmetic recompute paths), and the point-generic re-templating pattern for the `algorithm.h` functions.
+
 ## Verification (every phase)
 Full `ctest` green (the MATLAB/GeographicLib/EPSG/VDatum truth suite is immovable) AND a local MSVC `cl.exe`
 build (c++23, warnings-as-errors) — the parity check that the tagging campaign learned the hard way. Per-family
