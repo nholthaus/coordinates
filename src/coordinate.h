@@ -53,6 +53,7 @@
 #include <units.h>
 
 #include "algorithm.h"
+#include "axisAccessors.h"
 #include "frameAxes.h"
 #include "frameOfReference.h"
 #include "point.h"
@@ -72,7 +73,7 @@ inline namespace coordinates
 	///	@tparam		FrameDataType	the ancillary frame data type (defaults to `FrameData`).
 	//  ----------------------------------------------------------------------------
 	template<class Frame, class Tuple, class FrameDataType = FrameData>
-	class Coordinate : public Point<Frame, Tuple, FrameDataType>
+	class Coordinate : public Point<Frame, Tuple, FrameDataType>, public traits::AxisAccessors<Frame, Coordinate<Frame, Tuple, FrameDataType>>
 	{
 	public:
 		//////////////////////////////////////////////////////////////////////////

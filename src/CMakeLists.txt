@@ -24,6 +24,7 @@ set(PUBLIC_HEADERS
         abstractTileManager.h
         algorithm.h
         angles.h
+        axisAccessors.h
         coordinate.h
         coordinate_traits.h
         coordinates.h

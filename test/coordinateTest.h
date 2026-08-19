@@ -138,6 +138,33 @@ namespace
 		EXPECT_UNITS_NEAR(std::get<0>(legacyNed.point()), std::get<0>(ned.point()), 5.0e-9_m);
 		EXPECT_UNITS_NEAR(std::get<2>(legacyNed.point()), std::get<2>(ned.point()), 5.0e-9_m);
 	}
+
+	// The frame_axes-driven AxisAccessors mixin gives each frame its named member accessors with the right
+	// (possibly tagged) return type -- ecef.x(), lla.latitude(), aer.azimuth() -- on the ONE Coordinate body.
+	TEST_F(CoordinateTest, namedMemberAccessors)
+	{
+		EcefCoord ecef(CartesianTuple(1.0_m, 2.0_m, 3.0_m));
+		static_assert(std::is_same_v<decltype(ecef.x()), meters<double>>);
+		EXPECT_UNITS_EQ(1.0_m, ecef.x());
+		EXPECT_UNITS_EQ(2.0_m, ecef.y());
+		EXPECT_UNITS_EQ(3.0_m, ecef.z());
+		ecef.setZ(9.0_m);
+		EXPECT_UNITS_EQ(9.0_m, ecef.z());
+
+		GeoCoord lla(40.0_deg, -75.0_deg, 100.0_m);
+		static_assert(std::is_same_v<decltype(lla.latitude()), angles::Latitude>);
+		static_assert(std::is_same_v<decltype(lla.altitude()), heights::Ellipsoidal>);    // WGS84 is ellipsoid-referenced
+		EXPECT_UNITS_EQ(40.0_deg, lla.latitude());
+		EXPECT_UNITS_EQ(-75.0_deg, lla.longitude());
+		EXPECT_UNITS_EQ(100.0_m, lla.altitude());
+		EXPECT_UNITS_NEAR(39.8107_deg, lla.geocentricLatitude(), 1.0e-3_deg);    // geocentric < geodetic
+
+		Coordinate<AERFrame<WgsHoriz>, SphericalTuple> aer(SphericalTuple(30.0_deg, 45.0_deg, 1000.0_m));
+		static_assert(std::is_same_v<decltype(aer.azimuth()), angles::Azimuth>);
+		static_assert(std::is_same_v<decltype(aer.range()), ranges::Euclidean>);
+		EXPECT_UNITS_EQ(30.0_deg, aer.azimuth());
+		EXPECT_UNITS_EQ(1000.0_m, aer.range());
+	}
 }
 
 #endif    // coordinateTest_h__
