@@ -1046,10 +1046,10 @@ inline namespace coordinates
 		/// a `consteval` `units` construct in the math, which would make it uninvocable through the thread pool.
 		/// za..zi are the 3x3 elevation window (zd/zf flank the center; the center elevation is unused, matching the
 		/// ESRI kernel), `cellSize` the ground sample distance, `zenith_r`/`azimuth_r` the sun geometry.
-		constexpr uint8_t hillshadeCell(meters<> za, meters<> zb, meters<> zc,
-		                                meters<> zd, meters<> zf,
-		                                meters<> zg, meters<> zh, meters<> zi,
-		                                meters<> cellSize, radians<> zenith_r, radians<> azimuth_r)
+		inline uint8_t hillshadeCell(meters<> za, meters<> zb, meters<> zc,
+		                             meters<> zd, meters<> zf,
+		                             meters<> zg, meters<> zh, meters<> zi,
+		                             meters<> cellSize, radians<> zenith_r, radians<> azimuth_r)
 		{
 			const dimensionless<> dz_dx((zc + 2 * zf + zi - (za + 2 * zd + zg)) / (8 * cellSize));
 			const dimensionless<> dz_dy((zg + 2 * zh + zi - (za + 2 * zb + zc)) / (8 * cellSize));

@@ -732,11 +732,24 @@ inline namespace coordinates
 			};
 
 			/// Depth of a node above the graph root, generic over a `Parent` accessor. A node is the root when
-			/// its parent is itself (`Parent<U>::type == U`); otherwise the depth is one more than its parent's.
-			template<typename U, template<class> class Parent = frame_parent>
-			struct depth
+			/// its parent is itself; otherwise the depth is one more than its parent's. Written as two partial
+			/// specializations (root vs non-root) rather than one recursive initializer: MSVC cannot resolve a
+			/// `static constexpr value` that refers to `depth<parent>::value` of the still-incomplete class.
+			template<typename U, template<class> class Parent = frame_parent, bool IsRoot = std::same_as<typename Parent<U>::type, U>>
+			struct depth;
+
+			// root: the node is its own parent
+			template<typename U, template<class> class Parent>
+			struct depth<U, Parent, true>
 			{
-				static constexpr int value = std::same_as<typename Parent<U>::type, U> ? 0 : depth<typename Parent<U>::type, Parent>::value + 1;
+				static constexpr int value = 0;
+			};
+
+			// non-root: one hop above the parent's depth
+			template<typename U, template<class> class Parent>
+			struct depth<U, Parent, false>
+			{
+				static constexpr int value = depth<typename Parent<U>::type, Parent>::value + 1;
 			};
 
 			/**
