@@ -50,7 +50,8 @@ set(PUBLIC_HEADERS
         horizontalDatum.h
         intersection.h
         point.h
-        rigidBody.h
+        ray.h
+        kinematicState.h
         positionAER.h
         positionECEF.h
         positionENU.h

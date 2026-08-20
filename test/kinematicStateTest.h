@@ -27,8 +27,8 @@
 //
 //--------------------------------------------------------------------------------------------------
 
-#ifndef rigidBodyTest_h
-#define rigidBodyTest_h
+#ifndef kinematicStateTest_h
+#define kinematicStateTest_h
 
 //------------------------
 //	INCLUDES
@@ -39,18 +39,18 @@
 #include <gtest/gtest.h>
 
 #include "gtest_units.h"
-#include "rigidBody.h"
+#include "kinematicState.h"
 
 inline namespace coordinates
 {
 	using namespace units::literals;
 
 	//	----------------------------------------------------------------------------
-	//	CLASS		RigidBodyTest
+	//	CLASS		KinematicStateTest
 	//  ----------------------------------------------------------------------------
-	///	@brief		Unit tests for the 6-DOF rigid-body state and its kinematic propagation.
+	///	@brief		Unit tests for the kinematic state and its propagation.
 	//  ----------------------------------------------------------------------------
-	class RigidBodyTest : public ::testing::Test
+	class KinematicStateTest : public ::testing::Test
 	{
 	protected:
 		using F   = coordinateFrames::ECEFFrame<horizontalDatums::WGS84_G1674>;
@@ -58,25 +58,25 @@ inline namespace coordinates
 		using rps = units::angular_velocity::radians_per_second<>;
 	};
 
-	TEST_F(RigidBodyTest, translationAdvancesByVelocityTimesDt)
+	TEST_F(KinematicStateTest, translationAdvancesByVelocityTimesDt)
 	{
-		RigidBodyState<F> s(Pose::identity(), VelocityVector<F>(mps(10.0), mps(0.0), mps(0.0)), AngularRateVector<F>());
+		KinematicState<F> s(Pose::identity(), VelocityVector<F>(mps(10.0), mps(0.0), mps(0.0)), AngularRateVector<F>());
 		auto              s2 = integrateKinematics(s, AccelerationVector<F>(), AngularRateVector<F>(), 2.0_s);
 		EXPECT_UNITS_NEAR(20.0_m, std::get<0>(s2.position()), 1.0e-12_m);
 		EXPECT_UNITS_NEAR(0.0_m, std::get<1>(s2.position()), 1.0e-12_m);
 		EXPECT_UNITS_NEAR(0.0_m, std::get<2>(s2.position()), 1.0e-12_m);
 	}
 
-	TEST_F(RigidBodyTest, linearAccelerationChangesVelocity)
+	TEST_F(KinematicStateTest, linearAccelerationChangesVelocity)
 	{
 		using mps2 = units::acceleration::meters_per_second_squared<>;
-		RigidBodyState<F> s(Pose::identity(), VelocityVector<F>(), AngularRateVector<F>());
+		KinematicState<F> s(Pose::identity(), VelocityVector<F>(), AngularRateVector<F>());
 		auto              s2 = integrateKinematics(s, AccelerationVector<F>(mps2(3.0), mps2(0.0), mps2(0.0)), AngularRateVector<F>(), 4.0_s);
 		// v = a*t = 12 m/s
 		EXPECT_UNITS_NEAR(mps(12.0), std::get<0>(s2.velocity().vector()), 1.0e-12_mps);
 	}
 
-	TEST_F(RigidBodyTest, attitudeDerivativePureYaw)
+	TEST_F(KinematicStateTest, attitudeDerivativePureYaw)
 	{
 		// For identity attitude and body rate (0,0,wz), q_dot = 1/2 * (0,0,0,wz).
 		AngularRateVector<F> omega(rps(0.0), rps(0.0), rps(0.2));
@@ -87,10 +87,10 @@ inline namespace coordinates
 		EXPECT_NEAR(qd.z.value(), 0.1, 1e-15);    // 1/2 * 0.2
 	}
 
-	TEST_F(RigidBodyTest, constantYawRateIntegratesToExpectedAngle)
+	TEST_F(KinematicStateTest, constantYawRateIntegratesToExpectedAngle)
 	{
 		// Constant body yaw rate 0.1 rad/s for 1 s -> yaw ~ 0.1 rad.
-		RigidBodyState<F> r(Pose::identity(), VelocityVector<F>(), AngularRateVector<F>(rps(0.0), rps(0.0), rps(0.1)));
+		KinematicState<F> r(Pose::identity(), VelocityVector<F>(), AngularRateVector<F>(rps(0.0), rps(0.0), rps(0.1)));
 		for (int i = 0; i < 1000; ++i)
 			r = integrateKinematics(r, AccelerationVector<F>(), AngularRateVector<F>(), 0.001_s);
 		const auto e   = rotation::toEulerAngles(r.attitude());
@@ -98,10 +98,10 @@ inline namespace coordinates
 		EXPECT_NEAR(yaw, 0.1, 1e-4);
 	}
 
-	TEST_F(RigidBodyTest, attitudeStaysUnitQuaternion)
+	TEST_F(KinematicStateTest, attitudeStaysUnitQuaternion)
 	{
 		// After propagation the attitude quaternion remains normalized (renormalized each step).
-		RigidBodyState<F> r(Pose::identity(), VelocityVector<F>(), AngularRateVector<F>(rps(0.3), rps(-0.2), rps(0.1)));
+		KinematicState<F> r(Pose::identity(), VelocityVector<F>(), AngularRateVector<F>(rps(0.3), rps(-0.2), rps(0.1)));
 		for (int i = 0; i < 500; ++i)
 			r = integrateKinematics(r, AccelerationVector<F>(), AngularRateVector<F>(), 0.002_s);
 		const auto q = r.attitude();
@@ -109,4 +109,4 @@ inline namespace coordinates
 	}
 }    // namespace coordinates
 
-#endif    // rigidBodyTest_h
+#endif    // kinematicStateTest_h

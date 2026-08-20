@@ -27,21 +27,21 @@
 //
 //--------------------------------------------------------------------------------------------------
 //
-// The 6-DOF rigid-body state an aviation-simulation dynamics loop advances, plus the KINEMATIC evolution
-// that says how it changes. `RigidBodyState` couples a `Pose` (position + attitude in a parent frame) with a
-// linear velocity and a body angular rate. The derivative and the step helper implement pure kinematics --
-// the translation derivative is the velocity, and the attitude derivative is the quaternion kinematic
-// equation q_dot = 1/2 * q (x) omega. The DYNAMICS -- mass, the inertia tensor, forces and moments, and the
-// choice of integrator -- belong to the engine above; this header provides the state container and the
-// kinematic glue the engine steps.
+// The instantaneous state of a moving body -- where it is, how it is oriented, and how both are changing --
+// plus the KINEMATIC evolution that advances it. `KinematicState` couples a `Pose` (position + orientation in
+// a parent frame) with a linear velocity and a body angular rate. The derivative and step helpers implement
+// pure kinematics: the translation derivative is the velocity, and the orientation derivative is the
+// quaternion kinematic equation q_dot = 1/2 * q (x) omega. The DYNAMICS -- mass, the inertia tensor, forces
+// and moments, and the choice of integrator -- belong to the engine above; this header provides the state
+// container and the kinematic glue the engine steps.
 //
 // Convention (pinned): the pose's quaternion rotates BODY axes into PARENT axes; the body angular rate omega
 // is expressed in BODY axes; Euler angles are intrinsic Z-Y-X (yaw-pitch-roll), matching the rotation lib.
 //
 //--------------------------------------------------------------------------------------------------
 
-#ifndef rigidBody_h
-#define rigidBody_h
+#ifndef kinematicState_h
+#define kinematicState_h
 
 //------------------------
 //	INCLUDES
@@ -53,6 +53,7 @@
 #include "kinematics.h"
 #include "pose.h"
 #include "quaternion.h"
+#include "ray.h"
 #include "vector.h"
 
 inline namespace coordinates
@@ -76,10 +77,10 @@ inline namespace coordinates
 	//	FUNCTION: attitudeDerivative [free]
 	//------------------------------------------------------------------------------------------------------
 	/// @brief		The quaternion kinematic derivative q_dot = 1/2 * q (x) omega for a body-to-parent
-	///				attitude `q` spinning at body angular rate `omega`.
+	///				orientation `q` spinning at body angular rate `omega`.
 	/// @details	`omega` is expressed in BODY axes and promoted to the pure quaternion (0, wx, wy, wz); the
 	///				product is the body-frame kinematic form `q_dot = 1/2 * q (x) omega_quat`. Integrating this
-	///				(with periodic renormalization) propagates attitude. Rates are radians/second; the result
+	///				(with periodic renormalization) propagates orientation. Rates are radians/second; the result
 	///				is a per-second quaternion derivative.
 	/// @tparam		Frame	the body frame the angular rate is expressed in.
 	/// @param[in]	q		the current body-to-parent orientation.
@@ -105,10 +106,10 @@ inline namespace coordinates
 	}
 
 	//	----------------------------------------------------------------------------
-	//	CLASS		RigidBodyState
+	//	CLASS		KinematicState
 	//  ----------------------------------------------------------------------------
-	///	@brief		The 6-DOF state of a rigid body: pose (position + attitude) plus linear velocity and body
-	///				angular rate. The state a dynamics integrator reads and writes.
+	///	@brief		The instantaneous state of motion of a body: its pose (position + orientation) plus linear
+	///				velocity and body angular rate. The state a dynamics integrator reads and writes.
 	///	@details	The pose places the body in `Frame` (its quaternion rotates body axes into `Frame` axes).
 	///				The linear velocity is expressed in `Frame`; the angular rate is expressed in BODY axes.
 	///				This container carries no forces, mass, or inertia -- those are the engine's; it holds the
@@ -116,7 +117,7 @@ inline namespace coordinates
 	///	@tparam		Frame	the parent frame the body's position and linear velocity are expressed in.
 	//  ----------------------------------------------------------------------------
 	template<class Frame>
-	class RigidBodyState
+	class KinematicState
 	{
 	public:
 		using frame_type    = Frame;
@@ -127,10 +128,10 @@ inline namespace coordinates
 		//	CONSTRUCTORS
 		//----------------------------------
 
-		RigidBodyState() = default;
+		KinematicState() = default;
 
 		/// From a pose, a linear velocity (in `Frame`), and a body angular rate.
-		RigidBodyState(const Pose& pose, const velocity_type& velocity, const rate_type& bodyRate)
+		KinematicState(const Pose& pose, const velocity_type& velocity, const rate_type& bodyRate)
 		    : m_pose(pose)
 		    , m_velocity(velocity)
 		    , m_bodyRate(bodyRate)
@@ -141,11 +142,34 @@ inline namespace coordinates
 		//	GETTERS
 		//----------------------------------
 
-		[[nodiscard]] const Pose&          pose() const { return m_pose; }              ///< position + attitude in `Frame`
+		[[nodiscard]] const Pose&          pose() const { return m_pose; }              ///< position + orientation in `Frame`
 		[[nodiscard]] CartesianTuple       position() const { return m_pose.translation(); }
 		[[nodiscard]] rotation::Quaternion attitude() const { return m_pose.rotation(); }
 		[[nodiscard]] const velocity_type& velocity() const { return m_velocity; }      ///< linear velocity in `Frame`
 		[[nodiscard]] const rate_type&     bodyRate() const { return m_bodyRate; }       ///< angular rate in BODY axes
+
+		//----------------------------------
+		//	RAYS
+		//----------------------------------
+
+		/// The boresight ray: from the body's position, straight down its forward (+x body) axis in `Frame`.
+		[[nodiscard]] Ray<Frame> ray() const { return ray(0.0_deg, 0.0_deg); }
+
+		/// A ray steered off the boresight by delta-azimuth (about the body's down/+z axis, +right) and
+		/// delta-elevation (about the body's right/+y axis, +down), from the body's position. This is the
+		/// "sensor looking down-and-right of the nose" pointing: the deltas are BODY-relative, off the forward axis.
+		[[nodiscard]] Ray<Frame> ray(units::angle::degrees<> deltaAzimuth, units::angle::degrees<> deltaElevation) const
+		{
+			return steeredRay_(m_pose, deltaAzimuth, deltaElevation);
+		}
+
+		/// A mounted sensor's ray: the mount is a `Pose` (its offset from the body origin + its rotation relative
+		/// to body axes); the sensor pose is `pose() * mount`, and the ray is steered off ITS boresight by the
+		/// deltas. Carries the body's position and attitude AND the mount, so nothing but the deltas is passed.
+		[[nodiscard]] Ray<Frame> ray(const Pose& mount, units::angle::degrees<> deltaAzimuth = 0.0_deg, units::angle::degrees<> deltaElevation = 0.0_deg) const
+		{
+			return steeredRay_(m_pose * mount, deltaAzimuth, deltaElevation);
+		}
 
 		//----------------------------------
 		//	SETTERS
@@ -156,7 +180,31 @@ inline namespace coordinates
 		void setBodyRate(const rate_type& bodyRate) { m_bodyRate = bodyRate; }
 
 	private:
-		Pose          m_pose{Pose::identity()};    ///< body placement (position + attitude) in `Frame`
+		//	----------------------------------------------------------------------------
+		//	FUNCTION: steeredRay_ [static, private]
+		//  ----------------------------------------------------------------------------
+		///	@brief		Build the ray from a sensor pose, steered off its forward (+x) boresight by the deltas.
+		///	@details	The delta-azimuth rotates about the body down (+z) axis (+ toward the right), the
+		///				delta-elevation about the body right (+y) axis (+ downward); the resulting body-axis
+		///				direction is carried into `Frame` by the pose. Zero deltas give the pure boresight.
+		///	@param[in]	sensorPose	the sensor's pose in `Frame` (body pose, optionally composed with a mount).
+		///	@param[in]	deltaAzimuth	the azimuth offset off boresight (body axes).
+		///	@param[in]	deltaElevation	the elevation offset off boresight (body axes).
+		///	@return		the steered ray in `Frame`.
+		//  ----------------------------------------------------------------------------
+		static Ray<Frame> steeredRay_(const Pose& sensorPose, units::angle::degrees<> deltaAzimuth, units::angle::degrees<> deltaElevation)
+		{
+			// Forward (+x) boresight rotated within body axes: yaw by deltaAzimuth about +z, pitch by
+			// deltaElevation about +y. cos(el) forward, sin(daz) right, sin(el) down.
+			const double az = units::angle::radians<>(deltaAzimuth).value();
+			const double el = units::angle::radians<>(deltaElevation).value();
+			const CartesianTuple bodyDirection(units::length::meters<>(std::cos(el) * std::cos(az)),    // x forward
+			                                   units::length::meters<>(std::cos(el) * std::sin(az)),    // y right
+			                                   units::length::meters<>(std::sin(el)));                  // z down
+			return Ray<Frame>::fromPose(sensorPose, bodyDirection);
+		}
+
+		Pose          m_pose{Pose::identity()};    ///< body placement (position + orientation) in `Frame`
 		velocity_type m_velocity{};                ///< linear velocity, expressed in `Frame`
 		rate_type     m_bodyRate{};                ///< angular rate, expressed in BODY axes
 	};
@@ -164,8 +212,8 @@ inline namespace coordinates
 	//------------------------------------------------------------------------------------------------------
 	//	FUNCTION: integrateKinematics [free]
 	//------------------------------------------------------------------------------------------------------
-	/// @brief		Advance a rigid-body state by `dt` under the KINEMATIC equations, given the engine-supplied
-	///				linear and angular accelerations. Explicit Euler with attitude renormalization.
+	/// @brief		Advance a kinematic state by `dt` under the KINEMATIC equations, given the engine-supplied
+	///				linear and angular accelerations. Explicit Euler with orientation renormalization.
 	/// @details	Steps `position += velocity*dt`, `velocity += linearAccel*dt`, `q += q_dot*dt` (then
 	///				renormalize), `bodyRate += angularAccel*dt`, where `q_dot = attitudeDerivative(q,
 	///				bodyRate)`. This is the SIMPLEST integrator, offered as a convenience -- an engine wanting
@@ -174,12 +222,12 @@ inline namespace coordinates
 	/// @tparam		Frame	the parent frame of the state.
 	/// @param[in]	state			the current state.
 	/// @param[in]	linearAccel		the linear acceleration in `Frame` (from the engine's force model).
-	/// @param[in]	angularAccel	the angular acceleration in BODY axes (from the engine's moment model).
+	/// @param[in]	angularAccelBody	the angular acceleration in BODY axes (from the engine's moment model).
 	/// @param[in]	dt				the time step.
 	/// @return		the advanced state.
 	//------------------------------------------------------------------------------------------------------
 	template<class Frame>
-	[[nodiscard]] RigidBodyState<Frame> integrateKinematics(const RigidBodyState<Frame>& state,
+	[[nodiscard]] KinematicState<Frame> integrateKinematics(const KinematicState<Frame>&    state,
 	                                                        const AccelerationVector<Frame>& linearAccel,
 	                                                        const AngularRateVector<Frame>&  angularAccelBody,
 	                                                        units::time::seconds<>           dt)
@@ -193,7 +241,7 @@ inline namespace coordinates
 		                            std::get<1>(pos) + units::length::meters<>(std::get<1>(v).value() * dts),
 		                            std::get<2>(pos) + units::length::meters<>(std::get<2>(v).value() * dts));
 
-		// --- attitude: q += q_dot * dt, renormalize (q_dot from body rate) ---
+		// --- orientation: q += q_dot * dt, renormalize (q_dot from body rate) ---
 		const rotation::Quaternion   q  = state.attitude();
 		const QuaternionDerivative   qd = attitudeDerivative(q, state.bodyRate());
 		const rotation::Quaternion   qNew = rotation::Quaternion(units::dimensionless<>(q.w().value() + qd.w.value() * dts),
@@ -217,8 +265,8 @@ inline namespace coordinates
 		                                 rps(std::get<1>(w).value() + std::get<1>(al).value() * dts),
 		                                 rps(std::get<2>(w).value() + std::get<2>(al).value() * dts));
 
-		return RigidBodyState<Frame>(Pose(newPos, qNew), newVel, newRate);
+		return KinematicState<Frame>(Pose(newPos, qNew), newVel, newRate);
 	}
 }    // namespace coordinates
 
-#endif    // rigidBody_h
+#endif    // kinematicState_h

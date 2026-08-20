@@ -71,7 +71,9 @@
 
 #include <bodyFrame.h>
 #include <pose.h>
-#include <rigidBody.h>
+#include <kinematicState.h>
+
+#include <ray.h>
 
 #if defined(COORDINATES_ENABLE_LOS) && COORDINATES_ENABLE_LOS
 #include <lineOfSight.h>

@@ -37,6 +37,7 @@
 #include "positionAER.h"
 #include "positionECEF.h"
 #include "positionGeodetic.h"
+#include "ray.h"
 #include "topography.h"
 
 inline namespace coordinates
@@ -278,6 +279,28 @@ inline namespace coordinates
 			if (hit->range > maxRange)
 				return std::nullopt;
 			return hit;
+		}
+
+		/**
+		 * @brief Intersect a geometric ray with the terrain, returning the first hit.
+		 *
+		 * A ray carries BOTH its origin and its direction, so it is a complete query: the march starts at the
+		 * ray's OWN origin (not this engine's observer) and proceeds along its direction. The origin's geodetic
+		 * position becomes the marcher's observer for this call, so the result is always consistent with the ray
+		 * regardless of how this engine was constructed. Build the ray from a sensor `Pose` (`Ray::fromPose`) or
+		 * an az/el look-angle at a site (`Ray::fromAzimuthElevation`).
+		 *
+		 * @tparam RayFrame the ray's frame (an ECEF frame).
+		 * @param[in] ray the geometric ray to march, origin and direction both honored.
+		 * @return Hit record if found; std::nullopt otherwise.
+		 */
+		template<class RayFrame>
+		[[nodiscard]] std::optional<TerrainHit> terrainIntersection(const Ray<RayFrame>& ray) const
+		{
+			const PositionECEF<Datum> originEcef(ray.origin());
+			const LineOfSight         atOrigin(PositionGeodetic<Datum>(originEcef), m_opt);
+			const auto [azimuth, elevation] = atOrigin.directionToAzEl_(ray.direction().vector());
+			return atOrigin.terrainIntersectionAngles_(azimuth, elevation);
 		}    //----------------------------------
 		//  VIEWSHED OVERLAY IMAGE
 		//----------------------------------
@@ -545,6 +568,36 @@ inline namespace coordinates
 		}
 
 		/**
+		 * @brief Resolve an ECEF direction into the observer's local azimuth and elevation.
+		 *
+		 * Rotates the direction into the observer's ENU frame and takes azimuth = atan2(east, north)
+		 * (0=North, 90=East) and elevation = atan2(up, hypot(east, north)) (0=level, +90=up).
+		 *
+		 * @param[in] directionECEF the direction in ECEF meters (magnitude irrelevant).
+		 * @return the (azimuth, elevation) look-angle at the observer.
+		 */
+		[[nodiscard]] std::pair<degrees<T>, degrees<T>> directionToAzEl_(const CartesianTuple& directionECEF) const
+		{
+			const T dx = std::get<0>(directionECEF).value();
+			const T dy = std::get<1>(directionECEF).value();
+			const T dz = std::get<2>(directionECEF).value();
+
+			const radians<T> lat = m_observerGeodetic.latitude().template to<radians<T>>();
+			const radians<T> lon = m_observerGeodetic.longitude().template to<radians<T>>();
+
+			const T sLat = sin(lat).value(), cLat = cos(lat).value();
+			const T sLon = sin(lon).value(), cLon = cos(lon).value();
+
+			const T east  = (-sLon) * dx + (cLon) *dy;
+			const T north = (-sLat * cLon) * dx + (-sLat * sLon) * dy + (cLat) *dz;
+			const T up    = (cLat * cLon) * dx + (cLat * sLon) * dy + (sLat) *dz;
+
+			const degrees<T> azimuth   = radians<T>(std::atan2(east, north));
+			const degrees<T> elevation = radians<T>(std::atan2(up, std::hypot(east, north)));
+			return {azimuth, elevation};
+		}
+
+		/**
 		 * @brief Compute the maximum along-surface range for an az/el ray before it hits the reference ellipsoid.
 		 *
 		 * We compute an ECEF ray from the observer in the specified local ENU direction, intersect it with the
@@ -704,4 +757,28 @@ inline namespace coordinates
 				throw std::runtime_error("LineOfSight::writePPM_: failed while writing file");
 		}
 	};
+
+	//	----------------------------------------------------------------------------
+	//	FUNCTION: terrainIntersection [free]
+	//  ----------------------------------------------------------------------------
+	///	@brief		The first terrain intersection of a ray -- the whole query in one argument.
+	///	@details	A ray already carries its origin and direction, so a terrain hit needs nothing else: this
+	///				marches the ray against the topography model from the ray's own origin. The topography model
+	///				(and thus the reference geoid) is a template parameter defaulting to `DTED`; the tile is
+	///				resolved by that model. Prefer this to constructing a `LineOfSight` by hand when all you have
+	///				is a ray -- it minimizes the call to its single essential argument.
+	///	@tparam		Datum	the full datum the march runs in; defaults to `datums::WGS84_G1674_AGL`, the datum
+	///						that pairs the WGS84 horizontal datum with the DTED (EGM96) topography.
+	///	@param[in]	ray	the geometric ray to march.
+	///	@return		the first terrain hit, or `std::nullopt` if the ray clears the terrain.
+	//  ----------------------------------------------------------------------------
+	template<class Datum = datums::WGS84_G1674_AGL, class RayFrame>
+	[[nodiscard]] auto terrainIntersection(const Ray<RayFrame>& ray)
+	{
+		// The datum's vertical component IS its topography/geoid model (e.g. WGS84_G1674_AGL pairs the WGS84
+		// horizontal datum with DTED/EGM96), so the marcher's topography model falls out of the datum.
+		using TopographyModel = typename traits::datum_traits<Datum>::vertical_datum;
+		const LineOfSight<Datum, TopographyModel> los(PositionGeodetic<Datum>(PositionECEF<Datum>(ray.origin())));
+		return los.terrainIntersection(ray);
+	}
 }    // namespace coordinates
