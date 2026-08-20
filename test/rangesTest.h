@@ -99,8 +99,8 @@ namespace
 	// parameters can be set independently. Default AER keeps both as meters.
 	TEST_F(RangesTest, originAltitudeDecoupledFromRange)
 	{
-		// Range in kilometers, origin altitude in feet -- previously impossible (one shared unit param).
-		PositionAER<datums::WGS84_G1674, degrees, kilometers, feet> aer(
+		// Range in kilometers, origin altitude given in feet (converted into the geodetic origin).
+		PositionAER<datums::WGS84_G1674, degrees, kilometers> aer(
 		        10.0_deg, 20.0_deg, 5.0_km, 40.0_deg, -75.0_deg, 100.0_ft);
 		static_assert(std::is_same_v<decltype(aer.range()), ranges::Euclidean>);
 		EXPECT_UNITS_EQ(5.0_km, aer.range());

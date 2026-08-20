@@ -64,7 +64,7 @@ inline namespace coordinates
 		E e1(p1);
 		E e2(p2);
 
-		EXPECT_FALSE(isLineOfSight<Datum>(e1, e2));
+		EXPECT_FALSE(isLineOfSight(e1, e2));
 	}
 
 	TEST_F(LineOfSightTest, nearbyHighAltitudePoints_clear)
@@ -80,7 +80,7 @@ inline namespace coordinates
 		E e1(p1);
 		E e2(p2);
 
-		EXPECT_TRUE(isLineOfSight<Datum>(e1, e2));
+		EXPECT_TRUE(isLineOfSight(e1, e2));
 	}
 }
 

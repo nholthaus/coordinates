@@ -81,7 +81,7 @@ namespace
 	TEST_F(PositionECEFTest, is_point)
 	{
 		EXPECT_TRUE(coordinates::traits::is_point<ECEF>);
-		EXPECT_TRUE((coordinates::traits::is_point<PositionECEF<datums::ITRS2000, cubits, long double>>));
+		EXPECT_TRUE((coordinates::traits::is_point<PositionECEF<datums::ITRS2000, cubits>>));
 	}
 
 	TEST_F(PositionECEFTest, defaultConstructor)

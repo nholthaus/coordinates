@@ -42,31 +42,6 @@
 
 inline namespace coordinates
 {
-	//	----------------------------------------------------------------------------
-	//	CLASS		Point
-	//  ----------------------------------------------------------------------------
-	///	@brief		Convenience class for implementing the `point` concept
-	///	@details
-	//  ----------------------------------------------------------------------------
-	template<typename ReferenceFrame, typename TupleType, typename FrameDataType>
-	class Point
-	{
-	public:
-		virtual ~Point() = default;
-
-		using reference_frame = ReferenceFrame;
-		using tuple_type      = TupleType;
-		using frame_data_type = FrameDataType;
-
-		virtual tuple_type      point() const     = 0;
-		virtual frame_data_type frameData() const = 0;
-
-		virtual void setPoint(const tuple_type& point)              = 0;
-		virtual void setPoint(tuple_type&& point)                   = 0;
-		virtual void setFrameData(const frame_data_type& frameData) = 0;
-		virtual void setFrameData(frame_data_type&& frameData)      = 0;
-	};
-
 	//----------------------------------
 	//	POINT TRAITS CLASS
 	//----------------------------------
@@ -184,8 +159,14 @@ inline namespace coordinates
 
 		 */
 		template<typename T>
-		concept is_point = std::is_default_constructible_v<T> && has_reference_frame<T> && has_tuple_type<T, point_traits> && has_frame_data_type<T> &&
-		                   has_point<T> && has_setPoint<T> && has_frameData<T> && has_setFrameData<T>;
+		concept is_coordinate = std::is_default_constructible_v<T> && has_reference_frame<T> && has_tuple_type<T, point_traits> && has_frame_data_type<T> &&
+		                        has_point<T> && has_setPoint<T> && has_frameData<T> && has_setFrameData<T>;
+
+		/// `is_point` is the structural coordinate contract. It carries no base-class / virtual requirement:
+		/// any type providing the frame/tuple/frame-data typedefs and the point/frameData interface satisfies
+		/// it. Retained as the established spelling; `is_coordinate` is the same contract under the evolved name.
+		template<typename T>
+		concept is_point = is_coordinate<T>;
 
 		/**
 		 * @brief		Trait which tests whether two point are convertible to each other

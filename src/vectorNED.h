@@ -170,15 +170,15 @@ inline namespace coordinates
 			const FrameData               fd = ecef.frameData();
 			const PositionGeodetic<Datum> origin(fd.origin, fd.date);
 
-			PositionECEF<Datum, meters, T> eOrg(origin);
-			PositionECEF<Datum, meters, T> eTip(eOrg.x() + ecef.x(), eOrg.y() + ecef.y(), eOrg.z() + ecef.z());
+			PositionECEF<Datum, meters> eOrg(origin);
+			PositionECEF<Datum, meters> eTip(eOrg.x() + ecef.x(), eOrg.y() + ecef.y(), eOrg.z() + ecef.z());
 			eTip.setFrameData(eOrg.frameData());
 
-			PositionNED<Datum, meters, T> pTip;
+			PositionNED<Datum, meters> pTip;
 			pTip.setFrameData(FrameData(origin.point(), fd.date));
 			coordinates::convert(eTip, pTip);
 
-			PositionNED<Datum, meters, T> pOrg(0.0_m, 0.0_m, 0.0_m, origin, fd.date);
+			PositionNED<Datum, meters> pOrg(0.0_m, 0.0_m, 0.0_m, origin, fd.date);
 
 			m_north = pTip.north() - pOrg.north();
 			m_east  = pTip.east() - pOrg.east();
@@ -282,19 +282,28 @@ inline namespace coordinates
 
 #include "positionNED.h"
 
-template<is_datum Datum, template<class> class PosUnits, typename T>
-VectorNED<Datum, PosUnits, T> operator-(const PositionNED<Datum, PosUnits, T>& lhs, const PositionNED<Datum, PosUnits, T>& rhs)
+// A NED point: a point whose reference frame is a NEDFrame. Constrained structurally so the operators
+// deduce the concrete (aliased) point type rather than naming the non-deducible PositionNED alias.
+template<class P>
+concept ned_point =
+        coordinates::traits::is_point<P> && !coordinates::traits::is_vector<P>
+        && std::same_as<typename coordinates::traits::point_traits<P>::reference_frame,
+                        coordinateFrames::NEDFrame<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<P>::reference_frame>::datum_type>>;
+
+template<ned_point NedPoint>
+VectorNED<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type> operator-(const NedPoint& lhs, const NedPoint& rhs)
 {
+	using Datum = typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type;
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionNED frame mismatch in operator-");
-	return VectorNED<Datum, PosUnits, T>(lhs.north() - rhs.north(),
-	                                     lhs.east() - rhs.east(),
-	                                     lhs.down() - rhs.down(),
-	                                     PositionGeodetic<Datum>(lhs.frameData().origin, lhs.date()),
-	                                     lhs.date());
+	return VectorNED<Datum>(lhs.north() - rhs.north(),
+	                        lhs.east() - rhs.east(),
+	                        lhs.down() - rhs.down(),
+	                        PositionGeodetic<Datum>(lhs.frameData().origin, lhs.date()),
+	                        lhs.date());
 }
 
-template<is_datum Datum, template<class> class PosUnits, template<class> class VecUnits, typename T>
-PositionNED<Datum, PosUnits, T> operator+(PositionNED<Datum, PosUnits, T> lhs, const VectorNED<Datum, VecUnits, T>& rhs)
+template<ned_point NedPoint, template<class> class VecUnits, typename T>
+NedPoint operator+(NedPoint lhs, const VectorNED<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
 {
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionNED frame mismatch in operator+");
 	lhs.setNorth(lhs.north() + rhs.north());
@@ -303,8 +312,8 @@ PositionNED<Datum, PosUnits, T> operator+(PositionNED<Datum, PosUnits, T> lhs, c
 	return lhs;
 }
 
-template<is_datum Datum, template<class> class PosUnits, template<class> class VecUnits, typename T>
-PositionNED<Datum, PosUnits, T> operator-(PositionNED<Datum, PosUnits, T> lhs, const VectorNED<Datum, VecUnits, T>& rhs)
+template<ned_point NedPoint, template<class> class VecUnits, typename T>
+NedPoint operator-(NedPoint lhs, const VectorNED<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
 {
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionNED frame mismatch in operator-");
 	lhs.setNorth(lhs.north() - rhs.north());

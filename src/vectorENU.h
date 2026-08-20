@@ -160,15 +160,15 @@ inline namespace coordinates
 			const FrameData               fd = ecef.frameData();
 			const PositionGeodetic<Datum> origin(fd.origin, fd.date);
 
-			PositionECEF<Datum, meters, T> eOrg(origin);
-			PositionECEF<Datum, meters, T> eTip(eOrg.x() + ecef.x(), eOrg.y() + ecef.y(), eOrg.z() + ecef.z());
+			PositionECEF<Datum, meters> eOrg(origin);
+			PositionECEF<Datum, meters> eTip(eOrg.x() + ecef.x(), eOrg.y() + ecef.y(), eOrg.z() + ecef.z());
 			eTip.setFrameData(eOrg.frameData());
 
-			PositionENU<Datum, meters, T> pTip;
+			PositionENU<Datum, meters> pTip;
 			pTip.setFrameData(FrameData(origin.point(), fd.date));
 			coordinates::convert(eTip, pTip);
 
-			PositionENU<Datum, meters, T> pOrg(0.0_m, 0.0_m, 0.0_m, origin, fd.date);
+			PositionENU<Datum, meters> pOrg(0.0_m, 0.0_m, 0.0_m, origin, fd.date);
 
 			m_east  = pTip.east() - pOrg.east();
 			m_north = pTip.north() - pOrg.north();
@@ -290,7 +290,7 @@ inline namespace coordinates
 		 */
 		template<typename AzElUnit, template<class> class OriginAngleUnits, template<class> class OriginHeightUnits>
 		    requires(units::traits::is_angle_unit_v<AzElUnit>)
-		static VectorENU fromAER(AzElUnit azimuth, AzElUnit elevation, const PositionGeodetic<Datum, OriginAngleUnits, OriginHeightUnits, T>& origin)
+		static VectorENU fromAER(AzElUnit azimuth, AzElUnit elevation, const PositionGeodetic<Datum, OriginAngleUnits, OriginHeightUnits>& origin)
 		{
 			// Range is arbitrary; use 1 meter to yield a unit-length direction vector in ENU.
 			const meters<T> range{1};
@@ -299,8 +299,8 @@ inline namespace coordinates
 			const OriginAngleUnits<T> az(azimuth);
 			const OriginAngleUnits<T> el(elevation);
 
-			const PositionAER<Datum, OriginAngleUnits, meters, OriginHeightUnits, T> aer(az, el, range, origin, origin.date());
-			const PositionENU<Datum, DistanceUnits, T>            enu(aer);
+			const PositionAER<Datum, OriginAngleUnits, meters> aer(az, el, range, origin, origin.date());
+			const PositionENU<Datum, DistanceUnits>            enu(aer);
 
 			return VectorENU(enu.east(), enu.north(), enu.up(), origin_type(origin.point(), origin.date()), origin.date());
 		}
@@ -318,19 +318,28 @@ inline namespace coordinates
 //  POSITION/VECTOR ARITHMETIC
 //----------------------------------
 
-template<is_datum Datum, template<class> class PosUnits, typename T>
-VectorENU<Datum, PosUnits, T> operator-(const PositionENU<Datum, PosUnits, T>& lhs, const PositionENU<Datum, PosUnits, T>& rhs)
+// An ENU point: a point whose reference frame is an ENUFrame. Constrained structurally so the operators
+// deduce the concrete (aliased) point type rather than naming the non-deducible PositionENU alias.
+template<class P>
+concept enu_point =
+        coordinates::traits::is_point<P> && !coordinates::traits::is_vector<P>
+        && std::same_as<typename coordinates::traits::point_traits<P>::reference_frame,
+                        coordinateFrames::ENUFrame<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<P>::reference_frame>::datum_type>>;
+
+template<enu_point EnuPoint>
+VectorENU<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type> operator-(const EnuPoint& lhs, const EnuPoint& rhs)
 {
+	using Datum = typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type;
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionENU frame mismatch in operator-");
-	return VectorENU<Datum, PosUnits, T>(lhs.east() - rhs.east(),
-	                                     lhs.north() - rhs.north(),
-	                                     lhs.up() - rhs.up(),
-	                                     PositionGeodetic<Datum>(lhs.frameData().origin, lhs.date()),
-	                                     lhs.date());
+	return VectorENU<Datum>(lhs.east() - rhs.east(),
+	                        lhs.north() - rhs.north(),
+	                        lhs.up() - rhs.up(),
+	                        PositionGeodetic<Datum>(lhs.frameData().origin, lhs.date()),
+	                        lhs.date());
 }
 
-template<is_datum Datum, template<class> class PosUnits, template<class> class VecUnits, typename T>
-PositionENU<Datum, PosUnits, T> operator+(PositionENU<Datum, PosUnits, T> lhs, const VectorENU<Datum, VecUnits, T>& rhs)
+template<enu_point EnuPoint, template<class> class VecUnits, typename T>
+EnuPoint operator+(EnuPoint lhs, const VectorENU<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
 {
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionENU frame mismatch in operator+");
 	lhs.setEast(lhs.east() + rhs.east());
@@ -339,8 +348,8 @@ PositionENU<Datum, PosUnits, T> operator+(PositionENU<Datum, PosUnits, T> lhs, c
 	return lhs;
 }
 
-template<is_datum Datum, template<class> class PosUnits, template<class> class VecUnits, typename T>
-PositionENU<Datum, PosUnits, T> operator-(PositionENU<Datum, PosUnits, T> lhs, const VectorENU<Datum, VecUnits, T>& rhs)
+template<enu_point EnuPoint, template<class> class VecUnits, typename T>
+EnuPoint operator-(EnuPoint lhs, const VectorENU<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
 {
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionENU frame mismatch in operator-");
 	lhs.setEast(lhs.east() - rhs.east());

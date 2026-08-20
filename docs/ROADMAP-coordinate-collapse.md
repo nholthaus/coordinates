@@ -131,6 +131,25 @@ The foundation additions that ARE sound and can be reused verbatim in the pass: 
 `setPoint(Components...)` on `Coordinate` (converts each component into the tuple's stored unit, needed by the
 arithmetic recompute paths), and the point-generic re-templating pattern for the `algorithm.h` functions.
 
+## Ratified decisions (owner, during the fresh pass)
+
+- **Finding 3 — `Intersection` datum.** `Intersection<Datum>` and `intersectEllipsoid`/`isLineOfSight` are
+  parameterized on the **horizontal** datum recoverable from the ECEF point's frame
+  (`frame_traits<point_traits<P>::reference_frame>::datum_type`), not the full 3-D datum. An ellipsoid
+  intersection is a purely horizontal-datum/ellipsoid quantity — no vertical component. `Intersection`'s
+  static_assert relaxes from `is_datum` to `is_horizontal_datum`. Done + `-Werror` syntax-clean.
+- **Frame-specific verbs → `AxisAccessors` mixin.** The ECEF verbs (`intersectRay`, `hasLineOfSightTo`) and
+  the geodetic verbs (`inverseTo`, `distanceTo`, `initialBearingTo`, `finalBearingTo`, `bearingTo`,
+  `geodesicDistanceTo`, `euclideanDistanceTo`, `slantRangeTo`, `destination`) live in each frame's
+  `AxisAccessors<Frame, Derived, Tuple>` specialization — frame-scoped, zero cost on frames that lack them,
+  member-call surface preserved. Same mechanism as the named axes.
+- **`PositionGeodetic` signature simplified:** `template<class Datum, template<class> class AngleUnits =
+  degrees, template<class> class HeightUnits = meters> using PositionGeodetic = Coordinate<
+  Geodetic3DFrame<Datum>, std::tuple<AngleUnits<double>, AngleUnits<double>, HeightUnits<double>>>`. The
+  trailing `T` storage-type parameter is DROPPED (fixed to `double`); `<Datum>`, `<Datum, radians>`, and
+  `<Datum, degrees, feet>` all keep working. The two explicit-`T` sites (`vectorTest.h`,
+  `positionAER.h`'s `origin_type` / `vectorENU.h`'s `fromAER`) migrate to the 3-param form.
+
 ## Verification (every phase)
 Full `ctest` green (the MATLAB/GeographicLib/EPSG/VDatum truth suite is immovable) AND a local MSVC `cl.exe`
 build (c++23, warnings-as-errors) — the parity check that the tagging campaign learned the hard way. Per-family

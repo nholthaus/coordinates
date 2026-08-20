@@ -91,12 +91,15 @@ namespace
 
 	};
 
-	struct TestPoint : public coordinates::Point<ENUFrame<horizontalDatums::ITRF2008>, coordinates::CartesianTuple, coordinates::FrameData>
+	// A minimal standalone type that satisfies the `is_point` concept structurally -- no base class. This is
+	// exactly the point of the concept-only design: anything providing the typedefs + interface is a point.
+	struct TestPoint
 	{
 		TestPoint() {};
 
-		using coordinates::Point<ENUFrame<horizontalDatums::ITRF2008>, coordinates::CartesianTuple, coordinates::FrameData>::tuple_type;
-		using coordinates::Point<ENUFrame<horizontalDatums::ITRF2008>, coordinates::CartesianTuple, coordinates::FrameData>::frame_data_type;
+		using reference_frame = ENUFrame<horizontalDatums::ITRF2008>;
+		using tuple_type      = coordinates::CartesianTuple;
+		using frame_data_type = coordinates::FrameData;
 
 		tuple_type point() const { return tuple_type(); }
 		void setPoint(const tuple_type&) {}
@@ -107,13 +110,13 @@ namespace
 		void setFrameData(frame_data_type&&) { return; }
 	};
 
-	struct TestSphericalPoint : public coordinates::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coordinates::SphericalTuple, coordinates::FrameData>
+	struct TestSphericalPoint
 	{
 		TestSphericalPoint() {};
 
-		using coordinates::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coordinates::SphericalTuple, coordinates::FrameData>::tuple_type;
-		using coordinates::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coordinates::SphericalTuple, coordinates::FrameData>::frame_data_type;
-		using coordinates::Point<Geodetic2DFrame<horizontalDatums::NAD83>, coordinates::SphericalTuple, coordinates::FrameData>::reference_frame;
+		using reference_frame = Geodetic2DFrame<horizontalDatums::NAD83>;
+		using tuple_type      = coordinates::SphericalTuple;
+		using frame_data_type = coordinates::FrameData;
 
 		tuple_type point() const { return tuple_type(); }
 		void setPoint(const tuple_type&) {}

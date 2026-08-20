@@ -61,7 +61,7 @@ inline namespace coordinates
 		// Singapore Changi: 01:21:33N 103:59:22E
 		G sin(1.3591666666666669_deg, 103.98944444444444_deg, 0.0_m);
 
-		auto result = geodesicInverse<WGS84_G1674>(jfk, sin);
+		auto result = geodesicInverse(jfk, sin);
 
 		// GeodSolve -i -: -p 0 output:
 		//   003:18:29.9 177:29:09.2 15347628
@@ -77,7 +77,7 @@ inline namespace coordinates
 		G jfk(40.63972222222222_deg, -73.77888888888889_deg, 0.0_m);
 
 		// Solve direct using the GeodSolve example values.
-		auto direct = geodesicDirect<WGS84_G1674>(jfk, 3.308305555555555_deg, 15347628.0_m);
+		auto direct = geodesicDirect(jfk, 3.308305555555555_deg, 15347628.0_m);
 
 		// Expected destination is Singapore Changi (from the inverse example inputs).
 		EXPECT_UNITS_NEAR(1.3591666666666669_deg, direct.destination().latitude(), 5.0e-6_deg);

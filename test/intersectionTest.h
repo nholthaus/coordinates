@@ -81,7 +81,7 @@ inline namespace coordinates
 		// Shoot in +Y direction (tangent-ish from +X); should miss.
 		CartesianTuple dir(0.0_m, 1.0_m, 0.0_m);
 
-		auto hit = intersectEllipsoid<WGS84_G1674>(origin, dir);
+		auto hit = intersectEllipsoid(origin, dir);
 
 		EXPECT_FALSE(hit.hit());
 		EXPECT_FALSE(hit.hitEllipsoid());

@@ -487,8 +487,11 @@ inline namespace coordinates
 	 * @param[in]	b	Second geodetic point.
 	 * @return		GeodesicInverseResult containing distance, initial bearing, and final bearing.
 	 */
-	template<class Datum, class EllipsoidType = horizontal_datum_traits<typename datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
-	GeodesicInverseResult geodesicInverse(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
+	template<class GeodeticPoint,
+	         class Datum         = typename traits::frame_traits<typename traits::point_traits<GeodeticPoint>::reference_frame>::datum_type,
+	         class EllipsoidType = horizontal_datum_traits<typename datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
+	    requires(traits::is_point<GeodeticPoint>)
+	GeodesicInverseResult geodesicInverse(const GeodeticPoint& a, const GeodeticPoint& b)
 	{
 		static_assert(traits::is_datum<Datum>, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(traits::is_ellipsoid<EllipsoidType>, "`EllipsoidType` template parameter does not satisfy the ellipsoid concept.");
@@ -643,8 +646,11 @@ inline namespace coordinates
 	 * @param[in]	distance		Surface distance to travel along the geodesic.
 	 * @return		GeodesicDirectResult containing destination point and final bearing.
 	 */
-	template<class Datum, class EllipsoidType = horizontal_datum_traits<typename datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
-	GeodesicDirectResult<PositionGeodetic<Datum>> geodesicDirect(const PositionGeodetic<Datum>& start, degrees<> initialBearing, meters<> distance)
+	template<class GeodeticPoint,
+	         class Datum         = typename traits::frame_traits<typename traits::point_traits<GeodeticPoint>::reference_frame>::datum_type,
+	         class EllipsoidType = horizontal_datum_traits<typename datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
+	    requires(traits::is_point<GeodeticPoint>)
+	GeodesicDirectResult<GeodeticPoint> geodesicDirect(const GeodeticPoint& start, degrees<> initialBearing, meters<> distance)
 	{
 		static_assert(traits::is_datum<Datum>, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(traits::is_ellipsoid<EllipsoidType>, "`EllipsoidType` template parameter does not satisfy the ellipsoid concept.");
@@ -719,14 +725,14 @@ inline namespace coordinates
 
 		const fp_t alpha2 = std::atan2(sinAlpha, -tmp);
 
-		PositionGeodetic<Datum> dst(units::angle::degrees<>(units::angle::radians<>(static_cast<double>(phi2))),
-		                            units::angle::degrees<>(wrap180(units::angle::degrees<>(units::angle::radians<>(static_cast<double>(lon2))))),
-		                            start.altitude().template to<units::length::meters<>>(),
-		                            start.frameData().date);
+		GeodeticPoint dst(units::angle::degrees<>(units::angle::radians<>(static_cast<double>(phi2))),
+		                  units::angle::degrees<>(wrap180(units::angle::degrees<>(units::angle::radians<>(static_cast<double>(lon2))))),
+		                  start.altitude().template to<units::length::meters<>>());
+		dst.setFrameData(start.frameData());
 
 		const auto azi2_deg = wrap360(units::angle::degrees<>(static_cast<double>(alpha2 * static_cast<fp_t>(180.0) / std::numbers::pi_v<fp_t>)));
 
-		return GeodesicDirectResult<PositionGeodetic<Datum>>(dst, azi2_deg);
+		return GeodesicDirectResult<GeodeticPoint>(dst, azi2_deg);
 	}
 
 	/**
@@ -736,9 +742,10 @@ inline namespace coordinates
 	 * @param[in]	b	Second point.
 	 * @return		Surface distance between points (Great Circle).
 	 */
-	template<class Datum>
-	meters<> geodesicDistance(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
-	{ return geodesicInverse<Datum>(a, b).distance().template to<meters<>>(); }
+	template<class GeodeticPoint>
+	    requires(traits::is_point<GeodeticPoint>)
+	meters<> geodesicDistance(const GeodeticPoint& a, const GeodeticPoint& b)
+	{ return geodesicInverse(a, b).distance().template to<meters<>>(); }
 
 	/**
 	 * @brief		Convenience wrapper returning the initial bearing.
@@ -747,9 +754,10 @@ inline namespace coordinates
 	 * @param[in]	b	Second point.
 	 * @return		Initial bearing at point a.
 	 */
-	template<class Datum>
-	degrees<> initialBearing(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
-	{ return geodesicInverse<Datum>(a, b).initialBearing().template to<degrees<>>(); }
+	template<class GeodeticPoint>
+	    requires(traits::is_point<GeodeticPoint>)
+	degrees<> initialBearing(const GeodeticPoint& a, const GeodeticPoint& b)
+	{ return geodesicInverse(a, b).initialBearing().template to<degrees<>>(); }
 
 	/**
 	 * @brief		Convenience wrapper returning the final bearing.
@@ -758,9 +766,10 @@ inline namespace coordinates
 	 * @param[in]	b	Second point.
 	 * @return		Final bearing at point b.
 	 */
-	template<class Datum>
-	degrees<> finalBearing(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
-	{ return geodesicInverse<Datum>(a, b).finalBearing().template to<degrees<>>(); }
+	template<class GeodeticPoint>
+	    requires(traits::is_point<GeodeticPoint>)
+	degrees<> finalBearing(const GeodeticPoint& a, const GeodeticPoint& b)
+	{ return geodesicInverse(a, b).finalBearing().template to<degrees<>>(); }
 
 	//------------------------
 	//	ELLIPSOID INTERSECTION
@@ -775,10 +784,12 @@ inline namespace coordinates
 	 * @param[in]	dirECEF		Ray direction vector in ECEF.
 	 * @return		Intersection result (hit flag + intersection point).
 	 */
-	template<class Datum, class EllipsoidType = horizontal_datum_traits<typename datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
-	Intersection<Datum> intersectEllipsoid(const PositionECEF<Datum>& originECEF, const CartesianTuple& dirECEF)
+	template<class EcefPoint,
+	         class HorizontalDatum = typename traits::frame_traits<typename traits::point_traits<EcefPoint>::reference_frame>::datum_type,
+	         class EllipsoidType   = typename horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid>
+	    requires(traits::is_point<EcefPoint>)
+	Intersection<HorizontalDatum> intersectEllipsoid(const EcefPoint& originECEF, const CartesianTuple& dirECEF)
 	{
-		static_assert(traits::is_datum<Datum>, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(traits::is_ellipsoid<EllipsoidType>, "`EllipsoidType` template parameter does not satisfy the ellipsoid concept.");
 
 		const auto ox = std::get<0>(originECEF.point());
@@ -800,7 +811,7 @@ inline namespace coordinates
 		const auto disc = B * B - 4.0 * A * C;
 		if (disc < 0.0 || A == 0.0)
 		{
-			return Intersection<Datum>();
+			return Intersection<HorizontalDatum>();
 		}
 
 		const auto sqrtDisc = sqrt(disc);
@@ -816,28 +827,32 @@ inline namespace coordinates
 
 		if (!std::isfinite(t))
 		{
-			return Intersection<Datum>();
+			return Intersection<HorizontalDatum>();
 		}
 
 		const auto px = units::length::meters<>(ox + t * dx);
 		const auto py = units::length::meters<>(oy + t * dy);
 		const auto pz = units::length::meters<>(oz + t * dz);
 
-		return Intersection<Datum>(units::length::meters(t), CartesianTuple(px, py, pz), originECEF.frameData().date);
+		return Intersection<HorizontalDatum>(units::length::meters(t), CartesianTuple(px, py, pz), originECEF.frameData().date);
 	}
 
 	/**
 	 * @brief		Tests whether two points have clear line-of-sight over the ellipsoid.
 	 * @details		This is an ellipsoid-only test. Terrain/topography is not considered.
-	 * @tparam		Datum	Datum of the points.
+	 * @tparam		EcefPoint		the ECEF point type of both endpoints.
+	 * @tparam		HorizontalDatum	the horizontal datum recovered from the point's frame.
+	 * @tparam		EllipsoidType	the reference ellipsoid of that horizontal datum.
 	 * @param[in]	observer	Observer point.
 	 * @param[in]	target		Target point.
 	 * @return		true if the line segment between observer and target does not intersect the ellipsoid interior.
 	 */
-	template<class Datum, class EllipsoidType = traits::horizontal_datum_traits<typename traits::datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
-	bool isLineOfSight(const PositionECEF<Datum>& observer, const PositionECEF<Datum>& target)
+	template<class EcefPoint,
+	         class HorizontalDatum = typename traits::frame_traits<typename traits::point_traits<EcefPoint>::reference_frame>::datum_type,
+	         class EllipsoidType   = typename traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid>
+	    requires(traits::is_point<EcefPoint>)
+	bool isLineOfSight(const EcefPoint& observer, const EcefPoint& target)
 	{
-		static_assert(traits::is_datum<Datum>, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(traits::is_ellipsoid<EllipsoidType>, "`EllipsoidType` template parameter does not satisfy the ellipsoid concept.");
 
 		const auto ox = std::get<0>(observer.point()).template to<double>();

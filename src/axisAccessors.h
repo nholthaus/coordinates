@@ -48,10 +48,14 @@
 
 #include <units.h>
 
+#include "algorithm.h"
 #include "angles.h"
 #include "frameAxes.h"
 #include "frameOfReference.h"
+#include "geodesicDirectResult.h"
+#include "geodesicInverseResult.h"
 #include "heights.h"
+#include "intersection.h"
 #include "latitudeConversion.h"
 #include "ranges.h"
 #include "verticalDatum.h"
@@ -120,6 +124,15 @@ inline namespace coordinates
 			void               setX(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
 			void               setY(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
 			void               setZ(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
+
+			/// Intersect a ray from this point (direction in ECEF, need not be normalized) with the datum's
+			/// reference ellipsoid.
+			[[nodiscard]] Intersection<HorizontalDatum> intersectRay(const CartesianTuple& directionECEF) const
+			{ return coordinates::intersectEllipsoid(base::self(), directionECEF); }
+
+			/// Ellipsoid-only line-of-sight to another ECEF point (terrain not considered).
+			[[nodiscard]] bool hasLineOfSightTo(const Derived& target) const
+			{ return coordinates::isLineOfSight(base::self(), target); }
 		};
 
 		//------------------------------------------------------------------------------------------------------
@@ -158,6 +171,48 @@ inline namespace coordinates
 				return coordinates::convertFromEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(
 				        base::template slot<0>(), base::template slot<1>(), toEllipsoidHeight());
 			}
+
+			//==========================================================================================
+			//	GEODESIC / TWO-POINT MEASUREMENTS (a.measureTo(b)) -- thin forwarders over the free engine.
+			//==========================================================================================
+
+			/// Inverse geodesic solution (distance + both bearings) to another geodetic point.
+			[[nodiscard]] GeodesicInverseResult inverseTo(const Derived& other) const
+			{ return coordinates::geodesicInverse(base::self(), other); }
+
+			/// Geodesic (great-circle surface) distance to another geodetic point.
+			[[nodiscard]] ranges::Geodesic distanceTo(const Derived& other) const
+			{ return ranges::Geodesic(coordinates::geodesicDistance(base::self(), other)); }
+
+			/// Uniform-named companion to `distanceTo`: the geodesic surface distance.
+			[[nodiscard]] ranges::Geodesic geodesicDistanceTo(const Derived& other) const
+			{ return ranges::Geodesic(coordinates::geodesicDistance(base::self(), other)); }
+
+			/// Initial bearing (forward azimuth) to another geodetic point, normalized to [0, 360).
+			[[nodiscard]] angles::Azimuth initialBearingTo(const Derived& other) const
+			{ return angles::Azimuth(coordinates::initialBearing(base::self(), other)); }
+
+			/// Final bearing at the destination point, normalized to [0, 360).
+			[[nodiscard]] angles::Azimuth finalBearingTo(const Derived& other) const
+			{ return angles::Azimuth(coordinates::finalBearing(base::self(), other)); }
+
+			/// The common bearing to another geodetic point (its initial bearing).
+			[[nodiscard]] angles::Azimuth bearingTo(const Derived& other) const
+			{ return angles::Azimuth(coordinates::initialBearing(base::self(), other)); }
+
+			/// Destination point reached from this point along an initial bearing over a surface distance.
+			[[nodiscard]] GeodesicDirectResult<Derived> destination(degrees<> azimuth, meters<> distance) const
+			{ return coordinates::geodesicDirect(base::self(), azimuth, distance); }
+
+			/// Straight-line (Euclidean) distance from this point to any other point.
+			template<traits::is_point Point>
+			[[nodiscard]] ranges::Euclidean euclideanDistanceTo(const Point& other) const
+			{ return ranges::Euclidean(coordinates::distance(base::self(), other)); }
+
+			/// Slant range to a target: a straight-line distance through 3-space, so a `ranges::Euclidean`.
+			template<traits::is_point Point>
+			[[nodiscard]] ranges::Euclidean slantRangeTo(const Point& other) const
+			{ return ranges::Euclidean(coordinates::distance(base::self(), other)); }
 		};
 
 		//------------------------------------------------------------------------------------------------------
@@ -203,6 +258,18 @@ inline namespace coordinates
 			void setAzimuth(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
 			void setElevation(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
 			void setRange(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
+
+			/// Look angles (azimuth, elevation, range) of a target as seen from an observer. Azimuth/elevation/
+			/// range are inherently observer-relative, so this makes the observer explicit: it builds the AER
+			/// coordinate of `target` in the local frame whose origin is `observer`, running the full
+			/// conversion pipeline (through ECEF, honoring datums).
+			template<class ObserverPoint, class TargetPoint>
+			    requires(traits::is_point<ObserverPoint> && traits::is_point<TargetPoint>)
+			[[nodiscard]] static Derived fromObserver(const ObserverPoint& observer, const TargetPoint& target)
+			{
+				const typename Derived::local_origin_type origin(observer);
+				return Derived(target, origin, origin.date());
+			}
 		};
 	}    // namespace traits
 }    // namespace coordinates
