@@ -31,6 +31,7 @@ set(PUBLIC_HEADERS
         coordinates_fwd.h
         datum.h
         dted.h
+        entity.h
         dtedRawFileContents.h
         dtedTile.h
         dtedTileManager.h

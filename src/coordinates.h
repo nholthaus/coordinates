@@ -75,6 +75,7 @@
 
 #include <ray.h>
 #include <sensorFieldOfView.h>
+#include <entity.h>
 
 #include <hillshadeCanvas.h>
 

@@ -1,0 +1,213 @@
+//--------------------------------------------------------------------------------------------------
+//
+//	Coordinates: A compile-time c++23 coordinate conversion library based on `units`
+//
+//--------------------------------------------------------------------------------------------------
+//
+// The MIT License (MIT)
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+// and associated documentation files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+// BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+//--------------------------------------------------------------------------------------------------
+//
+// Copyright (c) 2016 Nic Holthaus
+//
+//--------------------------------------------------------------------------------------------------
+//
+// The one composable thing above a `Coordinate`: an `Entity`. A point is first-class; an `Entity` is a point
+// that MAY also carry an orientation (a pose), motion, a field of view, and child entities. Everything is
+// optional and either set at construction or with a plain `set*` afterward. Attitude is relational, so an
+// entity's pose is expressed relative to its parent; attaching children builds a rigid tree (the entity tree
+// IS the rigid body) whose child transforms compose up to the world. A top-level entity is world-posed, and a
+// child reports its position and pose in WORLD coordinates by default -- resolved by walking the parent chain
+// -- with an overload to report relative to any other entity instead. The heavier verbs (rays, visibility,
+// propagation) are layered on in later steps; this is the composable state + frame resolution.
+//
+//--------------------------------------------------------------------------------------------------
+
+#ifndef entity_h
+#define entity_h
+
+//------------------------
+//	INCLUDES
+//------------------------
+
+#include <memory>
+#include <vector>
+
+#include <units.h>
+
+#include "coordinates_fwd.h"
+#include "frameOfReference.h"
+#include "kinematics.h"
+#include "pose.h"
+#include "positionECEF.h"
+
+inline namespace coordinates
+{
+	using namespace units;
+	using namespace units::literals;
+
+	//	----------------------------------------------------------------------------
+	//	CLASS		Entity
+	//  ----------------------------------------------------------------------------
+	///	@brief		A composable point that may carry a pose, motion, a field of view, and child entities.
+	///	@details	`Entity` is the single first-class thing above `Coordinate`. Its position is a
+	///				`PositionECEF<Datum>` (the world/rigid-body frame); its pose is an orientation (with a mount
+	///				offset) relative to its parent; children attach rigidly to form a tree that moves as one -- the
+	///				entity tree is the rigid body. A top-level entity is world-posed; a child resolves its position
+	///				and pose to WORLD by composing rigid transforms up the parent chain, and an overload reports
+	///				relative to another entity instead. All state is optional and set at construction or via `set*`.
+	///	@tparam		Datum	the geodetic datum whose ECEF frame the entity's position and motion live in.
+	//  ----------------------------------------------------------------------------
+	template<class Datum>
+	class Entity
+	{
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		//		PUBLIC TYPES
+		//////////////////////////////////////////////////////////////////////////
+
+		using datum_type    = Datum;
+		using position_type = PositionECEF<Datum>;
+		using frame_type    = coordinateFrames::ECEFFrame<typename traits::datum_traits<Datum>::horizontal_datum>;
+		using velocity_type = VelocityVector<frame_type>;
+		using rate_type     = AngularRateVector<frame_type>;
+
+		//////////////////////////////////////////////////////////////////////////
+		//		CONSTRUCTORS
+		//////////////////////////////////////////////////////////////////////////
+
+		/// An empty entity (no position, identity pose, no motion). Fill it with `set*`.
+		Entity() = default;
+
+		/// The natural-use-case constructor: a position, and optionally an orientation and motion. Every case is
+		/// a prefix of the argument list -- a bare point `Entity{p}`, a posed thing `Entity{p, pose}`, or a moving
+		/// body `Entity{p, pose, velocity, rate}`. Field of view is set separately (`setFieldOfView`), added in a
+		/// later step, since it is the least common field.
+		explicit Entity(const position_type& position, const Pose& pose = Pose::identity(), const velocity_type& velocity = velocity_type{}, const rate_type& angularRate = rate_type{})
+		    : m_position(position)
+		    , m_pose(pose)
+		    , m_velocity(velocity)
+		    , m_angularRate(angularRate)
+		{
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+		//		SETTERS
+		//////////////////////////////////////////////////////////////////////////
+
+		void setPosition(const position_type& position) { m_position = position; }        ///< the entity's location
+		void setPose(const Pose& pose) { m_pose = pose; }                                  ///< orientation relative to the parent
+		void setVelocity(const velocity_type& velocity) { m_velocity = velocity; }         ///< linear velocity in the ECEF frame
+		void setAngularRate(const rate_type& angularRate) { m_angularRate = angularRate; } ///< body angular rate
+
+		//////////////////////////////////////////////////////////////////////////
+		//		GETTERS (world-resolved by default)
+		//////////////////////////////////////////////////////////////////////////
+
+		/// The entity's position in WORLD coordinates (a root's own position; a child resolved up the chain).
+		[[nodiscard]] position_type position() const
+		{
+			if (m_parent == nullptr)
+				return m_position;
+			position_type worldPosition;
+			worldPosition.setPoint(m_parent->pose().transformPoint(localPose().translation()));
+			return worldPosition;
+		}
+
+		/// The entity's position expressed relative to another entity's frame.
+		[[nodiscard]] position_type position(const Entity& relativeTo) const
+		{
+			position_type result;
+			result.setPoint(relativeTo.pose().inverse().transformPoint(position().point()));
+			return result;
+		}
+
+		/// The entity's pose in WORLD coordinates: a root's own pose, or a child's local pose composed up the
+		/// parent chain (`worldFromParent * parentFromChild`).
+		[[nodiscard]] Pose pose() const
+		{
+			if (m_parent == nullptr)
+				return localPose();
+			return m_parent->pose() * localPose();
+		}
+
+		/// The entity's pose expressed relative to another entity's frame.
+		[[nodiscard]] Pose pose(const Entity& relativeTo) const { return relativeTo.pose().inverse() * pose(); }
+
+		[[nodiscard]] const velocity_type& velocity() const { return m_velocity; }       ///< linear velocity (ECEF frame)
+		[[nodiscard]] const rate_type&     angularRate() const { return m_angularRate; } ///< body angular rate
+
+		//////////////////////////////////////////////////////////////////////////
+		//		CHILDREN (rigid attachment -- the entity tree is the rigid body)
+		//////////////////////////////////////////////////////////////////////////
+
+		//	----------------------------------------------------------------------------
+		//	STRUCT		Mount
+		//  ----------------------------------------------------------------------------
+		///	@brief		A child's rigid placement on its parent: an offset from the parent origin plus an
+		///				orientation, both in the parent's body axes.
+		//  ----------------------------------------------------------------------------
+		struct Mount
+		{
+			CartesianTuple offset{0.0_m, 0.0_m, 0.0_m};    ///< the child origin in the parent's body axes
+			Pose           orientation{Pose::identity()};  ///< the child's rotation relative to the parent's axes
+		};
+
+		/// Attach a child entity rigidly at a mount; the parent OWNS the child and returns a reference to it for
+		/// further configuration. The child's local pose is the mount (offset + orientation) relative to this
+		/// entity, so the child resolves to world through this parent.
+		Entity& attach(const Mount& mount)
+		{
+			auto child      = std::make_unique<Entity>();
+			child->m_parent = this;
+			child->m_pose   = Pose(mount.offset, mount.orientation.rotation());
+			Entity& ref     = *child;
+			m_children.push_back(std::move(child));
+			return ref;
+		}
+
+		[[nodiscard]] const std::vector<std::unique_ptr<Entity>>& children() const { return m_children; }
+		[[nodiscard]] const Entity*                               parent() const { return m_parent; }
+
+	private:
+		//	----------------------------------------------------------------------------
+		//	FUNCTION: localPose [private]
+		//  ----------------------------------------------------------------------------
+		///	@brief		The entity's pose in its PARENT's frame: its orientation with the position as translation.
+		///	@details	For a root, the translation is the entity's world ECEF position, so the local pose IS the
+		///				world pose. For a child, the translation is the mount offset (the pose set at `attach`), so
+		///				composing with the parent's world pose places the child.
+		///	@return		the pose relative to the parent (or world, for a root).
+		//  ----------------------------------------------------------------------------
+		[[nodiscard]] Pose localPose() const
+		{
+			if (m_parent == nullptr)
+				return Pose(m_position.point(), m_pose.rotation());
+			return m_pose;
+		}
+
+		position_type                        m_position;                    ///< location (world for a root, unused for a child)
+		Pose                                 m_pose{Pose::identity()};      ///< orientation; for a child, its mount pose in the parent
+		velocity_type                        m_velocity{};                  ///< linear velocity in the ECEF frame
+		rate_type                            m_angularRate{};               ///< body angular rate
+		const Entity*                        m_parent{nullptr};             ///< non-owning; a parent outlives the children it owns
+		std::vector<std::unique_ptr<Entity>> m_children;                    ///< owned child entities (the rigid tree)
+	};
+}    // namespace coordinates
+
+#endif    // entity_h
