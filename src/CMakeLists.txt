@@ -60,7 +60,7 @@ set(PUBLIC_HEADERS
         positionGeodetic.h
         positionNED.h
         ranges.h
-        sensorFieldOfView.h
+        fieldOfView.h
         tileException.h
         tileMetadata.h
         topography.h

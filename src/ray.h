@@ -57,6 +57,9 @@
 
 inline namespace coordinates
 {
+	using namespace units;
+	using namespace units::literals;
+
 	//	----------------------------------------------------------------------------
 	//	CLASS		Ray
 	//  ----------------------------------------------------------------------------
@@ -89,7 +92,7 @@ inline namespace coordinates
 		/// From an origin and a direction; the direction is normalized on construction.
 		Ray(const origin_type& origin, const direction_type& direction)
 		    : m_origin(origin)
-		    , m_direction(normalized_(direction))
+		    , m_direction(normalized(direction))
 		{
 		}
 
@@ -105,7 +108,7 @@ inline namespace coordinates
 		//////////////////////////////////////////////////////////////////////////
 
 		/// The point a metric distance `range` along the ray from the origin.
-		[[nodiscard]] origin_type pointAt(units::length::meters<> range) const
+		[[nodiscard]] origin_type pointAt(meters<> range) const
 		{
 			const auto d = m_direction.vector();
 			origin_type p;
@@ -137,18 +140,18 @@ inline namespace coordinates
 		/// into `Frame`. This is the natural "aim a beam at a bearing and elevation from a site" constructor -- a
 		/// level scan is `elevation == 0`. `Frame` must be the ECEF frame the origin's datum lives in (see `RayECEF`).
 		template<class OriginPoint>
-		[[nodiscard]] static Ray fromAzimuthElevation(const OriginPoint& originPoint, units::angle::degrees<> azimuth, units::angle::degrees<> elevation)
+		[[nodiscard]] static Ray fromAzimuthElevation(const OriginPoint& originPoint, degrees<> azimuth, degrees<> elevation)
 		{
 			// The local ENU direction of the look-angle: east = cos(el) sin(az), north = cos(el) cos(az),
 			// up = sin(el). Anchor it to the origin as an ENU vector, then convert to `Frame` by the rotation-
 			// only vector frame change -- the frame graph rotates the local direction into ECEF.
-			const double az = units::angle::radians<>(azimuth).value();
-			const double el = units::angle::radians<>(elevation).value();
+			const double az = radians<>(azimuth).value();
+			const double el = radians<>(elevation).value();
 			const double ce = std::cos(el);
 			using EnuVector = Vector<coordinateFrames::ENUFrame<typename OriginPoint::reference_frame::datum_type>>;
-			EnuVector localDirection(units::length::meters<>(ce * std::sin(az)),    // east
-			                         units::length::meters<>(ce * std::cos(az)),    // north
-			                         units::length::meters<>(std::sin(el)),         // up
+			EnuVector localDirection(meters<>(ce * std::sin(az)),    // east
+			                         meters<>(ce * std::cos(az)),    // north
+			                         meters<>(std::sin(el)),         // up
 			                         originPoint);
 			direction_type worldDirection(localDirection);    // rotation-only frame change into Frame
 
@@ -172,20 +175,20 @@ inline namespace coordinates
 
 	private:
 		//	----------------------------------------------------------------------------
-		//	FUNCTION: normalized_ [static, private]
+		//	FUNCTION: normalized [static, private]
 		//  ----------------------------------------------------------------------------
 		///	@brief		Return the direction scaled to unit length (a zero vector is returned unchanged).
 		///	@param[in]	direction	the direction to normalize.
 		///	@return		the unit-length direction, sharing the input's frame data.
 		//  ----------------------------------------------------------------------------
-		static direction_type normalized_(const direction_type& direction)
+		static direction_type normalized(const direction_type& direction)
 		{
 			const auto   v   = direction.vector();
 			const double dx  = std::get<0>(v).value(), dy = std::get<1>(v).value(), dz = std::get<2>(v).value();
 			const double len = std::sqrt(dx * dx + dy * dy + dz * dz);
 			if (len == 0.0)
 				return direction;
-			direction_type unit(units::length::meters<>(dx / len), units::length::meters<>(dy / len), units::length::meters<>(dz / len));
+			direction_type unit(meters<>(dx / len), meters<>(dy / len), meters<>(dz / len));
 			unit.setFrameData(direction.frameData());
 			return unit;
 		}
@@ -212,7 +215,7 @@ inline namespace coordinates
 	///	@return		the ray from `site` along the look-angle, in the site's ECEF frame.
 	//  ----------------------------------------------------------------------------
 	template<class OriginPoint>
-	[[nodiscard]] auto ray(const OriginPoint& site, units::angle::degrees<> azimuth, units::angle::degrees<> elevation)
+	[[nodiscard]] auto ray(const OriginPoint& site, degrees<> azimuth, degrees<> elevation)
 	{
 		using Frame = coordinateFrames::ECEFFrame<typename OriginPoint::reference_frame::datum_type>;
 		return Ray<Frame>::fromAzimuthElevation(site, azimuth, elevation);

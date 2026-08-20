@@ -58,6 +58,9 @@
 
 inline namespace coordinates
 {
+	using namespace units;
+	using namespace units::literals;
+
 	//	----------------------------------------------------------------------------
 	//	STRUCT		QuaternionDerivative
 	//  ----------------------------------------------------------------------------
@@ -67,10 +70,10 @@ inline namespace coordinates
 	//  ----------------------------------------------------------------------------
 	struct QuaternionDerivative
 	{
-		units::frequency::hertz<> w{0.0};    ///< d(scalar)/dt
-		units::frequency::hertz<> x{0.0};    ///< d(i)/dt
-		units::frequency::hertz<> y{0.0};    ///< d(j)/dt
-		units::frequency::hertz<> z{0.0};    ///< d(k)/dt
+		hertz<> w{0.0};    ///< d(scalar)/dt
+		hertz<> x{0.0};    ///< d(i)/dt
+		hertz<> y{0.0};    ///< d(j)/dt
+		hertz<> z{0.0};    ///< d(k)/dt
 	};
 
 	//------------------------------------------------------------------------------------------------------
@@ -97,7 +100,7 @@ inline namespace coordinates
 		const double qw = q.w().value(), qx = q.x().value(), qy = q.y().value(), qz = q.z().value();
 
 		// q (x) (0, wx, wy, wz), then halved (Hamilton product).
-		using Hz = units::frequency::hertz<>;
+		using Hz = hertz<>;
 		return QuaternionDerivative{
 		        Hz(0.5 * (-qx * wx - qy * wy - qz * wz)),
 		        Hz(0.5 * (qw * wx + qy * wz - qz * wy)),
@@ -158,17 +161,17 @@ inline namespace coordinates
 		/// A ray steered off the boresight by delta-azimuth (about the body's down/+z axis, +right) and
 		/// delta-elevation (about the body's right/+y axis, +down), from the body's position. This is the
 		/// "sensor looking down-and-right of the nose" pointing: the deltas are BODY-relative, off the forward axis.
-		[[nodiscard]] Ray<Frame> ray(units::angle::degrees<> deltaAzimuth, units::angle::degrees<> deltaElevation) const
+		[[nodiscard]] Ray<Frame> ray(degrees<> deltaAzimuth, degrees<> deltaElevation) const
 		{
-			return steeredRay_(m_pose, deltaAzimuth, deltaElevation);
+			return steeredRay(m_pose, deltaAzimuth, deltaElevation);
 		}
 
 		/// A mounted sensor's ray: the mount is a `Pose` (its offset from the body origin + its rotation relative
 		/// to body axes); the sensor pose is `pose() * mount`, and the ray is steered off ITS boresight by the
 		/// deltas. Carries the body's position and attitude AND the mount, so nothing but the deltas is passed.
-		[[nodiscard]] Ray<Frame> ray(const Pose& mount, units::angle::degrees<> deltaAzimuth = 0.0_deg, units::angle::degrees<> deltaElevation = 0.0_deg) const
+		[[nodiscard]] Ray<Frame> ray(const Pose& mount, degrees<> deltaAzimuth = 0.0_deg, degrees<> deltaElevation = 0.0_deg) const
 		{
-			return steeredRay_(m_pose * mount, deltaAzimuth, deltaElevation);
+			return steeredRay(m_pose * mount, deltaAzimuth, deltaElevation);
 		}
 
 		//----------------------------------
@@ -181,7 +184,7 @@ inline namespace coordinates
 
 	private:
 		//	----------------------------------------------------------------------------
-		//	FUNCTION: steeredRay_ [static, private]
+		//	FUNCTION: steeredRay [static, private]
 		//  ----------------------------------------------------------------------------
 		///	@brief		Build the ray from a sensor pose, steered off its forward (+x) boresight by the deltas.
 		///	@details	The delta-azimuth rotates about the body down (+z) axis (+ toward the right), the
@@ -192,15 +195,15 @@ inline namespace coordinates
 		///	@param[in]	deltaElevation	the elevation offset off boresight (body axes).
 		///	@return		the steered ray in `Frame`.
 		//  ----------------------------------------------------------------------------
-		static Ray<Frame> steeredRay_(const Pose& sensorPose, units::angle::degrees<> deltaAzimuth, units::angle::degrees<> deltaElevation)
+		static Ray<Frame> steeredRay(const Pose& sensorPose, degrees<> deltaAzimuth, degrees<> deltaElevation)
 		{
 			// Forward (+x) boresight rotated within body axes: yaw by deltaAzimuth about +z, pitch by
 			// deltaElevation about +y. cos(el) forward, sin(daz) right, sin(el) down.
-			const double az = units::angle::radians<>(deltaAzimuth).value();
-			const double el = units::angle::radians<>(deltaElevation).value();
-			const CartesianTuple bodyDirection(units::length::meters<>(std::cos(el) * std::cos(az)),    // x forward
-			                                   units::length::meters<>(std::cos(el) * std::sin(az)),    // y right
-			                                   units::length::meters<>(std::sin(el)));                  // z down
+			const double az = radians<>(deltaAzimuth).value();
+			const double el = radians<>(deltaElevation).value();
+			const CartesianTuple bodyDirection(meters<>(std::cos(el) * std::cos(az)),    // x forward
+			                                   meters<>(std::cos(el) * std::sin(az)),    // y right
+			                                   meters<>(std::sin(el)));                  // z down
 			return Ray<Frame>::fromPose(sensorPose, bodyDirection);
 		}
 
@@ -230,35 +233,35 @@ inline namespace coordinates
 	[[nodiscard]] KinematicState<Frame> integrateKinematics(const KinematicState<Frame>&    state,
 	                                                        const AccelerationVector<Frame>& linearAccel,
 	                                                        const AngularRateVector<Frame>&  angularAccelBody,
-	                                                        units::time::seconds<>           dt)
+	                                                        seconds<>           dt)
 	{
 		const double dts = dt.value();
 
 		// --- translation: position += velocity * dt (velocity in Frame) ---
 		const auto           v = state.velocity().vector();
 		const CartesianTuple pos = state.position();
-		const CartesianTuple newPos(std::get<0>(pos) + units::length::meters<>(std::get<0>(v).value() * dts),
-		                            std::get<1>(pos) + units::length::meters<>(std::get<1>(v).value() * dts),
-		                            std::get<2>(pos) + units::length::meters<>(std::get<2>(v).value() * dts));
+		const CartesianTuple newPos(std::get<0>(pos) + meters<>(std::get<0>(v).value() * dts),
+		                            std::get<1>(pos) + meters<>(std::get<1>(v).value() * dts),
+		                            std::get<2>(pos) + meters<>(std::get<2>(v).value() * dts));
 
 		// --- orientation: q += q_dot * dt, renormalize (q_dot from body rate) ---
 		const rotation::Quaternion   q  = state.attitude();
 		const QuaternionDerivative   qd = attitudeDerivative(q, state.bodyRate());
-		const rotation::Quaternion   qNew = rotation::Quaternion(units::dimensionless<>(q.w().value() + qd.w.value() * dts),
-		                                                         units::dimensionless<>(q.x().value() + qd.x.value() * dts),
-		                                                         units::dimensionless<>(q.y().value() + qd.y.value() * dts),
-		                                                         units::dimensionless<>(q.z().value() + qd.z.value() * dts))
+		const rotation::Quaternion   qNew = rotation::Quaternion(dimensionless<>(q.w().value() + qd.w.value() * dts),
+		                                                         dimensionless<>(q.x().value() + qd.x.value() * dts),
+		                                                         dimensionless<>(q.y().value() + qd.y.value() * dts),
+		                                                         dimensionless<>(q.z().value() + qd.z.value() * dts))
 		                                        .normalized();
 
 		// --- linear velocity: v += a * dt (both in Frame) ---
-		using mps      = units::velocity::meters_per_second<>;
+		using mps      = meters_per_second<>;
 		const auto la  = linearAccel.vector();
 		VelocityVector<Frame> newVel(mps(std::get<0>(v).value() + std::get<0>(la).value() * dts),
 		                             mps(std::get<1>(v).value() + std::get<1>(la).value() * dts),
 		                             mps(std::get<2>(v).value() + std::get<2>(la).value() * dts));
 
 		// --- body rate: omega += alpha * dt (both in body axes; alpha carried as a rate delta per second) ---
-		using rps      = units::angular_velocity::radians_per_second<>;
+		using rps      = radians_per_second<>;
 		const auto w   = state.bodyRate().vector();
 		const auto al  = angularAccelBody.vector();
 		AngularRateVector<Frame> newRate(rps(std::get<0>(w).value() + std::get<0>(al).value() * dts),

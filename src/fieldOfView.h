@@ -27,7 +27,7 @@
 //
 //--------------------------------------------------------------------------------------------------
 //
-// A sensor's angular field of view, tested for containment. `SensorFieldOfView` is a rectangular frustum in
+// A sensor's angular field of view, tested for containment. `FieldOfView` is a rectangular frustum in
 // BODY axes: a boresight direction (default forward, +x) plus a horizontal and a vertical half-angle. A
 // direction or a world-space target is inside the field of view when, resolved into the sensor's body axes and
 // measured off the boresight, its azimuth is within the horizontal half-angle and its elevation within the
@@ -37,8 +37,8 @@
 //
 //--------------------------------------------------------------------------------------------------
 
-#ifndef sensorFieldOfView_h
-#define sensorFieldOfView_h
+#ifndef fieldOfView_h
+#define fieldOfView_h
 
 //------------------------
 //	INCLUDES
@@ -53,8 +53,11 @@
 
 inline namespace coordinates
 {
+	using namespace units;
+	using namespace units::literals;
+
 	//	----------------------------------------------------------------------------
-	//	CLASS		SensorFieldOfView
+	//	CLASS		FieldOfView
 	//  ----------------------------------------------------------------------------
 	///	@brief		A sensor's rectangular angular field of view in body axes: a boresight plus horizontal and
 	///				vertical half-angles, with containment tests.
@@ -64,7 +67,7 @@ inline namespace coordinates
 	///				it is contained when |azimuth| <= the horizontal half-angle and |elevation| <= the vertical
 	///				half-angle. With a `Pose`, a world-space direction or target is rotated into body axes first.
 	//  ----------------------------------------------------------------------------
-	class SensorFieldOfView
+	class FieldOfView
 	{
 	public:
 		//----------------------------------
@@ -72,14 +75,14 @@ inline namespace coordinates
 		//----------------------------------
 
 		/// A field of view about the forward (+x) boresight with the given half-angles.
-		SensorFieldOfView(units::angle::degrees<> horizontalHalfAngle, units::angle::degrees<> verticalHalfAngle)
-		    : SensorFieldOfView(CartesianTuple(1.0_m, 0.0_m, 0.0_m), horizontalHalfAngle, verticalHalfAngle)
+		FieldOfView(degrees<> horizontalHalfAngle, degrees<> verticalHalfAngle)
+		    : FieldOfView(CartesianTuple(1.0_m, 0.0_m, 0.0_m), horizontalHalfAngle, verticalHalfAngle)
 		{
 		}
 
 		/// A field of view about an arbitrary body-axis boresight with the given half-angles.
-		SensorFieldOfView(const CartesianTuple& boresight, units::angle::degrees<> horizontalHalfAngle, units::angle::degrees<> verticalHalfAngle)
-		    : m_boresight(normalized_(boresight))
+		FieldOfView(const CartesianTuple& boresight, degrees<> horizontalHalfAngle, degrees<> verticalHalfAngle)
+		    : m_boresight(normalized(boresight))
 		    , m_horizontalHalfAngle(horizontalHalfAngle)
 		    , m_verticalHalfAngle(verticalHalfAngle)
 		{
@@ -90,8 +93,8 @@ inline namespace coordinates
 		//----------------------------------
 
 		[[nodiscard]] const CartesianTuple&    boresight() const { return m_boresight; }
-		[[nodiscard]] units::angle::degrees<>  horizontalHalfAngle() const { return m_horizontalHalfAngle; }
-		[[nodiscard]] units::angle::degrees<>  verticalHalfAngle() const { return m_verticalHalfAngle; }
+		[[nodiscard]] degrees<>  horizontalHalfAngle() const { return m_horizontalHalfAngle; }
+		[[nodiscard]] degrees<>  verticalHalfAngle() const { return m_verticalHalfAngle; }
 
 		//----------------------------------
 		//	CONTAINMENT
@@ -133,50 +136,44 @@ inline namespace coordinates
 
 			const double azimuth   = std::atan2(right, fwd);
 			const double elevation = std::atan2(up, fwd);
-			const double hh        = units::angle::radians<>(m_horizontalHalfAngle).value();
-			const double vh        = units::angle::radians<>(m_verticalHalfAngle).value();
+			const double hh        = radians<>(m_horizontalHalfAngle).value();
+			const double vh        = radians<>(m_verticalHalfAngle).value();
 			return std::abs(azimuth) <= hh && std::abs(elevation) <= vh;
 		}
 
-		/// True when a WORLD-space direction lies within the field of view, given the sensor's pose (the world
-		/// direction is rotated into body axes by the pose's inverse, then tested).
-		[[nodiscard]] bool contains(const Pose& sensorPose, const CartesianTuple& worldDirection) const
+		/// True when a world-space target POINT lies within the field of view, given the viewer's pose. The look
+		/// direction from the viewer's position (the pose translation) to the target is rotated into body axes by
+		/// the pose's inverse, then tested against the half-angles.
+		[[nodiscard]] bool contains(const Pose& viewerPose, const CartesianTuple& worldTarget) const
 		{
-			return contains(sensorPose.inverse().rotateDirection(worldDirection));
-		}
-
-		/// True when a world-space target POINT lies within the field of view, given the sensor's pose. The
-		/// look direction is the vector from the sensor's position (the pose translation) to the target.
-		[[nodiscard]] bool contains(const Pose& sensorPose, const CartesianTuple& worldTarget, bool /*isPoint*/) const
-		{
-			const CartesianTuple origin = sensorPose.translation();
+			const CartesianTuple origin = viewerPose.translation();
 			const CartesianTuple lookWorld(std::get<0>(worldTarget) - std::get<0>(origin),
 			                               std::get<1>(worldTarget) - std::get<1>(origin),
 			                               std::get<2>(worldTarget) - std::get<2>(origin));
-			return contains(sensorPose, lookWorld);
+			return contains(viewerPose.inverse().rotateDirection(lookWorld));
 		}
 
 	private:
 		//	----------------------------------------------------------------------------
-		//	FUNCTION: normalized_ [static, private]
+		//	FUNCTION: normalized [static, private]
 		//  ----------------------------------------------------------------------------
 		///	@brief		Return a direction scaled to unit length (a zero vector defaults to forward, +x).
 		///	@param[in]	direction	the direction to normalize.
 		///	@return		the unit-length direction.
 		//  ----------------------------------------------------------------------------
-		static CartesianTuple normalized_(const CartesianTuple& direction)
+		static CartesianTuple normalized(const CartesianTuple& direction)
 		{
 			const double dx = std::get<0>(direction).value(), dy = std::get<1>(direction).value(), dz = std::get<2>(direction).value();
 			const double n  = std::sqrt(dx * dx + dy * dy + dz * dz);
 			if (n == 0.0)
 				return CartesianTuple(1.0_m, 0.0_m, 0.0_m);
-			return CartesianTuple(units::length::meters<>(dx / n), units::length::meters<>(dy / n), units::length::meters<>(dz / n));
+			return CartesianTuple(meters<>(dx / n), meters<>(dy / n), meters<>(dz / n));
 		}
 
 		CartesianTuple          m_boresight{1.0_m, 0.0_m, 0.0_m};    ///< the look direction in body axes (unit)
-		units::angle::degrees<> m_horizontalHalfAngle{0.0};          ///< half the horizontal angular extent
-		units::angle::degrees<> m_verticalHalfAngle{0.0};            ///< half the vertical angular extent
+		degrees<> m_horizontalHalfAngle{0.0};          ///< half the horizontal angular extent
+		degrees<> m_verticalHalfAngle{0.0};            ///< half the vertical angular extent
 	};
 }    // namespace coordinates
 
-#endif    // sensorFieldOfView_h
+#endif    // fieldOfView_h

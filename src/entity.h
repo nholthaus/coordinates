@@ -50,11 +50,20 @@
 
 #include <units.h>
 
+#include <optional>
+
+#include "algorithm.h"
 #include "coordinates_fwd.h"
+#include "fieldOfView.h"
 #include "frameOfReference.h"
 #include "kinematics.h"
 #include "pose.h"
 #include "positionECEF.h"
+#include "ray.h"
+
+#if defined(COORDINATES_ENABLE_LOS) && COORDINATES_ENABLE_LOS
+#include "lineOfSight.h"
+#endif
 
 inline namespace coordinates
 {
@@ -184,6 +193,45 @@ inline namespace coordinates
 		[[nodiscard]] const std::vector<std::unique_ptr<Entity>>& children() const { return m_children; }
 		[[nodiscard]] const Entity*                               parent() const { return m_parent; }
 
+		//////////////////////////////////////////////////////////////////////////
+		//		FIELD OF VIEW (optional)
+		//////////////////////////////////////////////////////////////////////////
+
+		void                              setFieldOfView(const FieldOfView& fieldOfView) { m_fieldOfView = fieldOfView; }
+		[[nodiscard]] std::optional<FieldOfView> fieldOfView() const { return m_fieldOfView; }
+
+		//////////////////////////////////////////////////////////////////////////
+		//		RAYS & VISIBILITY (derived; minimal inputs)
+		//////////////////////////////////////////////////////////////////////////
+
+		/// The boresight ray the entity looks along -- its world pose's forward (+x) axis from its world position.
+		/// Takes nothing: the entity already knows where it is and where it points.
+		[[nodiscard]] Ray<frame_type> ray() const { return Ray<frame_type>::fromPose(pose(), CartesianTuple(1.0_m, 0.0_m, 0.0_m)); }
+
+		/// The boresight ray expressed in another entity's frame.
+		[[nodiscard]] Ray<frame_type> ray(const Entity& relativeTo) const
+		{
+			return Ray<frame_type>::fromPose(pose(relativeTo), CartesianTuple(1.0_m, 0.0_m, 0.0_m));
+		}
+
+		/// True when this entity can see `other`: `other` has line of sight (ellipsoid, and terrain when the
+		/// line-of-sight support is built in) AND -- if this entity has a field of view -- lies within it. With
+		/// no field of view the entity is omnidirectional, so `sees` is pure line of sight.
+		[[nodiscard]] bool sees(const Entity& other) const
+		{
+			if (m_fieldOfView.has_value() && !m_fieldOfView->contains(pose(), other.position().point()))
+				return false;
+
+			const position_type here  = position();
+			const position_type there = other.position();
+#if defined(COORDINATES_ENABLE_LOS) && COORDINATES_ENABLE_LOS
+			const LineOfSight<Datum> los{PositionGeodetic<Datum>(here)};
+			return los.lineOfSightTerrain(PositionGeodetic<Datum>(there));
+#else
+			return coordinates::isLineOfSight(here, there);
+#endif
+		}
+
 	private:
 		//	----------------------------------------------------------------------------
 		//	FUNCTION: localPose [private]
@@ -203,6 +251,7 @@ inline namespace coordinates
 
 		position_type                        m_position;                    ///< location (world for a root, unused for a child)
 		Pose                                 m_pose{Pose::identity()};      ///< orientation; for a child, its mount pose in the parent
+		std::optional<FieldOfView>           m_fieldOfView;                 ///< the entity's view cone (none = omnidirectional)
 		velocity_type                        m_velocity{};                  ///< linear velocity in the ECEF frame
 		rate_type                            m_angularRate{};               ///< body angular rate
 		const Entity*                        m_parent{nullptr};             ///< non-owning; a parent outlives the children it owns

@@ -27,8 +27,8 @@
 //
 //--------------------------------------------------------------------------------------------------
 
-#ifndef sensorFieldOfViewTest_h
-#define sensorFieldOfViewTest_h
+#ifndef fieldOfViewTest_h
+#define fieldOfViewTest_h
 
 //------------------------
 //	INCLUDES
@@ -39,18 +39,18 @@
 #include <gtest/gtest.h>
 
 #include "pose.h"
-#include "sensorFieldOfView.h"
+#include "fieldOfView.h"
 
 inline namespace coordinates
 {
 	using namespace units::literals;
 
 	//	----------------------------------------------------------------------------
-	//	CLASS		SensorFieldOfViewTest
+	//	CLASS		FieldOfViewTest
 	//  ----------------------------------------------------------------------------
 	///	@brief		Unit tests for the sensor field-of-view containment tests.
 	//  ----------------------------------------------------------------------------
-	class SensorFieldOfViewTest : public ::testing::Test
+	class FieldOfViewTest : public ::testing::Test
 	{
 	protected:
 		// A body direction at the given azimuth (right, about +z) and elevation (down, about +y) off forward.
@@ -64,71 +64,71 @@ inline namespace coordinates
 	};
 
 	// The boresight itself is always contained.
-	TEST_F(SensorFieldOfViewTest, boresightIsContained)
+	TEST_F(FieldOfViewTest, boresightIsContained)
 	{
-		SensorFieldOfView fov(30.0_deg, 20.0_deg);
+		FieldOfView fov(30.0_deg, 20.0_deg);
 		EXPECT_TRUE(fov.contains(CartesianTuple(1.0_m, 0.0_m, 0.0_m)));
 	}
 
 	// Just inside each half-angle passes; just outside fails.
-	TEST_F(SensorFieldOfViewTest, horizontalHalfAngleBoundary)
+	TEST_F(FieldOfViewTest, horizontalHalfAngleBoundary)
 	{
-		SensorFieldOfView fov(30.0_deg, 20.0_deg);
+		FieldOfView fov(30.0_deg, 20.0_deg);
 		EXPECT_TRUE(fov.contains(dir(29.0, 0.0)));
 		EXPECT_FALSE(fov.contains(dir(31.0, 0.0)));
 		EXPECT_TRUE(fov.contains(dir(-29.0, 0.0)));
 		EXPECT_FALSE(fov.contains(dir(-31.0, 0.0)));
 	}
 
-	TEST_F(SensorFieldOfViewTest, verticalHalfAngleBoundary)
+	TEST_F(FieldOfViewTest, verticalHalfAngleBoundary)
 	{
-		SensorFieldOfView fov(30.0_deg, 20.0_deg);
+		FieldOfView fov(30.0_deg, 20.0_deg);
 		EXPECT_TRUE(fov.contains(dir(0.0, 19.0)));
 		EXPECT_FALSE(fov.contains(dir(0.0, 21.0)));
 	}
 
 	// A rectangular frustum: horizontally in but vertically out is NOT contained.
-	TEST_F(SensorFieldOfViewTest, cornerOutsideRectangle)
+	TEST_F(FieldOfViewTest, cornerOutsideRectangle)
 	{
-		SensorFieldOfView fov(30.0_deg, 20.0_deg);
+		FieldOfView fov(30.0_deg, 20.0_deg);
 		EXPECT_TRUE(fov.contains(dir(25.0, 15.0)));      // both within
 		EXPECT_FALSE(fov.contains(dir(25.0, 25.0)));     // horiz in, vert out
 	}
 
 	// Anything behind the sensor is never contained.
-	TEST_F(SensorFieldOfViewTest, behindIsNeverContained)
+	TEST_F(FieldOfViewTest, behindIsNeverContained)
 	{
-		SensorFieldOfView fov(80.0_deg, 80.0_deg);       // very wide, still not > 90 behind
+		FieldOfView fov(80.0_deg, 80.0_deg);       // very wide, still not > 90 behind
 		EXPECT_FALSE(fov.contains(CartesianTuple(-1.0_m, 0.0_m, 0.0_m)));
 	}
 
 	// An off-boresight cone: boresight to the right (+y), a target to the right is contained.
-	TEST_F(SensorFieldOfViewTest, arbitraryBoresight)
+	TEST_F(FieldOfViewTest, arbitraryBoresight)
 	{
-		SensorFieldOfView fov(CartesianTuple(0.0_m, 1.0_m, 0.0_m), 20.0_deg, 20.0_deg);    // looking +y
+		FieldOfView fov(CartesianTuple(0.0_m, 1.0_m, 0.0_m), 20.0_deg, 20.0_deg);    // looking +y
 		EXPECT_TRUE(fov.contains(CartesianTuple(0.0_m, 1.0_m, 0.0_m)));                     // dead on
 		EXPECT_FALSE(fov.contains(CartesianTuple(1.0_m, 0.0_m, 0.0_m)));                    // forward is 90 deg off
 	}
 
-	// With a pose, a world-space direction is rotated into body axes before the test. A 90-deg-yaw sensor
-	// looking down world +y: a world +y direction is dead-on its (forward) boresight.
-	TEST_F(SensorFieldOfViewTest, worldDirectionThroughPose)
+	// With a pose, a world-space target point is rotated into body axes before the test. A 90-deg-yaw viewer at
+	// the origin looking down world +y: a target on world +y is dead-on its (forward) boresight.
+	TEST_F(FieldOfViewTest, worldTargetThroughPose)
 	{
-		const auto        q = rotation::toQuaternion(rotation::EulerAngles(90.0_deg, 0.0_deg, 0.0_deg));
-		Pose              pose(CartesianTuple(0.0_m, 0.0_m, 0.0_m), q);
-		SensorFieldOfView fov(10.0_deg, 10.0_deg);
-		EXPECT_TRUE(fov.contains(pose, CartesianTuple(0.0_m, 1.0_m, 0.0_m)));     // world +y == body forward
+		const auto  q = rotation::toQuaternion(rotation::EulerAngles(90.0_deg, 0.0_deg, 0.0_deg));
+		Pose        pose(CartesianTuple(0.0_m, 0.0_m, 0.0_m), q);
+		FieldOfView fov(10.0_deg, 10.0_deg);
+		EXPECT_TRUE(fov.contains(pose, CartesianTuple(0.0_m, 1.0_m, 0.0_m)));     // target on world +y == body forward
 		EXPECT_FALSE(fov.contains(pose, CartesianTuple(1.0_m, 0.0_m, 0.0_m)));    // world +x is 90 deg off
 	}
 
-	// A world-space target point: the look vector is target - sensor position.
-	TEST_F(SensorFieldOfViewTest, worldTargetPoint)
+	// The look vector is target - viewer position: a viewer offset from the origin still aims correctly.
+	TEST_F(FieldOfViewTest, worldTargetPoint)
 	{
-		Pose              pose(CartesianTuple(100.0_m, 0.0_m, 0.0_m), rotation::Quaternion::identity());
-		SensorFieldOfView fov(15.0_deg, 15.0_deg);
-		EXPECT_TRUE(fov.contains(pose, CartesianTuple(200.0_m, 0.0_m, 0.0_m), true));    // straight ahead (+x)
-		EXPECT_FALSE(fov.contains(pose, CartesianTuple(100.0_m, 100.0_m, 0.0_m), true)); // 90 deg to the side
+		Pose        pose(CartesianTuple(100.0_m, 0.0_m, 0.0_m), rotation::Quaternion::identity());
+		FieldOfView fov(15.0_deg, 15.0_deg);
+		EXPECT_TRUE(fov.contains(pose, CartesianTuple(200.0_m, 0.0_m, 0.0_m)));    // straight ahead (+x)
+		EXPECT_FALSE(fov.contains(pose, CartesianTuple(100.0_m, 100.0_m, 0.0_m))); // 90 deg to the side
 	}
 }    // namespace coordinates
 
-#endif    // sensorFieldOfViewTest_h
+#endif    // fieldOfViewTest_h

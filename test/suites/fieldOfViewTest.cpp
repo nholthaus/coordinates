@@ -28,4 +28,4 @@
 //--------------------------------------------------------------------------------------------------
 
 #include "coordinates.h"
-#include "sensorFieldOfViewTest.h"
+#include "fieldOfViewTest.h"

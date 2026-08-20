@@ -63,6 +63,9 @@ inline namespace coordinates
 {
 	namespace topography
 	{
+		using namespace units;
+		using namespace units::literals;
+
 		//	----------------------------------------------------------------------------
 		//	STRUCT		Color
 		//  ----------------------------------------------------------------------------
@@ -72,6 +75,12 @@ inline namespace coordinates
 		{
 			std::uint8_t r{0}, g{0}, b{0};
 		};
+
+		/// A [0,1] intensity as an 8-bit channel value (clamped).
+		[[nodiscard]] inline std::uint8_t channel(double intensity)
+		{
+			return static_cast<std::uint8_t>(std::lround(255.0 * std::clamp(intensity, 0.0, 1.0)));
+		}
 
 		//	----------------------------------------------------------------------------
 		//	STRUCT		Pixel
@@ -160,7 +169,7 @@ inline namespace coordinates
 			//----------------------------------
 
 			/// Render `tile` to a colorized hillshade at the given angular resolution (0 = the tile's native).
-			explicit HillshadeCanvas(const AbstractTile* tile, units::angle::degrees<> resolution = units::angle::degrees<>(0.0))
+			explicit HillshadeCanvas(const AbstractTile* tile, degrees<> resolution = 0.0_deg)
 			    : m_meta(tile ? tile->metadata() : TileMetadata{})
 			{
 				if (tile == nullptr)
@@ -170,33 +179,30 @@ inline namespace coordinates
 				m_rows           = static_cast<int>(shade.size());
 				m_columns        = m_rows > 0 ? static_cast<int>(shade[0].size()) : 0;
 
-				m_swLat = m_meta.southwestLatitude().value();
-				m_neLat = m_meta.northeastLatitude().value();
-				m_swLon = m_meta.southwestLongitude().value();
-				m_neLon = m_meta.northeastLongitude().value();
+				m_southwestLatitude  = m_meta.southwestLatitude();
+				m_northeastLatitude  = m_meta.northeastLatitude();
+				m_southwestLongitude = m_meta.southwestLongitude();
+				m_northeastLongitude = m_meta.northeastLongitude();
 
-				// Elevation range for the ramp.
-				double zlo = 1e30, zhi = -1e30;
+				// Elevation range for the color ramp, seeded from the first sample.
+				meters<> low = elevationAt(tile, 0, 0), high = low;
 				for (int r = 0; r < m_rows; ++r)
 					for (int c = 0; c < m_columns; ++c)
 					{
-						const double z = elevationAt_(tile, r, c);
-						zlo            = std::min(zlo, z);
-						zhi            = std::max(zhi, z);
+						const meters<> z = elevationAt(tile, r, c);
+						low              = units::min(low, z);
+						high             = units::max(high, z);
 					}
 
+				// Green valley to brown ridge, modulated by the hillshade. `f` is the normalized elevation.
 				m_base = Image(m_rows, m_columns);
 				for (int r = 0; r < m_rows; ++r)
 					for (int c = 0; c < m_columns; ++c)
 					{
-						const double z  = elevationAt_(tile, r, c);
-						const double f  = (zhi > zlo) ? (z - zlo) / (zhi - zlo) : 0.0;
-						const double sh = shade[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] / 255.0;
-						const Color  col{
-						        static_cast<std::uint8_t>(std::lround(255.0 * std::min(1.0, (0.30 + 0.70 * f) * sh))),
-						        static_cast<std::uint8_t>(std::lround(255.0 * std::min(1.0, (0.45 + 0.35 * f) * sh))),
-						        static_cast<std::uint8_t>(std::lround(255.0 * std::min(1.0, (0.25 + 0.20 * f) * sh)))};
-						m_base.plot(Pixel{r, c}, col);
+						const meters<> z  = elevationAt(tile, r, c);
+						const double   f  = (high > low) ? ((z - low) / (high - low)).value() : 0.0;
+						const double   sh = shade[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] / 255.0;
+						m_base.plot(Pixel{r, c}, Color{channel((0.30 + 0.70 * f) * sh), channel((0.45 + 0.35 * f) * sh), channel((0.25 + 0.20 * f) * sh)});
 					}
 			}
 
@@ -213,13 +219,15 @@ inline namespace coordinates
 			//	PROJECTION
 			//----------------------------------
 
-			/// Map a geodetic latitude/longitude (degrees) to a raster pixel. Row 0 is the north edge, column 0
-			/// the west edge; the projection is equirectangular over the tile bounds (the simple map projection).
+			/// Map a geodetic latitude/longitude to a raster pixel. Row 0 is the north edge, column 0 the west
+			/// edge; the projection is equirectangular over the tile bounds (the simple map projection). A
+			/// position's tagged latitude/longitude convert with `.to<degrees<>>()`.
 			[[nodiscard]] Pixel project(units::angle::degrees<> latitude, units::angle::degrees<> longitude) const
 			{
-				const double lat = latitude.value(), lon = longitude.value();
-				const int    row = static_cast<int>(std::lround((m_neLat - lat) / (m_neLat - m_swLat) * (m_rows - 1)));
-				const int    col = static_cast<int>(std::lround((lon - m_swLon) / (m_neLon - m_swLon) * (m_columns - 1)));
+				const units::dimensionless<> rowFraction = (m_northeastLatitude - latitude) / (m_northeastLatitude - m_southwestLatitude);
+				const units::dimensionless<> colFraction = (longitude - m_southwestLongitude) / (m_northeastLongitude - m_southwestLongitude);
+				const int                    row = static_cast<int>(std::lround(rowFraction.value() * (m_rows - 1)));
+				const int                    col = static_cast<int>(std::lround(colFraction.value() * (m_columns - 1)));
 				return Pixel{row, col};
 			}
 
@@ -239,7 +247,7 @@ inline namespace coordinates
 
 		private:
 			//	----------------------------------------------------------------------------
-			//	FUNCTION: elevationAt_ [private]
+			//	FUNCTION: elevationAt [private]
 			//  ----------------------------------------------------------------------------
 			///	@brief		The tile elevation (meters) at a raster (row, column), via the equirectangular mapping.
 			///	@param[in]	tile	the tile to sample.
@@ -247,18 +255,23 @@ inline namespace coordinates
 			///	@param[in]	column	the raster column (0 = west edge).
 			///	@return		the ground elevation in meters at that pixel's lat/lon.
 			//  ----------------------------------------------------------------------------
-			[[nodiscard]] double elevationAt_(const AbstractTile* tile, int row, int column) const
+			[[nodiscard]] units::length::meters<> elevationAt(const AbstractTile* tile, int row, int column) const
 			{
-				const double lat = m_neLat - (m_neLat - m_swLat) * row / (m_rows - 1);
-				const double lon = m_swLon + (m_neLon - m_swLon) * column / (m_columns - 1);
-				return tile->elevation(units::angle::degrees<>(lat), units::angle::degrees<>(lon)).value();
+				const units::dimensionless<> rowFraction = units::dimensionless<>(static_cast<double>(row) / (m_rows - 1));
+				const units::dimensionless<> colFraction = units::dimensionless<>(static_cast<double>(column) / (m_columns - 1));
+				const units::angle::degrees<> lat = m_northeastLatitude - (m_northeastLatitude - m_southwestLatitude) * rowFraction;
+				const units::angle::degrees<> lon = m_southwestLongitude + (m_northeastLongitude - m_southwestLongitude) * colFraction;
+				return tile->elevation(lat, lon);
 			}
 
-			TileMetadata m_meta;
-			Image        m_base;
-			int          m_rows{0};
-			int          m_columns{0};
-			double       m_swLat{0.0}, m_neLat{0.0}, m_swLon{0.0}, m_neLon{0.0};
+			TileMetadata            m_meta;
+			Image                   m_base;
+			int                     m_rows{0};
+			int                     m_columns{0};
+			units::angle::degrees<> m_southwestLatitude{0.0};
+			units::angle::degrees<> m_northeastLatitude{0.0};
+			units::angle::degrees<> m_southwestLongitude{0.0};
+			units::angle::degrees<> m_northeastLongitude{0.0};
 		};
 	}    // namespace topography
 }    // namespace coordinates

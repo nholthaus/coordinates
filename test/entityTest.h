@@ -127,6 +127,41 @@ inline namespace coordinates
 		const auto world = camera.position();
 		EXPECT_UNITS_NEAR(3.0_m, world.y(), 1e-6_m);    // 2.5 + 0.5, both +y with identity attitudes
 	}
+
+	// The boresight ray is the entity's forward (+x) world axis; an identity pose points along world +x.
+	TEST_F(EntityTest, rayIsForwardBoresight)
+	{
+		PositionECEF<Wgs> p(6378137.0_m, 0.0_m, 0.0_m);
+		Entity<Wgs>       e(p, Pose::identity());
+		const auto        r = e.ray();
+		EXPECT_NEAR(std::get<0>(r.direction().vector()).value(), 1.0, 1e-9);
+		EXPECT_NEAR(std::get<1>(r.direction().vector()).value(), 0.0, 1e-9);
+	}
+
+	// No field of view = omnidirectional: sees() is pure line of sight. A target far along the boresight, well
+	// above the ellipsoid, is visible; there is no cone to exclude it.
+	TEST_F(EntityTest, seesWithoutFieldOfViewIsLineOfSight)
+	{
+		PositionECEF<Wgs> here(6378137.0_m, 0.0_m, 0.0_m);
+		PositionECEF<Wgs> ahead(6478137.0_m, 0.0_m, 0.0_m);    // 100 km further out along +x
+		Entity<Wgs>       viewer(here, Pose::identity());
+		Entity<Wgs>       target(ahead);
+		EXPECT_TRUE(viewer.sees(target));
+		EXPECT_FALSE(viewer.fieldOfView().has_value());
+	}
+
+	// A narrow field of view excludes a target off the boresight even when line of sight is clear.
+	TEST_F(EntityTest, fieldOfViewExcludesOffAxisTarget)
+	{
+		PositionECEF<Wgs> here(6378137.0_m, 0.0_m, 0.0_m);
+		Entity<Wgs>       viewer(here, Pose::identity());
+		viewer.setFieldOfView(FieldOfView(5.0_deg, 5.0_deg));    // narrow, about forward (+x)
+
+		Entity<Wgs> ahead(PositionECEF<Wgs>(6478137.0_m, 0.0_m, 0.0_m));       // dead ahead
+		Entity<Wgs> aside(PositionECEF<Wgs>(6378137.0_m, 100000.0_m, 0.0_m));  // 100 km to the side (+y)
+		EXPECT_TRUE(viewer.sees(ahead));
+		EXPECT_FALSE(viewer.sees(aside));    // outside the 5 deg cone
+	}
 }    // namespace coordinates
 
 #endif    // entityTest_h
