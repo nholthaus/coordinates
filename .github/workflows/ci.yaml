@@ -157,6 +157,56 @@ jobs:
           ctest --test-dir build --output-on-failure
 
   # ---------------------------------------------------------------------------
+  # Eigen-interoperability build.
+  #
+  # Proves the opt-in Eigen seam (vector3.h's toEigen()/fromEigen(), guarded by
+  # __has_include(<Eigen/Core>)) compiles and its tests pass when Eigen IS
+  # present -- the counterpart to the primary matrix, which builds WITHOUT Eigen
+  # and exercises the seam's absence. Eigen is put on the include path via
+  # CMAKE_CXX_FLAGS so __has_include(<Eigen/Core>) fires and VECTOR3_HAS_EIGEN
+  # activates; the eigen-only tests then run under ctest.
+  # ---------------------------------------------------------------------------
+  eigen-interop:
+    name: eigen-interop
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: ">=3.28.0"
+
+      - name: Install toolchain and Eigen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libeigen3-dev
+
+      - name: Configure (with Eigen on the include path)
+        shell: bash
+        run: |
+          cmake -S . -B build \
+            -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCOORDINATES_WARNINGS_AS_ERRORS=ON \
+            -DCMAKE_CXX_FLAGS="-I/usr/include/eigen3"
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build build --parallel
+
+      - name: Test
+        shell: bash
+        run: |
+          ctest --test-dir build --output-on-failure
+
+  # ---------------------------------------------------------------------------
   # Feature-toggle build.
   #
   # Proves the feature knobs compile in a non-default state. DTED is turned OFF
