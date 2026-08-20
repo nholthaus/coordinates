@@ -71,7 +71,6 @@
 
 #include <bodyFrame.h>
 #include <pose.h>
-#include <kinematicState.h>
 
 #include <ray.h>
 #include <fieldOfView.h>

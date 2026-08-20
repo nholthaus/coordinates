@@ -53,7 +53,6 @@ set(PUBLIC_HEADERS
         intersection.h
         point.h
         ray.h
-        kinematicState.h
         positionAER.h
         positionECEF.h
         positionENU.h

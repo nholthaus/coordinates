@@ -71,6 +71,50 @@ inline namespace coordinates
 	using namespace units::literals;
 
 	//	----------------------------------------------------------------------------
+	//	STRUCT		QuaternionDerivative
+	//  ----------------------------------------------------------------------------
+	///	@brief		The time-derivative of a unit quaternion (per second): four dimensionless-per-second rates.
+	///	@details	Not itself a unit quaternion -- it is `d/dt` of one, a free 4-tuple of rates. A distinct type
+	///				so it is never mistaken for an orientation. The kinematic primitive `Entity::propagate` steps.
+	//  ----------------------------------------------------------------------------
+	struct QuaternionDerivative
+	{
+		hertz<> w{0.0};    ///< d(scalar)/dt
+		hertz<> x{0.0};    ///< d(i)/dt
+		hertz<> y{0.0};    ///< d(j)/dt
+		hertz<> z{0.0};    ///< d(k)/dt
+	};
+
+	//------------------------------------------------------------------------------------------------------
+	//	FUNCTION: attitudeDerivative [free]
+	//------------------------------------------------------------------------------------------------------
+	/// @brief		The quaternion kinematic derivative q_dot = 1/2 * q (x) omega for a body-to-parent
+	///				orientation `q` spinning at body angular rate `omega`.
+	/// @details	`omega` is in BODY axes, promoted to the pure quaternion (0, wx, wy, wz); the product is the
+	///				body-frame form q_dot = 1/2 q (x) omega_quat. Integrating it (with renormalization) propagates
+	///				orientation. Rates are radians/second; the result is a per-second quaternion derivative.
+	/// @tparam		Frame	the body frame the angular rate is expressed in.
+	/// @param[in]	q		the current body-to-parent orientation.
+	/// @param[in]	omega	the body angular rate.
+	/// @return		the quaternion time-derivative.
+	//------------------------------------------------------------------------------------------------------
+	template<class Frame>
+	[[nodiscard]] constexpr QuaternionDerivative attitudeDerivative(const rotation::Quaternion& q, const AngularRateVector<Frame>& omega)
+	{
+		const double wx = std::get<0>(omega.vector()).value();
+		const double wy = std::get<1>(omega.vector()).value();
+		const double wz = std::get<2>(omega.vector()).value();
+		const double qw = q.w().value(), qx = q.x().value(), qy = q.y().value(), qz = q.z().value();
+
+		// q (x) (0, wx, wy, wz), halved (Hamilton product).
+		return QuaternionDerivative{
+		        hertz<>(0.5 * (-qx * wx - qy * wy - qz * wz)),
+		        hertz<>(0.5 * (qw * wx + qy * wz - qz * wy)),
+		        hertz<>(0.5 * (qw * wy - qx * wz + qz * wx)),
+		        hertz<>(0.5 * (qw * wz + qx * wy - qy * wx))};
+	}
+
+	//	----------------------------------------------------------------------------
 	//	CLASS		Entity
 	//  ----------------------------------------------------------------------------
 	///	@brief		A composable point that may carry a pose, motion, a field of view, and child entities.
@@ -230,6 +274,33 @@ inline namespace coordinates
 #else
 			return coordinates::isLineOfSight(here, there);
 #endif
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+		//		MOTION
+		//////////////////////////////////////////////////////////////////////////
+
+		/// Advance the entity by `dt` under its own KINEMATICS: the position steps by the linear velocity, and
+		/// the orientation by the quaternion kinematic equation q_dot = 1/2 q (x) omega (renormalized). Children
+		/// are fixed relative to this entity, so the whole attached assembly moves rigidly with it -- no child
+		/// update needed. This is pure kinematics; a SIM layer computes the velocity/rate that drive it.
+		void propagate(seconds<> dt)
+		{
+			const double dts = dt.value();
+
+			const auto v = m_velocity.vector();
+			m_position.setPoint(std::get<0>(m_position.point()) + meters<>(std::get<0>(v).value() * dts),
+			                    std::get<1>(m_position.point()) + meters<>(std::get<1>(v).value() * dts),
+			                    std::get<2>(m_position.point()) + meters<>(std::get<2>(v).value() * dts));
+
+			const rotation::Quaternion q  = m_pose.rotation();
+			const QuaternionDerivative qd = attitudeDerivative(q, m_angularRate);
+			const rotation::Quaternion advanced = rotation::Quaternion(dimensionless<>(q.w().value() + qd.w.value() * dts),
+			                                                           dimensionless<>(q.x().value() + qd.x.value() * dts),
+			                                                           dimensionless<>(q.y().value() + qd.y.value() * dts),
+			                                                           dimensionless<>(q.z().value() + qd.z.value() * dts))
+			                                          .normalized();
+			m_pose = Pose(m_pose.translation(), advanced);
 		}
 
 	private:

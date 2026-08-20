@@ -162,6 +162,46 @@ inline namespace coordinates
 		EXPECT_TRUE(viewer.sees(ahead));
 		EXPECT_FALSE(viewer.sees(aside));    // outside the 5 deg cone
 	}
+
+	// propagate advances position by velocity * dt.
+	TEST_F(EntityTest, propagateAdvancesPositionByVelocity)
+	{
+		using mps = units::velocity::meters_per_second<>;
+		PositionECEF<Wgs> p(6378137.0_m, 0.0_m, 0.0_m);
+		Entity<Wgs>       e(p, Pose::identity(), VelocityVector<Entity<Wgs>::frame_type>(mps(10.0), mps(0.0), mps(0.0)), AngularRateVector<Entity<Wgs>::frame_type>());
+		e.propagate(2.0_s);
+		EXPECT_UNITS_NEAR(units::length::meters<>(6378137.0 + 20.0), e.position().x(), 1e-9_m);
+	}
+
+	// A constant body yaw rate integrates to the expected angle over many small steps, staying a unit quaternion.
+	TEST_F(EntityTest, propagateIntegratesYawRate)
+	{
+		using rps = units::angular_velocity::radians_per_second<>;
+		PositionECEF<Wgs> p(6378137.0_m, 0.0_m, 0.0_m);
+		Entity<Wgs>       e(p, Pose::identity(), VelocityVector<Entity<Wgs>::frame_type>(), AngularRateVector<Entity<Wgs>::frame_type>(rps(0.0), rps(0.0), rps(0.1)));
+		for (int i = 0; i < 1000; ++i)
+			e.propagate(0.001_s);
+		const auto   euler = e.pose().orientation();
+		const double yaw   = units::angle::radians<>(euler.yaw()).value();
+		EXPECT_NEAR(yaw, 0.1, 1e-4);
+		EXPECT_NEAR(e.pose().rotation().norm().value(), 1.0, 1e-9);
+	}
+
+	// A rigidly-attached child moves WITH the parent: after the parent translates, the child's world position
+	// has shifted by the same amount (the assembly is rigid).
+	TEST_F(EntityTest, propagateMovesTheAssembly)
+	{
+		using mps = units::velocity::meters_per_second<>;
+		PositionECEF<Wgs> p(6378137.0_m, 0.0_m, 0.0_m);
+		Entity<Wgs>       aircraft(p, Pose::identity(), VelocityVector<Entity<Wgs>::frame_type>(mps(0.0), mps(0.0), mps(5.0)), AngularRateVector<Entity<Wgs>::frame_type>());
+		Entity<Wgs>&      pod = aircraft.attach({CartesianTuple(0.0_m, 2.5_m, 0.0_m), Pose::identity()});
+
+		const auto before = pod.position();
+		aircraft.propagate(2.0_s);    // +z by 10 m
+		const auto after = pod.position();
+		EXPECT_UNITS_NEAR(units::length::meters<>(before.z().value() + 10.0), after.z(), 1e-6_m);
+		EXPECT_UNITS_NEAR(before.y(), after.y(), 1e-6_m);    // still 2.5 m offset, unchanged
+	}
 }    // namespace coordinates
 
 #endif    // entityTest_h

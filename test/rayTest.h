@@ -39,7 +39,6 @@
 #include <gtest/gtest.h>
 
 #include "gtest_units.h"
-#include "kinematicState.h"
 #include "ray.h"
 
 inline namespace coordinates
@@ -123,39 +122,6 @@ inline namespace coordinates
 		EXPECT_NEAR(std::get<0>(d).value(), std::cos(phi) * std::cos(lam), 1e-9);
 		EXPECT_NEAR(std::get<1>(d).value(), std::cos(phi) * std::sin(lam), 1e-9);
 		EXPECT_NEAR(std::get<2>(d).value(), std::sin(phi), 1e-9);
-	}
-
-	// KinematicState::ray() with no angles is the boresight: the body forward (+x) axis, rotated by the pose.
-	TEST_F(RayTest, kinematicStateBoresightIsForwardAxis)
-	{
-		Pose              pose(CartesianTuple(6378137.0_m, 0.0_m, 0.0_m), rotation::Quaternion::identity());
-		KinematicState<Frame> body(pose, VelocityVector<Frame>(), AngularRateVector<Frame>());
-		auto              r = body.ray();
-		EXPECT_NEAR(std::get<0>(r.direction().vector()).value(), 1.0, 1e-12);    // pure forward
-		EXPECT_NEAR(std::get<1>(r.direction().vector()).value(), 0.0, 1e-12);
-		EXPECT_NEAR(std::get<2>(r.direction().vector()).value(), 0.0, 1e-12);
-	}
-
-	// Off-boresight deltas steer the ray within body axes: +az toward +y (right), +el toward +z (down).
-	TEST_F(RayTest, kinematicStateOffBoresightSteersInBodyAxes)
-	{
-		Pose              pose(CartesianTuple(6378137.0_m, 0.0_m, 0.0_m), rotation::Quaternion::identity());
-		KinematicState<Frame> body(pose, VelocityVector<Frame>(), AngularRateVector<Frame>());
-		auto              r = body.ray(90.0_deg, 0.0_deg);    // 90 deg right, level -> pure +y
-		EXPECT_NEAR(std::get<0>(r.direction().vector()).value(), 0.0, 1e-9);
-		EXPECT_NEAR(std::get<1>(r.direction().vector()).value(), 1.0, 1e-9);
-		auto rDown = body.ray(0.0_deg, 90.0_deg);    // straight down body -> pure +z
-		EXPECT_NEAR(std::get<2>(rDown.direction().vector()).value(), 1.0, 1e-9);
-	}
-
-	// A mount Pose offsets the ray's origin: a +y-body offset with identity attitude shifts the origin +y.
-	TEST_F(RayTest, kinematicStateMountOffsetsOrigin)
-	{
-		Pose              pose(CartesianTuple(6378137.0_m, 0.0_m, 0.0_m), rotation::Quaternion::identity());
-		KinematicState<Frame> body(pose, VelocityVector<Frame>(), AngularRateVector<Frame>());
-		Pose              mount(CartesianTuple(0.0_m, 2.5_m, 0.0_m), rotation::Quaternion::identity());
-		auto              r = body.ray(mount);
-		EXPECT_UNITS_NEAR(2.5_m, std::get<1>(r.origin().point()), 1e-9_m);
 	}
 }    // namespace coordinates
 
