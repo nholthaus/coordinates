@@ -152,6 +152,16 @@ else()
     target_compile_definitions(coordinates PUBLIC COORDINATES_ENABLE_DTED=0)
 endif()
 
+# Line-of-sight/viewshed header (terrain-backed): a public header only when LOS is enabled, and the umbrella
+# includes it under the same define so a consumer with LOS off never pulls it in.
+if (COORDINATES_ENABLE_LOS)
+    target_sources(coordinates PUBLIC FILE_SET public_headers TYPE HEADERS
+            BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}" FILES lineOfSight.h)
+    target_compile_definitions(coordinates PUBLIC COORDINATES_ENABLE_LOS=1)
+else()
+    target_compile_definitions(coordinates PUBLIC COORDINATES_ENABLE_LOS=0)
+endif()
+
 target_sources(coordinates PRIVATE ${_sources})
 
 # ----------------------------

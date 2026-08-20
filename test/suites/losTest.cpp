@@ -27,70 +27,10 @@
 //
 //--------------------------------------------------------------------------------------------------
 
-#ifndef coordinates_h
-#define coordinates_h
-
-#if defined(_MSC_VER)
-#pragma warning(disable : 4503)    // decorated name length exceeded, name was truncated. This only affects debugging.
-#endif
-
-//------------------------
-//	INCLUDES
-//------------------------
-#include <CAS.h>
-#include <threadPool.h>
-#include <units.h>
-
-#include <abstractTile.h>
-#include <abstractTileManager.h>
-#include <algorithm.h>
-#include <angles.h>
-
-#include <coordinate.h>
-#include <datum.h>
-#include <frameAxes.h>
-#include <frameOfReference.h>
-#include <heights.h>
-#include <latitudeConversion.h>
-#include <ranges.h>
-#include <topography.h>
-
-#include <point.h>
-#include <positionAER.h>
-#include <positionECEF.h>
-#include <positionENU.h>
-#include <positionGeodetic.h>
-#include <positionNED.h>
-
-#include <vector.h>
-#include <vectorECEF.h>
-#include <vectorENU.h>
-#include <vectorNED.h>
-
-#include <kinematics.h>
-
-#include <bodyFrame.h>
-#include <pose.h>
-#include <rigidBody.h>
+// Ellipsoid line-of-sight suite. Compiles to empty when LOS is disabled (see COORDINATES_ENABLE_LOS).
 
 #if defined(COORDINATES_ENABLE_LOS) && COORDINATES_ENABLE_LOS
-#include <lineOfSight.h>
+#include "gtest_units.h"
+#include "coordinates.h"
+#include "losTest.h"
 #endif
-
-inline namespace coordinates
-{
-	//----------------------------------
-	//	CONVENIENCE CLASSES
-	//----------------------------------
-	using ITRS    = PositionECEF<ITRS2008>;
-	using ECEF    = PositionECEF<WGS84_G1674>;
-	using LLA     = PositionGeodetic<WGS84_G1674>;
-	using ENU     = PositionENU<WGS84_G1674>;
-	using NED     = PositionNED<WGS84_G1674>;
-	using AER     = PositionAER<WGS84_G1674>;
-	using VecECEF = VectorECEF<WGS84_G1674>;
-	using VecENU  = VectorENU<WGS84_G1674>;
-	using VecNED  = VectorNED<WGS84_G1674>;
-}    // namespace coordinates
-
-#endif    // coordinates_h

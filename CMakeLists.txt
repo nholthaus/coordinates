@@ -62,6 +62,10 @@ endfunction()
 option(COORDINATES_ENABLE_DTED     "Enable DTED/topography support"     ON)
 option(COORDINATES_ENABLE_GEOIDS   "Enable geoid/LUT support"           ON)
 
+# Terrain line-of-sight and viewshed utilities. The terrain flavors are backed by the topography model,
+# so LOS is only meaningful with DTED; default it to whatever DTED is.
+option(COORDINATES_ENABLE_LOS      "Enable line-of-sight/viewshed utilities" ${COORDINATES_ENABLE_DTED})
+
 # If you want finer grain knobs, split these:
 option(COORDINATES_ENABLE_EGM96    "Enable EGM96 LUT"                   ON)
 option(COORDINATES_ENABLE_GEOID12A "Enable GEOID12A LUT"                ON)
