@@ -11,3 +11,13 @@
 
 # Some generated images
 MATLAB/*.jpg
+
+# Example demo output (rendered at runtime, never committed)
+*.ppm
+*.png
+*.mp4
+frame_*.ppm
+frame_*.png
+adversary_frames*.png
+adv_cells/
+!examples/*.png

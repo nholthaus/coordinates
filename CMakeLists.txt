@@ -28,6 +28,7 @@ include(FetchContent)
 # ----------------------------
 
 option(COORDINATES_BUILD_TESTS     "Build coordinates tests"            ON)
+option(COORDINATES_BUILD_EXAMPLES  "Build coordinates examples"         ON)
 option(COORDINATES_FETCH_DEPS      "Fetch dependencies if not found"    ON)
 option(COORDINATES_WARNINGS_AS_ERRORS "Treat compiler warnings as errors on this project's own targets" OFF)
 
@@ -153,4 +154,11 @@ install(
 if (COORDINATES_BUILD_TESTS)
 	enable_testing()
 	add_subdirectory(test)
+endif()
+
+# ----------------------------
+# Examples
+# ----------------------------
+if (COORDINATES_BUILD_EXAMPLES)
+	add_subdirectory(examples)
 endif()
