@@ -74,6 +74,7 @@
 #include <kinematicState.h>
 
 #include <ray.h>
+#include <sensorFieldOfView.h>
 
 #include <hillshadeCanvas.h>
 
