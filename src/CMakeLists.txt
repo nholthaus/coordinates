@@ -38,6 +38,7 @@ set(PUBLIC_HEADERS
         ellipsoid.h
         frameAxes.h
         frameOfReference.h
+        hillshadeCanvas.h
         heightKinds.h
         heights.h
         kinematics.h
