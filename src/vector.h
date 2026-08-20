@@ -140,20 +140,24 @@ inline namespace coordinates
 		Vector& operator=(const V& other)
 		{
 			using SourceFrame = typename traits::point_traits<V>::reference_frame;
+			using meters      = units::length::meters<>;
 
-			// Express the source vector as a tip point and an origin point in the SOURCE frame, convert both
-			// into THIS frame, and subtract. Points carry the source's frame data so translation is applied
-			// consistently to both endpoints and cancels in the difference.
-			Coordinate<SourceFrame, std::tuple<Unit, Unit, Unit>> srcTip;
-			Coordinate<SourceFrame, std::tuple<Unit, Unit, Unit>> srcOrg;
+			// The inter-frame transform of a POSITION is a rotation plus a translation; a rotation is
+			// dimensionless (a direction-cosine matrix), so it applies to a vector of ANY unit. Run the
+			// conversion in a length-typed (`meters`) proxy -- the unit the frame graph is defined in -- by
+			// carrying the source components' magnitudes as meters, then rewrap the rotated magnitudes back
+			// into this vector's `Unit`. The source's tip and origin are both converted so the translation
+			// applies to each endpoint and cancels in the difference, leaving pure rotation.
+			const auto v = other.vector();
+			Coordinate<SourceFrame, std::tuple<meters, meters, meters>> srcTip;
+			Coordinate<SourceFrame, std::tuple<meters, meters, meters>> srcOrg;
 			srcTip.setFrameData(other.frameData());
 			srcOrg.setFrameData(other.frameData());
-			const auto v = other.vector();
-			srcTip.setPoint(std::get<0>(v), std::get<1>(v), std::get<2>(v));
-			srcOrg.setPoint(Unit(0.0), Unit(0.0), Unit(0.0));
+			srcTip.setPoint(meters(std::get<0>(v).value()), meters(std::get<1>(v).value()), meters(std::get<2>(v).value()));
+			srcOrg.setPoint(meters(0.0), meters(0.0), meters(0.0));
 
-			Coordinate<Frame, std::tuple<Unit, Unit, Unit>> dstTip;
-			Coordinate<Frame, std::tuple<Unit, Unit, Unit>> dstOrg;
+			Coordinate<Frame, std::tuple<meters, meters, meters>> dstTip;
+			Coordinate<Frame, std::tuple<meters, meters, meters>> dstOrg;
 			dstTip.setFrameData(m_frameData);
 			dstOrg.setFrameData(m_frameData);
 			coordinates::convert(srcTip, dstTip);
@@ -161,7 +165,8 @@ inline namespace coordinates
 
 			const auto tip = dstTip.point();
 			const auto org = dstOrg.point();
-			m_vector       = storage_type(std::get<0>(tip) - std::get<0>(org), std::get<1>(tip) - std::get<1>(org), std::get<2>(tip) - std::get<2>(org));
+			m_vector       = storage_type(Unit((std::get<0>(tip) - std::get<0>(org)).value()), Unit((std::get<1>(tip) - std::get<1>(org)).value()),
+			                              Unit((std::get<2>(tip) - std::get<2>(org)).value()));
 			return *this;
 		}
 

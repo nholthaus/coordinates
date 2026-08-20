@@ -40,6 +40,7 @@ set(PUBLIC_HEADERS
         frameOfReference.h
         heightKinds.h
         heights.h
+        kinematics.h
         latitudeConversion.h
         geodesicDirectResult.h
         geodesicInverseResult.h
