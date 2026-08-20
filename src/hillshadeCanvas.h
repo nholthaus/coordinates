@@ -220,15 +220,22 @@ inline namespace coordinates
 			//----------------------------------
 
 			/// Map a geodetic latitude/longitude to a raster pixel. Row 0 is the north edge, column 0 the west
-			/// edge; the projection is equirectangular over the tile bounds (the simple map projection). A
-			/// position's tagged latitude/longitude convert with `.to<degrees<>>()`.
-			[[nodiscard]] Pixel project(units::angle::degrees<> latitude, units::angle::degrees<> longitude) const
+			/// edge; the projection is equirectangular over the tile bounds (the simple map projection).
+			[[nodiscard]] Pixel project(degrees<> latitude, degrees<> longitude) const
 			{
-				const units::dimensionless<> rowFraction = (m_northeastLatitude - latitude) / (m_northeastLatitude - m_southwestLatitude);
-				const units::dimensionless<> colFraction = (longitude - m_southwestLongitude) / (m_northeastLongitude - m_southwestLongitude);
-				const int                    row = static_cast<int>(std::lround(rowFraction.value() * (m_rows - 1)));
-				const int                    col = static_cast<int>(std::lround(colFraction.value() * (m_columns - 1)));
+				const dimensionless<> rowFraction = (m_northeastLatitude - latitude) / (m_northeastLatitude - m_southwestLatitude);
+				const dimensionless<> colFraction = (longitude - m_southwestLongitude) / (m_northeastLongitude - m_southwestLongitude);
+				const int             row = static_cast<int>(std::lround(rowFraction.value() * (m_rows - 1)));
+				const int             col = static_cast<int>(std::lround(colFraction.value() * (m_columns - 1)));
 				return Pixel{row, col};
+			}
+
+			/// Map a geodetic POINT to a raster pixel -- a position projects directly, no accessor unwrap needed.
+			template<class GeodeticPoint>
+			    requires requires(const GeodeticPoint& p) { p.latitude(); p.longitude(); }
+			[[nodiscard]] Pixel project(const GeodeticPoint& point) const
+			{
+				return project(point.latitude().template to<degrees<>>(), point.longitude().template to<degrees<>>());
 			}
 
 			//----------------------------------
