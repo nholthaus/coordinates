@@ -96,6 +96,41 @@ inline namespace coordinates
 		EcefV                 ecefVel(nedVel);
 		EXPECT_UNITS_NEAR(mps(10.0), ecefVel.magnitude(), mps(1.0e-7));
 	}
+
+	TEST_F(KinematicsTest, transportRateAtEquatorEastward)
+	{
+		// At the equator (phi=0, h=0) moving East at vE: omega_en = [vE/N, 0, 0], with N = a (equatorial).
+		using mps = units::velocity::meters_per_second<>;
+		using rps = units::angular_velocity::radians_per_second<>;
+		PositionGeodetic<Wgs> pos(0.0_deg, 0.0_deg, 0.0_m);
+		NedV                  vNED(mps(0.0), mps(100.0), mps(0.0), pos);    // 100 m/s East
+
+		auto omegaEN = transportRate(pos, vNED);
+		using Ellipsoid = traits::horizontal_datum_traits<traits::datum_traits<Wgs>::horizontal_datum>::reference_ellipsoid;
+		const double a  = Ellipsoid::a().value();    // N == a at the equator
+		EXPECT_NEAR(std::get<0>(omegaEN.vector()).value(), 100.0 / a, 1e-15);    // vE/N
+		EXPECT_NEAR(std::get<1>(omegaEN.vector()).value(), 0.0, 1e-18);          // -vN/M = 0
+		EXPECT_NEAR(std::get<2>(omegaEN.vector()).value(), 0.0, 1e-18);          // -vE*tan(0)/N = 0
+		(void)rps{};
+	}
+
+	TEST_F(KinematicsTest, coriolisTerm)
+	{
+		// omega = [0,0,W], v = [vx,0,0]  ->  2*(omega x v) = [0, 2*W*vx, 0].
+		using mps  = units::velocity::meters_per_second<>;
+		using rps  = units::angular_velocity::radians_per_second<>;
+		using mps2 = units::acceleration::meters_per_second_squared<>;
+		const double W  = 7.2921150e-5;
+		const double vx = 200.0;
+		EcefW omega(rps(0.0), rps(0.0), rps(W));
+		EcefV v(mps(vx), mps(0.0), mps(0.0));
+
+		auto acc = coriolisAcceleration(omega, v);
+		EXPECT_NEAR(std::get<0>(acc.vector()).value(), 0.0, 1e-18);
+		EXPECT_NEAR(std::get<1>(acc.vector()).value(), 2.0 * W * vx, 1e-15);
+		EXPECT_NEAR(std::get<2>(acc.vector()).value(), 0.0, 1e-18);
+		(void)mps2{};
+	}
 }    // namespace coordinates
 
 #endif    // kinematicsTest_h
