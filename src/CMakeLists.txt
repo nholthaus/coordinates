@@ -58,6 +58,7 @@ set(PUBLIC_HEADERS
         tileException.h
         tileMetadata.h
         topography.h
+        vector.h
         vectorECEF.h
         vectorENU.h
         vectorNED.h
@@ -81,6 +82,7 @@ set(LIB_HEADERS
         "${CMAKE_SOURCE_DIR}/lib/rotationDetail.h"
         "${CMAKE_SOURCE_DIR}/lib/quaternion.h"
         "${CMAKE_SOURCE_DIR}/lib/rotation.h"
+        "${CMAKE_SOURCE_DIR}/lib/vector3.h"
 )
 
 target_sources(coordinates
