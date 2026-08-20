@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 
 	// The tower: a 10 ft mast on a hilltop. tile.elevation() is a typed length (meters); adding a feet mast
 	// just works -- units converts feet<->meters and the sum is the antenna's MSL altitude, no manual math.
-	const units::angle::degrees<> siteLat{37.75000}, siteLon{-114.93000};
+	const units::angle::degrees<> siteLat{37.75500}, siteLon{-114.90500};
 	const units::length::feet<>   towerHeight{10.0};
 	const auto                    floorElev = tile.elevation(siteLat, siteLon);
 	const Lla                     antenna(siteLat, siteLon, floorElev + towerHeight);
