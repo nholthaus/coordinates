@@ -346,7 +346,7 @@ inline namespace coordinates
 
 			const std::size_t threads = (m_opt.threadCount == 0) ? std::max<std::size_t>(1, std::thread::hardware_concurrency()) : m_opt.threadCount;
 
-			auto rowTask = [this, tile, resolution, width, height, latNE, lonSW, &shade, &rgb](std::size_t row)
+			auto rowTask = [this, resolution, width, latNE, lonSW, &shade, &rgb](std::size_t row)
 			{
 				const degrees<> lat = latNE - resolution * static_cast<int>(row);
 				for (std::size_t col = 0; col < width; ++col)
