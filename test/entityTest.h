@@ -90,6 +90,34 @@ inline namespace coordinates
 		EXPECT_EQ(aircraft.children().size(), 1u);
 	}
 
+	// A bare CartesianTuple promotes to a Mount, so a single point attaches with no Mount spelled out.
+	TEST_F(EntityTest, attachPromotesTupleToMount)
+	{
+		PositionECEF<Wgs> p(6378137.0_m, 0.0_m, 0.0_m);
+		Entity<Wgs>       aircraft(p, Pose::identity());
+		Entity<Wgs>&      pod = aircraft.attach(CartesianTuple(0.0_m, 2.5_m, 0.0_m));
+
+		EXPECT_UNITS_NEAR(2.5_m, pod.position().y(), 1e-6_m);
+		EXPECT_EQ(aircraft.children().size(), 1u);
+	}
+
+	// A whole outline attaches as an ordered set of child entities in one call, each resolving through the parent.
+	TEST_F(EntityTest, attachOutlineAddsChildrenInOrder)
+	{
+		PositionECEF<Wgs>     p(6378137.0_m, 0.0_m, 0.0_m);
+		Entity<Wgs>           aircraft(p, Pose::identity());
+		const CartesianVector outline{{0.0_m, 1.0_m, 0.0_m}, {0.0_m, 2.0_m, 0.0_m}, {0.0_m, 3.0_m, 0.0_m}};
+
+		const std::vector<Entity<Wgs>*> vertices = aircraft.attach(outline);
+
+		EXPECT_EQ(vertices.size(), 3u);
+		EXPECT_EQ(aircraft.children().size(), 3u);
+		// Same y-mapping the single-child test proves, now per vertex and IN ORDER.
+		EXPECT_UNITS_NEAR(1.0_m, vertices[0]->position().y(), 1e-6_m);
+		EXPECT_UNITS_NEAR(2.0_m, vertices[1]->position().y(), 1e-6_m);
+		EXPECT_UNITS_NEAR(3.0_m, vertices[2]->position().y(), 1e-6_m);
+	}
+
 	// A yawed parent rotates the child's body offset into world: +y-body offset under 90 deg yaw points -x world.
 	TEST_F(EntityTest, yawedParentRotatesChildOffset)
 	{

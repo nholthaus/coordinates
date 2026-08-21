@@ -86,12 +86,6 @@ static const CartesianVector CANOPY = {
     {4.503_m, 0.558_m, 0.0_m}, {4.383_m, 0.478_m, 0.0_m}, {3.786_m, 0.398_m, 0.0_m},
     {3.786_m, -0.359_m, 0.0_m}, {4.264_m, -0.438_m, 0.0_m},
 };
-// The vertical stabilizers as swept 4-corner fins in PURE body XYZ -- no separate cant angle, because the tip's
-// (y, z) already encodes the cant. Each corner is a real 3D point measured directly from the three reference
-// views: the SIDE view gives x (fore/aft sweep) and z (height, up = -z); the FRONT view gives the tip's
-// outboard offset in y; the TOP view gives the root chord's y on the engine boom. Winding root-LE -> tip-LE ->
-// tip-TE -> root-TE is a simple (non-self-intersecting) trapezoid. Rolling the airframe rotates these points
-// bodily, so the fins tilt correctly under attitude, one way under +roll and the other under -roll.
 static const CartesianVector FIN_R = {
     {-3.802_m, 1.478_m, 0.000_m},     // root leading  (inboard boom edge, z = 0)
     {-5.665_m, 2.249_m, -2.000_m},    // tip leading   (outboard + up)
@@ -112,28 +106,6 @@ static const CartesianVector INTAKE_R = {
     {2.710_m, 1.474_m, 0.0_m}, {0.558_m, 1.514_m, 0.0_m}, {-0.598_m, 1.395_m, 0.0_m},
     {-0.638_m, 1.355_m, 0.0_m}, {-0.398_m, 1.315_m, 0.0_m}, {0.000_m, 1.315_m, 0.0_m},
 };
-
-
-//----------------------------------------------------------------------------------------------------------------------
-//	FUNCTION: attachPolyline [static]
-//----------------------------------------------------------------------------------------------------------------------
-/// @brief		Attach a body-axis 2D vertex list to a parent entity as an ordered set of child entities.
-/// @details	Each body-axis point becomes a child at that offset (planform parts lie at z = 0; the vertical
-///				stabs carry real -z height). The returned pointers are IN ORDER so the caller can draw the loop by
-///				connecting consecutive children -- every child then resolves to world through the parent's pose,
-///				so the whole polyline moves rigidly with the airframe.
-/// @param[in]	parent	the entity to attach the vertices to (the airframe).
-/// @param[in]	parts	the body-axis (x forward, y right, z down) vertices in meters, in draw order.
-/// @return		the child entity pointers in the same order.
-//----------------------------------------------------------------------------------------------------------------------
-static std::vector<Entity<Wgs>*> attachParts(Entity<Wgs>& parent, const CartesianVector& parts)
-{
-	std::vector<Entity<Wgs>*> aircraft;
-	aircraft.reserve(parts.size());
-	for (const auto& part : parts)
-		aircraft.push_back(&parent.attach(part));
-	return aircraft;
-}
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -159,18 +131,18 @@ int main(int argc, char** argv)
 	// One airframe entity; every planform part is a set of child vertices at fixed body offsets. Built once,
 	// re-posed each frame -- the children never move in the body frame, only the airframe's pose changes.
 	Entity<Wgs> airframe;
-	auto        outline = attachParts(airframe, OUTLINE);
-	auto        canopy  = attachParts(airframe, CANOPY);
-	auto        intakeL = attachParts(airframe, INTAKE_L);
-	auto        intakeR = attachParts(airframe, INTAKE_R);
-	auto        vstabL  = attachParts(airframe, FIN_L);
-	auto        vstabR  = attachParts(airframe, FIN_R);
+	auto        outline = airframe.attach(OUTLINE);
+	auto        canopy  = airframe.attach(CANOPY);
+	auto        intakeL = airframe.attach(INTAKE_L);
+	auto        intakeR = airframe.attach(INTAKE_R);
+	auto        vstabL  = airframe.attach(FIN_L);
+	auto        vstabR  = airframe.attach(FIN_R);
 
 	// A pinhole camera ahead-of and above the airframe, looking aft and down onto its top: the canonical high
 	// rear-quarter F-35 photo angle. One `lookAt` places it; the camera derives its own basis and focal length.
 	const int W = 860, H = 650;
 	Camera    camera(W, H);
-	camera.lookAt(CartesianTuple(15.0_m, -1.0_m, -9.0_m), CartesianTuple(-2.0_m, 0.0_m, 0.0_m));
+	camera.lookAt({15.0_m, -1.0_m, -9.0_m}, {-2.0_m, 0.0_m, 0.0_m});
 
 	auto drawLoop = [&](Image& img, const std::vector<Entity<Wgs>*>& v, Color col) {
 		for (std::size_t i = 0; i < v.size(); ++i)

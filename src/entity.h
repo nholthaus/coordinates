@@ -239,6 +239,18 @@ inline namespace coordinates
 			return ref;
 		}
 
+		/// Attach a whole sequence of body-axis points as child entities, in order, each at its offset (identity
+		/// orientation). Returns the child pointers in the same order, so a caller can treat them as an ordered
+		/// polyline (e.g. an outline) that resolves to world rigidly through this parent's pose.
+		std::vector<Entity*> attach(const CartesianVector& offsets)
+		{
+			std::vector<Entity*> children;
+			children.reserve(offsets.size());
+			for (const CartesianTuple& offset : offsets)
+				children.push_back(&attach(Mount(offset)));
+			return children;
+		}
+
 		[[nodiscard]] const std::vector<std::unique_ptr<Entity>>& children() const { return m_children; }
 		[[nodiscard]] const Entity*                               parent() const { return m_parent; }
 
