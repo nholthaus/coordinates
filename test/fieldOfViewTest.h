@@ -35,6 +35,7 @@
 //------------------------
 
 #include <cmath>
+#include <numbers>
 
 #include <gtest/gtest.h>
 
@@ -56,7 +57,7 @@ inline namespace coordinates
 		// A body direction at the given azimuth (right, about +z) and elevation (down, about +y) off forward.
 		static CartesianTuple dir(double azDeg, double elDeg)
 		{
-			const double az = azDeg * M_PI / 180.0, el = elDeg * M_PI / 180.0;
+			const double az = azDeg * std::numbers::pi / 180.0, el = elDeg * std::numbers::pi / 180.0;
 			return CartesianTuple(units::length::meters<>(std::cos(el) * std::cos(az)),
 			                      units::length::meters<>(std::cos(el) * std::sin(az)),
 			                      units::length::meters<>(std::sin(el)));
