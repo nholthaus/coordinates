@@ -196,10 +196,10 @@ int main(int argc, char** argv)
 			thick(tailRow, tailCol, tailRow + wRow * tailSpan, tailCol + wCol * tailSpan, white);
 			thick(tailRow, tailCol, tailRow - wRow * tailSpan, tailCol - wCol * tailSpan, white);
 			// Pod at the wing midpoint (rides heading + bank with the wing); the live ray is drawn from it.
-			const Pixel pod{(int) std::lround(wingRow + 0.5 * halfSpan * wRow), (int) std::lround(wingCol + 0.5 * halfSpan * wCol)};
+			const Pixel podPixel{(int) std::lround(wingRow + 0.5 * halfSpan * wRow), (int) std::lround(wingCol + 0.5 * halfSpan * wCol)};
 			if (hit.has_value())
-				frame.line(pod, hitPixel, Color{255, 240, 0});    // live sensor ray, yellow
-			frame.disc(pod, 2, Color{40, 160, 255});              // cyan pod
+				frame.line(podPixel, hitPixel, Color{255, 240, 0});    // live sensor ray, yellow
+			frame.disc(podPixel, 2, Color{40, 160, 255});              // cyan pod
 			char name[512];
 			std::snprintf(name, sizeof(name), "%s/frame_%04d.ppm", frameDir.c_str(), frameNo++);
 			canvas.writePpm(frame, name);
