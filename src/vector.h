@@ -29,7 +29,7 @@
 //
 // A frame-tagged geometric vector. `Vector<Frame, Unit>` is a directed quantity expressed in a coordinate
 // frame -- the free-vector counterpart to `Coordinate<Frame, Tuple>`. It composes the frame-agnostic
-// `vec::Vector3<Unit>` (the algebra + optional Eigen interop) with a frame tag and the frame data (the
+// `Vector3<Unit>` (the algebra + optional Eigen interop) with a frame tag and the frame data (the
 // origin a local/tangent frame is anchored to, and the observation date). It satisfies the `is_vector`
 // concept and converts between frames by ROTATION ONLY: a free vector has no position, so a frame change
 // rotates its components but never translates them. The rotation is realized by converting the vector's tip
@@ -62,7 +62,7 @@ inline namespace coordinates
 	//	CLASS		Vector
 	//  ----------------------------------------------------------------------------
 	///	@brief		A directed quantity expressed in a coordinate frame: the frame-tagged geometric vector.
-	///	@details	Composes `vec::Vector3<Unit>` (the unit-typed algebra + opt-in Eigen interop) with a frame
+	///	@details	Composes `Vector3<Unit>` (the unit-typed algebra + opt-in Eigen interop) with a frame
 	///				tag and frame data (origin + date). It is a FREE vector: a frame change rotates its
 	///				components but never translates them, realized by converting the tip and origin as points
 	///				and subtracting. Satisfies the `is_vector` concept and interoperates with the frame graph.
@@ -82,7 +82,7 @@ inline namespace coordinates
 		using frame_data_type = FrameData;
 		using datum_type      = typename traits::frame_traits<Frame>::datum_type;
 		using unit_type       = Unit;
-		using storage_type    = vec::Vector3<Unit>;
+		using storage_type    = Vector3<Unit>;
 		using vector_tag      = std::true_type;    ///< marks this a vector (not a point) for the `is_vector` concept
 
 		//////////////////////////////////////////////////////////////////////////
@@ -103,7 +103,7 @@ inline namespace coordinates
 		{
 		}
 
-		/// From a `vec::Vector3` at the datum epoch.
+		/// From a `Vector3` at the datum epoch.
 		explicit Vector(const storage_type& v)
 		    : m_vector(v)
 		    , m_frameData(datum_type::epoch())
@@ -149,15 +149,15 @@ inline namespace coordinates
 			// into this vector's `Unit`. The source's tip and origin are both converted so the translation
 			// applies to each endpoint and cancels in the difference, leaving pure rotation.
 			const auto v = other.vector();
-			Coordinate<SourceFrame, std::tuple<meters, meters, meters>> srcTip;
-			Coordinate<SourceFrame, std::tuple<meters, meters, meters>> srcOrg;
+			Coordinate<SourceFrame, CartesianTuple> srcTip;
+			Coordinate<SourceFrame, CartesianTuple> srcOrg;
 			srcTip.setFrameData(other.frameData());
 			srcOrg.setFrameData(other.frameData());
 			srcTip.setPoint(meters(std::get<0>(v).value()), meters(std::get<1>(v).value()), meters(std::get<2>(v).value()));
-			srcOrg.setPoint(meters(0.0), meters(0.0), meters(0.0));
+			srcOrg.setPoint(0.0_m, 0.0_m, 0.0_m);
 
-			Coordinate<Frame, std::tuple<meters, meters, meters>> dstTip;
-			Coordinate<Frame, std::tuple<meters, meters, meters>> dstOrg;
+			Coordinate<Frame, CartesianTuple> dstTip;
+			Coordinate<Frame, CartesianTuple> dstOrg;
 			dstTip.setFrameData(m_frameData);
 			dstOrg.setFrameData(m_frameData);
 			coordinates::convert(srcTip, dstTip);
@@ -232,7 +232,7 @@ inline namespace coordinates
 			return *this;
 		}
 
-		/// The underlying frame-agnostic algebra vector (for direct `vec::Vector3` use, incl. Eigen interop).
+		/// The underlying frame-agnostic algebra vector (for direct `Vector3` use, incl. Eigen interop).
 		[[nodiscard]] const storage_type& components() const { return m_vector; }
 
 		/// Streams as `(x, y, z)`.

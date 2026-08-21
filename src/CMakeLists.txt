@@ -36,11 +36,14 @@ set(PUBLIC_HEADERS
         dtedTile.h
         dtedTileManager.h
         bodyFrame.h
+        camera.h
+        color.h
         ellipsoid.h
         frameAxes.h
         frameOfReference.h
         hillshadeCanvas.h
         heightKinds.h
+        image.h
         heights.h
         kinematics.h
         latitudeConversion.h
@@ -51,8 +54,10 @@ set(PUBLIC_HEADERS
         pose.h
         horizontalDatum.h
         intersection.h
+        pixel.h
         point.h
         ray.h
+        vector3.h
         positionAER.h
         positionECEF.h
         positionENU.h
@@ -87,7 +92,6 @@ set(LIB_HEADERS
         "${CMAKE_SOURCE_DIR}/lib/rotationDetail.h"
         "${CMAKE_SOURCE_DIR}/lib/quaternion.h"
         "${CMAKE_SOURCE_DIR}/lib/rotation.h"
-        "${CMAKE_SOURCE_DIR}/lib/vector3.h"
 )
 
 target_sources(coordinates

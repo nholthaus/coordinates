@@ -57,6 +57,9 @@
 
 #include "abstractTile.h"
 #include "algorithm.h"
+#include "color.h"
+#include "image.h"
+#include "pixel.h"
 #include "tileMetadata.h"
 
 inline namespace coordinates
@@ -65,90 +68,6 @@ inline namespace coordinates
 	{
 		using namespace units;
 		using namespace units::literals;
-
-		//	----------------------------------------------------------------------------
-		//	STRUCT		Color
-		//  ----------------------------------------------------------------------------
-		///	@brief		An 8-bit-per-channel RGB color for canvas drawing.
-		//  ----------------------------------------------------------------------------
-		struct Color
-		{
-			std::uint8_t r{0}, g{0}, b{0};
-		};
-
-		/// A [0,1] intensity as an 8-bit channel value (clamped).
-		[[nodiscard]] inline std::uint8_t channel(double intensity)
-		{
-			return static_cast<std::uint8_t>(std::lround(255.0 * std::clamp(intensity, 0.0, 1.0)));
-		}
-
-		//	----------------------------------------------------------------------------
-		//	STRUCT		Pixel
-		//  ----------------------------------------------------------------------------
-		///	@brief		A raster pixel address (row 0 = north edge, column 0 = west edge).
-		//  ----------------------------------------------------------------------------
-		struct Pixel
-		{
-			int row{0}, column{0};
-		};
-
-		//	----------------------------------------------------------------------------
-		//	CLASS		Image
-		//  ----------------------------------------------------------------------------
-		///	@brief		A mutable RGB raster: the drawable surface a `HillshadeCanvas` produces and writes.
-		///	@details	Row-major, three bytes per pixel. Draw primitives clip to the bounds. Cheap to copy, so a
-		///				caller clones the base once per frame and overlays transient content.
-		//  ----------------------------------------------------------------------------
-		class Image
-		{
-		public:
-			Image() = default;
-			Image(int rows, int columns) : m_rows(rows), m_columns(columns), m_rgb(static_cast<std::size_t>(rows) * columns * 3, 0) {}
-
-			[[nodiscard]] int rows() const { return m_rows; }
-			[[nodiscard]] int columns() const { return m_columns; }
-			[[nodiscard]] const std::vector<std::uint8_t>& rgb() const { return m_rgb; }
-
-			/// Set a single pixel (clipped).
-			void plot(Pixel p, Color c)
-			{
-				if (p.row < 0 || p.row >= m_rows || p.column < 0 || p.column >= m_columns)
-					return;
-				const std::size_t i = (static_cast<std::size_t>(p.row) * m_columns + p.column) * 3;
-				m_rgb[i + 0] = c.r; m_rgb[i + 1] = c.g; m_rgb[i + 2] = c.b;
-			}
-
-			/// Fill a filled disc of the given pixel radius centered at `p` (clipped).
-			void disc(Pixel p, int radius, Color c)
-			{
-				for (int dr = -radius; dr <= radius; ++dr)
-					for (int dc = -radius; dc <= radius; ++dc)
-						if (dr * dr + dc * dc <= radius * radius)
-							plot(Pixel{p.row + dr, p.column + dc}, c);
-			}
-
-			/// Draw a straight line between two pixels (Bresenham, clipped per pixel).
-			void line(Pixel a, Pixel b, Color c)
-			{
-				int r0 = a.row, c0 = a.column, r1 = b.row, c1 = b.column;
-				int dr = std::abs(r1 - r0), dc = std::abs(c1 - c0);
-				int sr = r0 < r1 ? 1 : -1, sc = c0 < c1 ? 1 : -1, err = dc - dr;
-				while (true)
-				{
-					plot(Pixel{r0, c0}, c);
-					if (r0 == r1 && c0 == c1)
-						break;
-					const int e2 = 2 * err;
-					if (e2 > -dr) { err -= dr; c0 += sc; }
-					if (e2 < dc)  { err += dc; r0 += sr; }
-				}
-			}
-
-		private:
-			int                       m_rows{0};
-			int                       m_columns{0};
-			std::vector<std::uint8_t> m_rgb;
-		};
 
 		//	----------------------------------------------------------------------------
 		//	CLASS		HillshadeCanvas

@@ -148,30 +148,28 @@ inline namespace coordinates
 			 * @details	Applies q * v * q^-1 using the optimized cross-product form, so the input need not
 			 *			be a unit quaternion for the direction to be correct (magnitude scales by norm^2 if
 			 *			not unit). Preserves the unit type of the input components.
-			 * @tparam	LengthUnit	the component unit of the input vector (any length unit).
-			 * @param[in]	v	the vector to rotate, as a 3-tuple of `LengthUnit`.
-			 * @return	the rotated vector, as a 3-tuple of `LengthUnit`.
+			 * @tparam	Vector	any three-component, tuple-protocol type (a `std::tuple<Unit, Unit, Unit>`, a
+			 *					`Vector3<Unit>`, or any type with `std::get` + `std::tuple_element`). The rotated
+			 *					result is returned as the same type, in the same component unit.
+			 * @param[in]	v	the vector to rotate.
+			 * @return	the rotated vector, as the same tuple-like type.
 			 */
-			template<class LengthUnit>
-			constexpr std::tuple<LengthUnit, LengthUnit, LengthUnit> rotate(const std::tuple<LengthUnit, LengthUnit, LengthUnit>& v) const noexcept
+			template<class Vector>
+			constexpr Vector rotate(const Vector& v) const noexcept
 			{
-				const double vx = std::get<0>(v).template to<double>();
-				const double vy = std::get<1>(v).template to<double>();
-				const double vz = std::get<2>(v).template to<double>();
+				const auto vx = std::get<0>(v);
+				const auto vy = std::get<1>(v);
+				const auto vz = std::get<2>(v);
 
-				const double qw = m_w.value(), qx = m_x.value(), qy = m_y.value(), qz = m_z.value();
-
-				// t = 2 * cross(q.xyz, v)
-				const double tx = 2.0 * (qy * vz - qz * vy);
-				const double ty = 2.0 * (qz * vx - qx * vz);
-				const double tz = 2.0 * (qx * vy - qy * vx);
+				// t = 2 * cross(q.xyz, v); the quaternion components are dimensionless, so t carries the vector unit.
+				const auto tx = 2.0 * (m_y * vz - m_z * vy);
+				const auto ty = 2.0 * (m_z * vx - m_x * vz);
+				const auto tz = 2.0 * (m_x * vy - m_y * vx);
 
 				// v' = v + qw * t + cross(q.xyz, t)
-				const double rx = vx + qw * tx + (qy * tz - qz * ty);
-				const double ry = vy + qw * ty + (qz * tx - qx * tz);
-				const double rz = vz + qw * tz + (qx * ty - qy * tx);
-
-				return {LengthUnit(rx), LengthUnit(ry), LengthUnit(rz)};
+				return Vector(vx + m_w * tx + (m_y * tz - m_z * ty),
+				              vy + m_w * ty + (m_z * tx - m_x * tz),
+				              vz + m_w * tz + (m_x * ty - m_y * tx));
 			}
 
 			//----------------------------------

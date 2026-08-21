@@ -26,77 +26,38 @@
 // Copyright (c) 2016 Nic Holthaus
 //
 //--------------------------------------------------------------------------------------------------
+//
+// An 8-bit-per-channel RGB color, plus `channel`, which converts a [0, 1] intensity to a clamped 8-bit value.
+//
+//--------------------------------------------------------------------------------------------------
 
-#ifndef coordinates_h
-#define coordinates_h
+#ifndef color_h
+#define color_h
 
-#if defined(_MSC_VER)
-#pragma warning(disable : 4503)    // decorated name length exceeded, name was truncated. This only affects debugging.
-#endif
-
-//------------------------
-//	INCLUDES
-//------------------------
-#include <CAS.h>
-#include <threadPool.h>
-#include <units.h>
-
-#include <abstractTile.h>
-#include <abstractTileManager.h>
-#include <algorithm.h>
-#include <angles.h>
-
-#include <coordinate.h>
-#include <datum.h>
-#include <frameAxes.h>
-#include <frameOfReference.h>
-#include <heights.h>
-#include <latitudeConversion.h>
-#include <ranges.h>
-#include <topography.h>
-
-#include <point.h>
-#include <positionAER.h>
-#include <positionECEF.h>
-#include <positionENU.h>
-#include <positionGeodetic.h>
-#include <positionNED.h>
-
-#include <vector.h>
-#include <vectorECEF.h>
-#include <vectorENU.h>
-#include <vectorNED.h>
-
-#include <kinematics.h>
-
-#include <bodyFrame.h>
-#include <pose.h>
-
-#include <ray.h>
-#include <fieldOfView.h>
-#include <entity.h>
-
-#include <camera.h>
-#include <hillshadeCanvas.h>
-
-#if defined(COORDINATES_ENABLE_LOS) && COORDINATES_ENABLE_LOS
-#include <lineOfSight.h>
-#endif
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
 
 inline namespace coordinates
 {
-	//----------------------------------
-	//	CONVENIENCE CLASSES
-	//----------------------------------
-	using ITRS    = PositionECEF<ITRS2008>;
-	using ECEF    = PositionECEF<WGS84_G1674>;
-	using LLA     = PositionGeodetic<WGS84_G1674>;
-	using ENU     = PositionENU<WGS84_G1674>;
-	using NED     = PositionNED<WGS84_G1674>;
-	using AER     = PositionAER<WGS84_G1674>;
-	using VecECEF = VectorECEF<WGS84_G1674>;
-	using VecENU  = VectorENU<WGS84_G1674>;
-	using VecNED  = VectorNED<WGS84_G1674>;
+	inline namespace topography
+	{
+		//	----------------------------------------------------------------------------
+		//	STRUCT		Color
+		//  ----------------------------------------------------------------------------
+		///	@brief		An 8-bit-per-channel RGB color for canvas drawing.
+		//  ----------------------------------------------------------------------------
+		struct Color
+		{
+			std::uint8_t r{0}, g{0}, b{0};
+		};
+
+		/// A [0,1] intensity as an 8-bit channel value (clamped).
+		[[nodiscard]] inline std::uint8_t channel(double intensity)
+		{
+			return static_cast<std::uint8_t>(std::lround(255.0 * std::clamp(intensity, 0.0, 1.0)));
+		}
+	}    // namespace topography
 }    // namespace coordinates
 
-#endif    // coordinates_h
+#endif    // color_h

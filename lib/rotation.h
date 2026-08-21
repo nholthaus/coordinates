@@ -156,19 +156,21 @@ inline namespace coordinates
 
 			/**
 			 * @brief	Apply the matrix to a Cartesian vector (active rotation).
-			 * @tparam	LengthUnit	the component unit of the vector.
-			 * @param[in]	v	the vector to rotate, as a 3-tuple of `LengthUnit`.
-			 * @return	the rotated vector, as a 3-tuple of `LengthUnit`.
+			 * @tparam	Vector	any three-component, tuple-protocol type (a `std::tuple<Unit, Unit, Unit>`, a
+			 *					`Vector3<Unit>`, or any type with `std::get` + `std::tuple_element`). The rotated
+			 *					result is returned as the same type, in the same component unit.
+			 * @param[in]	v	the vector to rotate.
+			 * @return	the rotated vector, as the same tuple-like type.
 			 */
-			template<class LengthUnit>
-			constexpr std::tuple<LengthUnit, LengthUnit, LengthUnit> rotate(const std::tuple<LengthUnit, LengthUnit, LengthUnit>& v) const noexcept
+			template<class Vector>
+			constexpr Vector rotate(const Vector& v) const noexcept
 			{
-				const double vx = std::get<0>(v).template to<double>();
-				const double vy = std::get<1>(v).template to<double>();
-				const double vz = std::get<2>(v).template to<double>();
-				return {LengthUnit(m_e[0].value() * vx + m_e[1].value() * vy + m_e[2].value() * vz),
-				        LengthUnit(m_e[3].value() * vx + m_e[4].value() * vy + m_e[5].value() * vz),
-				        LengthUnit(m_e[6].value() * vx + m_e[7].value() * vy + m_e[8].value() * vz)};
+				const auto vx = std::get<0>(v);
+				const auto vy = std::get<1>(v);
+				const auto vz = std::get<2>(v);
+				return Vector(m_e[0] * vx + m_e[1] * vy + m_e[2] * vz,
+				              m_e[3] * vx + m_e[4] * vy + m_e[5] * vz,
+				              m_e[6] * vx + m_e[7] * vy + m_e[8] * vz);
 			}
 
 		private:

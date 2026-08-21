@@ -41,6 +41,7 @@
 #include "coordinate_traits.h"
 #include "datum.h"
 #include "horizontalDatum.h"
+#include "vector3.h"
 
 inline namespace coordinates
 {
@@ -70,7 +71,8 @@ inline namespace coordinates
 	//	TYPEDEFS
 	//----------------------------------
 
-	using CartesianTuple   = std::tuple<meters<>, meters<>, meters<>>;
+	// `CartesianTuple` (a `Vector3<meters<>>`) and `CartesianVector` come from vector3.h. The spherical and
+	// orientation tuples remain plain `std::tuple` -- they are heterogeneous (angle, angle, length), not vectors.
 	using SphericalTuple   = std::tuple<degrees<>, degrees<>, meters<>>;
 	using OrientationTuple = std::tuple<degrees<>, degrees<>, degrees<>>;
 
@@ -593,9 +595,13 @@ inline namespace coordinates
 
 		/**
 		 * @brief		Trait which tests that a class has a `tuple_type` typedef which represents the type of data the frame converts from
+		 * @details		A frame's tuple type is either a heterogeneous `std::tuple` (spherical/orientation frames) or a
+		 *				`Vector3` (the Cartesian frames, whose points carry vector algebra); both are three-element and
+		 *				tuple-protocol-conforming, so either satisfies the frame concept.
 		 */
 		template<typename T, template<class> class Traits = frame_traits>
-		concept has_tuple_type = is_specialization_of<std::tuple, typename Traits<T>::tuple_type>::value;
+		concept has_tuple_type = is_specialization_of<std::tuple, typename Traits<T>::tuple_type>::value
+		                      || is_specialization_of<Vector3, typename Traits<T>::tuple_type>::value;
 
 		/**
 		 * @brief		Tests that a class has a `convertToBaseFrame` static function.

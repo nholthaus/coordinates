@@ -214,11 +214,16 @@ inline namespace coordinates
 		//  ----------------------------------------------------------------------------
 		///	@brief		A child's rigid placement on its parent: an offset from the parent origin plus an
 		///				orientation, both in the parent's body axes.
+		///	@details	Implicitly constructs from a bare offset (orientation defaults to identity), so a child at a
+		///				pure translation can be attached as `attach(offset)` without spelling out a `Mount`.
 		//  ----------------------------------------------------------------------------
 		struct Mount
 		{
 			CartesianTuple offset{0.0_m, 0.0_m, 0.0_m};    ///< the child origin in the parent's body axes
 			Pose           orientation{Pose::identity()};  ///< the child's rotation relative to the parent's axes
+
+			Mount() = default;
+			Mount(CartesianTuple offsetIn, Pose orientationIn = Pose::identity()) : offset(offsetIn), orientation(orientationIn) {}
 		};
 
 		/// Attach a child entity rigidly at a mount; the parent OWNS the child and returns a reference to it for

@@ -50,7 +50,7 @@ inline namespace coordinates
 	//	----------------------------------------------------------------------------
 	//	CLASS		VectorFirstClassTest
 	//  ----------------------------------------------------------------------------
-	///	@brief		Unit tests for the frame-agnostic `vec::Vector3` and the frame-tagged `Vector<Frame>`.
+	///	@brief		Unit tests for the frame-agnostic `Vector3` and the frame-tagged `Vector<Frame>`.
 	//  ----------------------------------------------------------------------------
 	class VectorFirstClassTest : public ::testing::Test
 	{
@@ -63,28 +63,28 @@ inline namespace coordinates
 	};
 
 	//======================================================
-	//	vec::Vector3 -- frame-agnostic algebra
+	//	Vector3 -- frame-agnostic algebra
 	//======================================================
 
 	TEST_F(VectorFirstClassTest, vector3_algebra)
 	{
-		vec::Vector3<meters<>> a(3.0_m, 4.0_m, 0.0_m);
-		vec::Vector3<meters<>> b(1.0_m, 0.0_m, 0.0_m);
+		Vector3<meters<>> a(3.0_m, 4.0_m, 0.0_m);
+		Vector3<meters<>> b(1.0_m, 0.0_m, 0.0_m);
 
 		EXPECT_UNITS_EQ(5.0_m, a.magnitude());
 		EXPECT_UNITS_EQ(square_meters<>(25.0), a.magnitudeSquared());
 		EXPECT_UNITS_EQ(4.0_m, (a + b).x());
 		EXPECT_UNITS_EQ(2.0_m, (a - b).x());
 		EXPECT_UNITS_EQ(6.0_m, (a * dimensionless<>(2.0)).x());
-		EXPECT_TRUE(vec::Vector3<meters<>>{}.isNull());
+		EXPECT_TRUE(Vector3<meters<>>{}.isNull());
 		EXPECT_FALSE(a.isNull());
 
 		// dot: (3,4,0).(1,0,0) = 3 m^2
 		EXPECT_UNITS_EQ(square_meters<>(3.0), a.dot(b));
 
 		// cross: (1,0,0) x (0,1,0) = (0,0,1)
-		vec::Vector3<meters<>> ex(1.0_m, 0.0_m, 0.0_m);
-		vec::Vector3<meters<>> ey(0.0_m, 1.0_m, 0.0_m);
+		Vector3<meters<>> ex(1.0_m, 0.0_m, 0.0_m);
+		Vector3<meters<>> ey(0.0_m, 1.0_m, 0.0_m);
 		auto                   ez = ex.cross(ey);
 		EXPECT_UNITS_EQ(square_meters<>(0.0), ez.x());
 		EXPECT_UNITS_EQ(square_meters<>(0.0), ez.y());
@@ -99,10 +99,10 @@ inline namespace coordinates
 
 	TEST_F(VectorFirstClassTest, vector3_constexpr)
 	{
-		constexpr vec::Vector3<meters<>> a(1.0_m, 2.0_m, 2.0_m);
+		constexpr Vector3<meters<>> a(1.0_m, 2.0_m, 2.0_m);
 		constexpr auto                   d = a.dot(a);
 		static_assert(d == square_meters<>(9.0), "constexpr dot product");
-		constexpr auto s = (a + vec::Vector3<meters<>>(1.0_m, 0.0_m, 0.0_m)).x();
+		constexpr auto s = (a + Vector3<meters<>>(1.0_m, 0.0_m, 0.0_m)).x();
 		static_assert(s == 2.0_m, "constexpr addition");
 		SUCCEED();
 	}
@@ -189,10 +189,10 @@ inline namespace coordinates
 #ifdef VECTOR3_HAS_EIGEN
 	TEST_F(VectorFirstClassTest, eigenRoundTrip)
 	{
-		vec::Vector3<meters<>>      a(1.0_m, 2.0_m, 3.0_m);
+		Vector3<meters<>>      a(1.0_m, 2.0_m, 3.0_m);
 		Eigen::Matrix<meters<>, 3, 1> e = a.toEigen();
 		EXPECT_UNITS_EQ(2.0_m, e(1));
-		auto b = vec::Vector3<meters<>>::fromEigen(e);
+		auto b = Vector3<meters<>>::fromEigen(e);
 		EXPECT_TRUE(a == b);
 
 		// scaling by a plain scalar preserves dimension through Eigen

@@ -102,14 +102,18 @@ inline namespace coordinates
 		/// From the axis components (forwarded into the tuple) at the datum epoch, or from the axis components
 		/// plus a trailing observation date. Accepts exactly `tuple_size` component values, or `tuple_size`
 		/// values followed by a `years<>` date; the date-carrying case splits the last argument off the pack.
-		template<class... Args>
-		    requires(sizeof...(Args) == std::tuple_size_v<Tuple>
-		             || (sizeof...(Args) == std::tuple_size_v<Tuple> + 1
-		                 && std::same_as<std::remove_cvref_t<std::tuple_element_t<sizeof...(Args) - 1, std::tuple<Args...>>>, years<>>))
-		explicit Coordinate(Args... args)
+		/// The first argument must itself be a component (convertible to slot 0), so a `(wholePoint, origin,
+		/// date)` local-frame call is NOT mistaken for three components and instead resolves to the tuple-origin
+		/// constructor.
+		template<class First, class... Rest>
+		    requires((sizeof...(Rest) + 1 == std::tuple_size_v<Tuple>
+		              || (sizeof...(Rest) + 1 == std::tuple_size_v<Tuple> + 1
+		                  && std::same_as<std::remove_cvref_t<std::tuple_element_t<sizeof...(Rest), std::tuple<First, Rest...>>>, years<>>))
+		             && std::convertible_to<First, std::tuple_element_t<0, Tuple>>)
+		explicit Coordinate(First first, Rest... rest)
 		{
-			auto packed = std::forward_as_tuple(std::move(args)...);
-			if constexpr (sizeof...(Args) == std::tuple_size_v<Tuple>)
+			auto packed = std::forward_as_tuple(std::move(first), std::move(rest)...);
+			if constexpr (sizeof...(Rest) + 1 == std::tuple_size_v<Tuple>)
 			{
 				m_point     = std::make_from_tuple<Tuple>(std::move(packed));
 				m_frameData = frame_data_type(datum_type::epoch());

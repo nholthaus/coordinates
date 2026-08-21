@@ -37,6 +37,8 @@
 #include <type_traits>
 #include <units.h>
 
+#include "vector3.h"
+
 //----------------------------------
 //	ADDITIONAL UNIT DEFINITIONS
 //----------------------------------
@@ -383,7 +385,7 @@ inline namespace coordinates
 	template<class Coefficients, class LengthUnits>
 	    requires(coordinates::traits::Helmert7Coefficients<Coefficients> && !coordinates::traits::Helmert14Coefficients<Coefficients> &&
 	             units::traits::is_length_unit_v<LengthUnits>)
-	std::tuple<meters<>, meters<>, meters<>> positionVectorTransform(const LengthUnits& x, const LengthUnits& y, const LengthUnits& z)
+	CartesianTuple positionVectorTransform(const LengthUnits& x, const LengthUnits& y, const LengthUnits& z)
 	{
 		// Helmert 7-parameter implementation
 		meters        H_tx = Coefficients::tx();
@@ -394,7 +396,7 @@ inline namespace coordinates
 		radians       H_ry = Coefficients::ry();
 		radians       H_rz = Coefficients::rz();
 
-		std::tuple<meters<>, meters<>, meters<>> output;
+		CartesianTuple output;
 		auto&                                    X_b = std::get<0>(output);
 		auto&                                    Y_b = std::get<1>(output);
 		auto&                                    Z_b = std::get<2>(output);
@@ -412,7 +414,7 @@ inline namespace coordinates
 
 	template<class Coefficients, class LengthUnits>
 	    requires(coordinates::traits::Helmert14Coefficients<Coefficients> && units::traits::is_length_unit_v<LengthUnits>)
-	std::tuple<meters<>, meters<>, meters<>> positionVectorTransform(const LengthUnits& x,
+	CartesianTuple positionVectorTransform(const LengthUnits& x,
 	                                                                 const LengthUnits& y,
 	                                                                 const LengthUnits& z,
 	                                                                 const years<>&     dateOfMeasurement = Coefficients::epoch())
@@ -426,7 +428,7 @@ inline namespace coordinates
 		radians       H_ry = (Coefficients::ry() + (Coefficients::dry() * (dateOfMeasurement - Coefficients::epoch())));
 		radians       H_rz = (Coefficients::rz() + (Coefficients::drz() * (dateOfMeasurement - Coefficients::epoch())));
 
-		std::tuple<meters<>, meters<>, meters<>> output;
+		CartesianTuple output;
 		auto&                                    X_b = std::get<0>(output);
 		auto&                                    Y_b = std::get<1>(output);
 		auto&                                    Z_b = std::get<2>(output);
@@ -442,41 +444,41 @@ inline namespace coordinates
 		return output;
 	}
 
-	template<class Coefficients, class LengthUnits>
+	template<class Coefficients, class Vector, class LengthUnits = std::tuple_element_t<0, Vector>>
 	    requires(coordinates::traits::Helmert7Coefficients<Coefficients> && !coordinates::traits::Helmert14Coefficients<Coefficients> &&
 	             units::traits::is_length_unit_v<LengthUnits>)
-	std::tuple<meters<>, meters<>, meters<>> positionVectorTransform(const std::tuple<LengthUnits, LengthUnits, LengthUnits>& input)
+	CartesianTuple positionVectorTransform(const Vector& input)
 	{ return positionVectorTransform<Coefficients, LengthUnits>(std::get<0>(input), std::get<1>(input), std::get<2>(input)); }
 
 	template<class Coefficients, class LengthUnits>
 	    requires(coordinates::traits::Helmert7Coefficients<Coefficients> && !coordinates::traits::Helmert14Coefficients<Coefficients> &&
 	             units::traits::is_length_unit_v<LengthUnits>)
-	std::tuple<meters<>, meters<>, meters<>> inversePositionVectorTransform(const LengthUnits& x, const LengthUnits& y, const LengthUnits& z)
+	CartesianTuple inversePositionVectorTransform(const LengthUnits& x, const LengthUnits& y, const LengthUnits& z)
 	{ return positionVectorTransform<inverse_coefficients<Coefficients>, LengthUnits>(x, y, z); }
 
-	template<class Coefficients, class LengthUnits>
+	template<class Coefficients, class Vector, class LengthUnits = std::tuple_element_t<0, Vector>>
 	    requires(coordinates::traits::Helmert7Coefficients<Coefficients> && !coordinates::traits::Helmert14Coefficients<Coefficients> &&
 	             units::traits::is_length_unit_v<LengthUnits>)
-	std::tuple<meters<>, meters<>, meters<>> inversePositionVectorTransform(const std::tuple<LengthUnits, LengthUnits, LengthUnits>& input)
+	CartesianTuple inversePositionVectorTransform(const Vector& input)
 	{ return positionVectorTransform<inverse_coefficients<Coefficients>, LengthUnits>(std::get<0>(input), std::get<1>(input), std::get<2>(input)); }
 
-	template<class Coefficients, class LengthUnits>
+	template<class Coefficients, class Vector, class LengthUnits = std::tuple_element_t<0, Vector>>
 	    requires(coordinates::traits::Helmert14Coefficients<Coefficients> && units::traits::is_length_unit_v<LengthUnits>)
-	std::tuple<meters<>, meters<>, meters<>> positionVectorTransform(const std::tuple<LengthUnits, LengthUnits, LengthUnits>& input,
+	CartesianTuple positionVectorTransform(const Vector&   input,
 	                                                                 const years<>& dateOfMeasurement = Coefficients::epoch())
 	{ return positionVectorTransform<Coefficients, LengthUnits>(std::get<0>(input), std::get<1>(input), std::get<2>(input), dateOfMeasurement); }
 
 	template<class Coefficients, class LengthUnits>
 	    requires(coordinates::traits::Helmert14Coefficients<Coefficients> && units::traits::is_length_unit_v<LengthUnits>)
-	std::tuple<meters<>, meters<>, meters<>> inversePositionVectorTransform(const LengthUnits& x,
+	CartesianTuple inversePositionVectorTransform(const LengthUnits& x,
 	                                                                        const LengthUnits& y,
 	                                                                        const LengthUnits& z,
 	                                                                        const years<>&     dateOfMeasurement = Coefficients::epoch())
 	{ return positionVectorTransform<inverse_coefficients<Coefficients>, LengthUnits>(x, y, z, dateOfMeasurement); }
 
-	template<class Coefficients, class LengthUnits>
+	template<class Coefficients, class Vector, class LengthUnits = std::tuple_element_t<0, Vector>>
 	    requires(coordinates::traits::Helmert14Coefficients<Coefficients> && units::traits::is_length_unit_v<LengthUnits>)
-	std::tuple<meters<>, meters<>, meters<>> inversePositionVectorTransform(const std::tuple<LengthUnits, LengthUnits, LengthUnits>& input,
+	CartesianTuple inversePositionVectorTransform(const Vector&   input,
 	                                                                        const years<>& dateOfMeasurement = Coefficients::epoch())
 	{
 		return positionVectorTransform<inverse_coefficients<Coefficients>, LengthUnits>(std::get<0>(input),

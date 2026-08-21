@@ -32,3 +32,4 @@ endfunction()
 
 coordinates_add_example(sensorTerrainHit)
 coordinates_add_example(towerHorizonScan)
+coordinates_add_example(f35Attitude)
