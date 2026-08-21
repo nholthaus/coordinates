@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 
 	// The tower: a 10 ft mast on a hilltop. tile.elevation() is a typed length (meters); adding a feet mast
 	// just works -- units converts feet<->meters and the sum is the antenna's MSL altitude, no manual math.
-	const units::angle::degrees<> siteLat{37.18500}, siteLon{-114.63500};
+	const units::angle::degrees<> siteLat{37.66389}, siteLon{-114.85825};
 	const units::length::feet<>   towerHeight{10.0};
 	const auto                    floorElev = tile.elevation(siteLat, siteLon);
 	const Lla                     antenna(siteLat, siteLon, floorElev + towerHeight);
@@ -119,8 +119,8 @@ int main(int argc, char** argv)
 	for (const Beam& b : beams)
 		if (b.blocked)
 			footprint.plot(b.hit, Color{255, 40, 40});
-	footprint.disc(antennaPixel, 3, Color{255, 255, 255});
-	footprint.disc(antennaPixel, 1, Color{0, 0, 0});
+	footprint.disc(antennaPixel, 5, Color{255, 255, 255});
+	footprint.disc(antennaPixel, 2, Color{0, 0, 0});
 
 	if (!frameDir.empty())
 		for (int i = 0; i < steps; ++i)
@@ -130,8 +130,8 @@ int main(int argc, char** argv)
 			frame.line(antennaPixel, b.ray, Color{255, 240, 0});    // the swept beam, yellow
 			if (b.blocked)
 				frame.disc(b.hit, 1, Color{255, 40, 40});           // terrain-hit terminus, red, over the ray
-			frame.disc(antennaPixel, 3, Color{255, 255, 255});      // antenna, white (over any ray pixels)
-			frame.disc(antennaPixel, 1, Color{0, 0, 0});
+			frame.disc(antennaPixel, 5, Color{255, 255, 255});      // antenna, white (over any ray pixels)
+			frame.disc(antennaPixel, 2, Color{0, 0, 0});
 			char name[512];
 			std::snprintf(name, sizeof(name), "%s/frame_%04d.ppm", frameDir.c_str(), i);
 			canvas.writePpm(frame, name);
