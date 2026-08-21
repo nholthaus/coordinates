@@ -61,7 +61,7 @@
 
 inline namespace coordinates
 {
-	namespace topography
+	inline namespace topography
 	{
 		using namespace units;
 		using namespace units::literals;
