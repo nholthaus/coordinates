@@ -688,7 +688,6 @@ TEST_F(PositionENUTest, assignment)
 
 	TEST_F(PositionENUTest, minusEqual)
 	{
-		ENU zero;
 		ENU enu1(12.0_m, 24.0_m, 36.0_m, Boston);
 		ENU enu2(36.0_m, 24.0_m, 12.0_m, Boston);
 		ENU enu3(1.0_m, 2.0_m, 3.0_m, Lexington);

@@ -548,7 +548,6 @@ namespace
 
 	TEST_F(PositionECEFTest, minusEqual)
 	{
-		PositionECEF<datums::NAD83, inches> zero;
 		PositionECEF<datums::NAD83, inches> ecef1(12_in, 24_in, 36_in);
 		PositionECEF<datums::NAD83, inches> ecef2(36_in, 24_in, 12_in);
 		PositionECEF<datums::NAD83, feet> ecef_ft(1.0_ft, 2.0_ft, 3.0_ft);

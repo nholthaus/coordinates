@@ -547,7 +547,6 @@ namespace
 		LLA closeButNoCigar(42.36012_deg, -71.05892_deg, 0.0_m);
 
 		LLA  angleTolerance(0.00001_deg, 0.00001_deg, 0.0_m);
-		ECEF meterTolerance(1.0_m, 1.0_m, 1.0_m);
 
 		// exactly same, default tolerance
 		EXPECT_TRUE(lla.isSame(exactlySame));

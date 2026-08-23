@@ -754,7 +754,6 @@ TEST_F(PositionNEDTest, implicitConversionConstructor_fromNEDsameOrigin)
 
 	TEST_F(PositionNEDTest, minusEqual)
 	{
-		NED zero;
 		NED ned1(12.0_m, 24.0_m, 36.0_m, Boston);
 		NED ned2(36.0_m, 24.0_m, 12.0_m, Boston);
 		NED ned3(1.0_m, 2.0_m, 3.0_m, Lexington);
