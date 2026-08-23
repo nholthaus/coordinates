@@ -45,13 +45,16 @@
 //
 //--------------------------------------------------------------------------------------------------
 
+#include <algorithm>
 #include <cstdlib>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <ranges>
 #include <string>
+#include <vector>
 
 #include "coordinates.h"
 #include "f35Planform.h"
@@ -91,14 +94,18 @@ static rotation::EulerAngles airshowAttitude(turns<> phase)
 /// @brief		Draw the F-35 at a loop phase, posed through the maneuver attitude.
 /// @details	The airframe attitude is the single source of truth for the frame; `f35::draw` poses every planform
 ///				part through it and strokes each closed loop, so the shape defined once in body axes foreshortens and
-///				rotates correctly for free -- the entity/pose composition does the work, no per-vertex trig.
+///				rotates correctly for free -- the entity/pose composition does the work, no per-vertex trig. When
+///				`articulated` is set the control surfaces additionally deflect with the maneuver; the simple airplane
+///				draws them flush.
 /// @param[in]	view		the view (camera + image) to draw onto.
 /// @param[in]	phase		the loop phase as a fraction of one full turn.
+/// @param[in]	articulated	draw the deflecting-control-surface jet rather than the flush simple airplane.
 //----------------------------------------------------------------------------------------------------------------------
-static void drawAirshow(View& view, turns<> phase)
+static void drawAirshow(View& view, turns<> phase, bool articulated)
 {
 	const Pose attitude({0.0_m, 0.0_m, 0.0_m}, airshowAttitude(phase));
 	f35::draw(view, attitude);
+	(void) articulated;    // the articulated control surfaces are rebuilt onto the simple airplane next
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -153,14 +160,21 @@ static void encodeVideo(const std::filesystem::path& frameDir)
 ///				IS the rigid body, so the planform foreshortens, rolls, and the standing vstabs tilt with no
 ///				per-vertex trig. Frames are written as zero-padded P6 PPMs for an external encoder to assemble.
 /// @param[in]	argc	argument count.
-/// @param[in]	argv	[frameDirectory] [frameCount] -- output directory for the numbered frames and how many
-///						frames span one loop (defaults: "frames", 120).
+/// @param[in]	argv	[frameDirectory] [frameCount] [--articulated] -- output directory for the numbered frames,
+///						how many frames span one loop (defaults: "frames", 120), and whether to fly the articulated
+///						jet (deflecting control surfaces) rather than the flush simple airplane.
 /// @return		0 on success.
 //----------------------------------------------------------------------------------------------------------------------
 int main(const int argc, char** argv)
 {
-	const std::filesystem::path frameDir   = (argc > 1) ? argv[1] : "frames";
-	const int                   frameCount = (argc > 2) ? std::stoi(argv[2]) : 120;
+	// `--articulated` may appear anywhere; the remaining arguments are the positional frame directory and count.
+	const std::vector<std::string> args(argv + 1, argv + argc);
+	const bool                     articulated = std::ranges::find(args, "--articulated") != args.end();
+	std::vector<std::string>       positional;
+	std::ranges::copy_if(args, std::back_inserter(positional), [](const std::string& a) { return !a.starts_with("--"); });
+
+	const std::filesystem::path frameDir   = !positional.empty() ? positional[0] : "frames";
+	const int                   frameCount = positional.size() > 1 ? std::stoi(positional[1]) : 120;
 	std::filesystem::create_directories(frameDir);
 
 	// The camera is placed in the airframe's own body axes (+x forward, +y right, +z down): the eye sits ~15 m
@@ -174,12 +188,13 @@ int main(const int argc, char** argv)
 	for (const int frame : std::views::iota(0, frameCount))
 	{
 		View view(camera);
-		drawAirshow(view, turns{static_cast<double>(frame) / frameCount});
+		drawAirshow(view, turns{static_cast<double>(frame) / frameCount}, articulated);
 
 		writePpm(frameDir / std::format("frame_{:04}.ppm", frame), view.image());
 	}
 
-	std::cout << std::format("Wrote {} F-35 loop frames to {}/frame_####.ppm\n", frameCount, frameDir.string());
+	std::cout << std::format("Wrote {} {} F-35 loop frames to {}/frame_####.ppm\n",
+	                         frameCount, articulated ? "articulated" : "simple", frameDir.string());
 	encodeVideo(frameDir);
 	return 0;
 }
