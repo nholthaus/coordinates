@@ -110,15 +110,19 @@ static void drawAirshow(View& view, turns<> phase, bool articulated)
 		return;
 	}
 
-	// Drive the control surfaces from the maneuver's roll: the wings deflect differentially (one side's edge down,
-	// the other up) proportional to the roll command. Flaperons roll the aircraft, leading-edge flaps lead the
-	// same roll, so the surfaces move together like an airshow demo -- all from the single maneuver source.
+	// Drive the control surfaces from the maneuver: the wings deflect differentially with the roll command (one
+	// side's edge down, the other up) and both rudders toe together with the yaw command. Flaperons roll the
+	// aircraft, leading-edge flaps lead the roll, rudders coordinate the yaw -- all from the single maneuver source,
+	// so the whole aircraft moves like an airshow demo with no per-surface tuning.
 	const radians<> roll = airshowAttitude(phase).roll();
+	const radians<> yaw  = airshowAttitude(phase).yaw();
 	f35::articulated(view, attitude,
 	                 {.leadingEdgeRight  = 0.4 * roll,
 	                  .leadingEdgeLeft   = -0.4 * roll,
 	                  .trailingEdgeRight = 0.6 * roll,
-	                  .trailingEdgeLeft  = -0.6 * roll});
+	                  .trailingEdgeLeft  = -0.6 * roll,
+	                  .rudderRight       = 1.2 * yaw,
+	                  .rudderLeft        = 1.2 * yaw});
 }
 
 //----------------------------------------------------------------------------------------------------------------------

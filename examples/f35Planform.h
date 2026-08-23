@@ -90,21 +90,60 @@ namespace f35
 		        {+3.272_m, +0.303_m, +0.000_m}};
 	}
 
-	/// The left vertical stabilizer: a basic swept fin, root chord on the boom at z=0, tip chord raked aft, canted
-	/// outboard and lifted up (-z) so the fin stands out of the planform and tilts correctly under roll.
+	/// The left vertical stabilizer: a 4-point swept fin, root chord on the boom at z=0, tip chord raked aft and
+	/// lifted up (-z), canted outboard, so the fin stands out of the planform and tilts under roll. Profile (leading
+	/// edge rake, trailing edge, taper) traced from the side view. Vertices: root-LE, tip-LE, tip-TE, root-TE.
 	inline constexpr CartesianVector finLeft()
 	{
-		return {
-		        {-3.900_m, -1.420_m, -0.000_m}, {-5.636_m, -2.150_m, -2.350_m}, {-6.308_m, -2.150_m, -2.350_m},
-		        {-6.644_m, -1.639_m, -0.705_m}, {-6.700_m, -1.420_m, -0.000_m}};
+		return {{-4.624_m, -1.420_m, +0.000_m}, {-6.588_m, -2.150_m, -1.922_m}, {-7.856_m, -2.150_m, -1.922_m}, {-7.201_m, -1.420_m, +0.000_m}};
 	}
 
 	/// The right vertical stabilizer (the y-mirror of the left).
 	inline constexpr CartesianVector finRight()
 	{
-		return {
-		        {-3.900_m, +1.420_m, -0.000_m}, {-5.636_m, +2.150_m, -2.350_m}, {-6.308_m, +2.150_m, -2.350_m},
-		        {-6.644_m, +1.639_m, -0.705_m}, {-6.700_m, +1.420_m, -0.000_m}};
+		return {{-4.624_m, +1.420_m, +0.000_m}, {-6.588_m, +2.150_m, -1.922_m}, {-7.856_m, +2.150_m, -1.922_m}, {-7.201_m, +1.420_m, +0.000_m}};
+	}
+
+	/// The fraction of the fin chord occupied by the rudder (the aft strip), measured from the side view.
+	inline constexpr double rudderChordFraction() { return 0.20; }
+
+	/// A fin's rudder panel: a 4-point quad on the aft strip of the fin, DERIVED from the fin's trailing-edge
+	/// corners (tip = index 2, root = index 4) pulled forward toward the leading edge by the rudder chord, so the
+	/// panel shares the fin's trailing edge and hinges on a straight line parallel to it. `fin` is `finLeft()` or
+	/// `finRight()`.
+	inline CartesianVector rudderPanel(const CartesianVector& fin)
+	{
+		const CartesianTuple leadingRoot = fin[0], leadingTip = fin[1];    // fin leading edge (root, tip)
+		const CartesianTuple trailTip = fin[2], trailRoot = fin[3];        // fin trailing edge (tip, root)
+		const double         f = rudderChordFraction();
+		const CartesianTuple hingeTip  = trailTip + (leadingTip - trailTip) * f;
+		const CartesianTuple hingeRoot = trailRoot + (leadingRoot - trailRoot) * f;
+		return {trailTip, trailRoot, hingeRoot, hingeTip};    // TE (tip->root) then hinge back (root->tip)
+	}
+
+	/// The FIXED part of a fin with its rudder CUT OUT: the fin outline up to the rudder hinge line (leading edge,
+	/// tip, then the hinge instead of the trailing edge), so the aft strip belongs to the deflecting rudder panel.
+	/// Shares the hinge points with `rudderPanel`, so the fixed fin and the rudder always meet exactly.
+	inline CartesianVector rudderCutFin(const CartesianVector& fin)
+	{
+		const CartesianVector rudder = rudderPanel(fin);    // {trailTip, trailRoot, hingeRoot, hingeTip}
+		// Fin without the aft strip: root-LE, tip-LE, then down the hinge (tipHinge -> rootHinge).
+		return {fin[0], fin[1], rudder[3], rudder[2]};
+	}
+
+	/// A fin's rudder deflected by `angle` about its hinge -- the near-vertical forward edge of the rudder panel
+	/// (hingeRoot->hingeTip). Positive angle yaws the trailing edge to one side. `fin` is `finLeft()`/`finRight()`.
+	inline CartesianVector deflectRudder(const CartesianVector& fin, radians<> angle)
+	{
+		const CartesianVector      panel     = rudderPanel(fin);
+		const CartesianTuple       hingeRoot = panel[2], hingeTip = panel[3];    // the rudder hinge line
+		const auto                 axis      = (hingeTip - hingeRoot).normalized();
+		const rotation::Quaternion q =
+		        rotation::toQuaternion(rotation::AxisAngle(axis.x().value(), axis.y().value(), axis.z().value(), angle));
+		CartesianVector deflected;
+		for (const CartesianTuple& v : panel)
+			deflected.push_back(q.rotate(v - hingeRoot) + hingeRoot);
+		return deflected;
 	}
 
 	//	----------------------------------------------------------------------------
@@ -266,6 +305,8 @@ namespace f35
 		radians<> leadingEdgeLeft{0.0};      ///< left wing leading-edge flap
 		radians<> trailingEdgeRight{0.0};    ///< right wing trailing-edge flaperon
 		radians<> trailingEdgeLeft{0.0};     ///< left wing trailing-edge flaperon
+		radians<> rudderRight{0.0};          ///< right fin rudder (yaw)
+		radians<> rudderLeft{0.0};           ///< left fin rudder (yaw)
 	};
 
 	/// Draw the ARTICULATED airplane: the flap-cut body outline, canopy, vstabs, and each control surface deflected
@@ -275,8 +316,8 @@ namespace f35
 	{
 		topography::drawPolyline(view, attitude, articulatedOutline(), color);
 		topography::drawPolyline(view, attitude, canopy(), color);
-		topography::drawPolyline(view, attitude, finLeft(), color);
-		topography::drawPolyline(view, attitude, finRight(), color);
+		topography::drawPolyline(view, attitude, rudderCutFin(finLeft()), color);     // fin with rudder cut out
+		topography::drawPolyline(view, attitude, rudderCutFin(finRight()), color);
 
 		const auto& le = leadingEdgeFlaps();     // [0] = right wing, [1] = left wing
 		const auto& te = trailingEdgeFlaps();
@@ -284,6 +325,8 @@ namespace f35
 		topography::drawPolyline(view, attitude, deflectFlap(le[1], deflections.leadingEdgeLeft), color);
 		topography::drawPolyline(view, attitude, deflectFlap(te[0], deflections.trailingEdgeRight), color);
 		topography::drawPolyline(view, attitude, deflectFlap(te[1], deflections.trailingEdgeLeft), color);
+		topography::drawPolyline(view, attitude, deflectRudder(finRight(), deflections.rudderRight), color);
+		topography::drawPolyline(view, attitude, deflectRudder(finLeft(), deflections.rudderLeft), color);
 	}
 
 	//----------------------------------------------------------------------------------------------------------------------
