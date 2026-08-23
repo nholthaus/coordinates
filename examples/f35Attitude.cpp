@@ -88,36 +88,17 @@ static rotation::EulerAngles airshowAttitude(turns<> phase)
 //----------------------------------------------------------------------------------------------------------------------
 //	FUNCTION: drawAirshow [static]
 //----------------------------------------------------------------------------------------------------------------------
-/// @brief		Draw the F-35 at a loop phase with its control surfaces ARTICULATED: flaperons deflect with the
-///				roll command and rudders with the yaw, so the jet flies the maneuver like a real airshow demo.
-/// @details	The fixed structure draws through the airframe attitude unchanged; the movable loops (flaperons,
-///				rudders) are first `deflect`ed about their hinges, then drawn through the same attitude. The
-///				deflections are DERIVED from the maneuver, not hand-authored: a control surface commands an angular
-///				RATE, so the ailerons track the maneuver's roll rate and the rudders its yaw rate (both obtained by
-///				finite-differencing `airshowAttitude` about the phase). Because the surfaces come from the same
-///				single source of truth as the pose, any maneuver -- or any airframe with flaps and rudders -- just
-///				"works": the surfaces lead the roll and coordinate the yaw with no per-aircraft tuning.
+/// @brief		Draw the F-35 at a loop phase, posed through the maneuver attitude.
+/// @details	The airframe attitude is the single source of truth for the frame; `f35::draw` poses every planform
+///				part through it and strokes each closed loop, so the shape defined once in body axes foreshortens and
+///				rotates correctly for free -- the entity/pose composition does the work, no per-vertex trig.
 /// @param[in]	view		the view (camera + image) to draw onto.
 /// @param[in]	phase		the loop phase as a fraction of one full turn.
 //----------------------------------------------------------------------------------------------------------------------
 static void drawAirshow(View& view, turns<> phase)
 {
-	const rotation::EulerAngles att = airshowAttitude(phase);
-	const Pose                  attitude({0.0_m, 0.0_m, 0.0_m}, att);
-
-	// Control surfaces command angular RATES, so derive them from the maneuver's roll/yaw/pitch rates -- a central
-	// finite difference of `airshowAttitude` about the phase -- then clamp to a realistic throw. This ties the
-	// articulation to the SAME maneuver SSOT as the airframe pose: the surfaces lead the roll and coordinate the
-	// yaw with no per-aircraft tuning. The library `f35::articulated` deflects each surface about its own hinge.
-	const turns<> h     = 0.002_tr;
-	const auto    rate  = [&](auto pick) { return (pick(airshowAttitude(phase + h)) - pick(airshowAttitude(phase - h))) / (2.0 * h / 1.0_tr); };
-	const auto    clamp = [](degrees<> a, degrees<> lim) { return units::max(-lim, units::min(lim, a)); };
-	const f35::Deflections deflections{
-	        .flaperon = clamp(0.09 * rate([](auto e) { return e.roll(); }), 25.0_deg),
-	        .leFlap   = clamp(0.60 * rate([](auto e) { return e.pitch(); }) + 12.0_deg, 30.0_deg),
-	        .rudder   = clamp(0.80 * rate([](auto e) { return e.yaw(); }), 25.0_deg)};
-
-	f35::articulated(view, attitude, deflections);
+	const Pose attitude({0.0_m, 0.0_m, 0.0_m}, airshowAttitude(phase));
+	f35::draw(view, attitude);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
