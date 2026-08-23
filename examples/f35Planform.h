@@ -78,108 +78,20 @@ namespace f35
 		        {-5.845_m, -0.492_m, +0.000_m}, {-5.807_m, -0.681_m, +0.000_m}, {-7.812_m, -1.021_m, +0.000_m}};
 	}
 
-	/// The canopy bubble.
+	/// The canopy bubble, a pointed oval on the forward fuselage (windscreen apex aft, rounded point forward).
 	inline constexpr CartesianVector canopy()
 	{
 		return {
-		        {+6.119_m, -0.021_m, +0.000_m}, {+6.069_m, +0.112_m, +0.000_m}, {+5.913_m, +0.268_m, +0.000_m},
-		        {+5.419_m, +0.473_m, +0.000_m}, {+5.011_m, +0.515_m, +0.000_m}, {+4.960_m, +0.556_m, +0.000_m},
-		        {+4.110_m, +0.556_m, +0.000_m}, {+3.855_m, +0.515_m, +0.000_m}, {+3.482_m, +0.390_m, +0.000_m},
-		        {+3.483_m, -0.391_m, +0.000_m}, {+3.772_m, -0.474_m, +0.000_m}, {+4.027_m, -0.515_m, +0.000_m},
-		        {+4.385_m, -0.515_m, +0.000_m}, {+4.589_m, -0.556_m, +0.000_m}, {+4.640_m, -0.515_m, +0.000_m},
-		        {+5.082_m, -0.515_m, +0.000_m}, {+5.456_m, -0.433_m, +0.000_m}, {+5.879_m, -0.261_m, +0.000_m}};
+		        {+3.045_m, +0.000_m, +0.000_m}, {+3.272_m, -0.303_m, +0.000_m}, {+3.651_m, -0.416_m, +0.000_m},
+		        {+4.332_m, -0.454_m, +0.000_m}, {+5.013_m, -0.454_m, +0.000_m}, {+5.542_m, -0.378_m, +0.000_m},
+		        {+5.921_m, -0.265_m, +0.000_m}, {+6.148_m, -0.113_m, +0.000_m}, {+6.223_m, +0.000_m, +0.000_m},
+		        {+6.148_m, +0.113_m, +0.000_m}, {+5.921_m, +0.265_m, +0.000_m}, {+5.542_m, +0.378_m, +0.000_m},
+		        {+5.013_m, +0.454_m, +0.000_m}, {+4.332_m, +0.454_m, +0.000_m}, {+3.651_m, +0.416_m, +0.000_m},
+		        {+3.272_m, +0.303_m, +0.000_m}};
 	}
 
-	/// The left forebody chine / LERX shoulder panel.
-	inline constexpr CartesianVector lerxLeft()
-	{
-		return {
-		        {+3.523_m, -1.463_m, +0.000_m}, {+1.213_m, -1.713_m, +0.000_m}, {+0.541_m, -1.875_m, +0.000_m},
-		        {-0.208_m, -2.328_m, +0.000_m}, {-0.624_m, -2.396_m, +0.000_m}, {-0.939_m, -0.639_m, +0.000_m},
-		        {+0.761_m, -0.639_m, +0.000_m}, {+2.154_m, -0.845_m, +0.000_m}, {+3.145_m, -1.126_m, +0.000_m}};
-	}
-
-	/// The right forebody chine / LERX shoulder panel.
-	inline constexpr CartesianVector lerxRight()
-	{
-		return {
-		        {+3.523_m, +1.463_m, +0.000_m}, {+1.213_m, +1.713_m, +0.000_m}, {+0.541_m, +1.875_m, +0.000_m},
-		        {-0.208_m, +2.328_m, +0.000_m}, {-0.624_m, +2.396_m, +0.000_m}, {-0.939_m, +0.639_m, +0.000_m},
-		        {+0.761_m, +0.639_m, +0.000_m}, {+2.154_m, +0.845_m, +0.000_m}, {+3.145_m, +1.126_m, +0.000_m}};
-	}
-
-	/// The left DSI intake lip.
-	inline constexpr CartesianVector intakeLeft()
-	{
-		return {
-		        {-0.927_m, -1.216_m, +0.000_m}, {-1.135_m, -1.010_m, +0.000_m}, {-2.404_m, -1.010_m, +0.000_m},
-		        {-2.285_m, -1.092_m, +0.000_m}, {-2.206_m, -1.092_m, +0.000_m}, {-2.081_m, -1.174_m, +0.000_m},
-		        {-1.956_m, -1.216_m, +0.000_m}, {-1.837_m, -1.216_m, +0.000_m}, {-1.790_m, -1.257_m, +0.000_m},
-		        {-1.053_m, -1.257_m, +0.000_m}};
-	}
-
-	/// The right DSI intake lip.
-	inline constexpr CartesianVector intakeRight()
-	{
-		return {
-		        {-0.927_m, +1.257_m, +0.000_m}, {-1.093_m, +1.258_m, +0.000_m}, {-1.140_m, +1.298_m, +0.000_m},
-		        {-1.663_m, +1.298_m, +0.000_m}, {-1.710_m, +1.257_m, +0.000_m}, {-1.876_m, +1.256_m, +0.000_m},
-		        {-2.040_m, +1.174_m, +0.000_m}, {-2.245_m, +1.133_m, +0.000_m}, {-2.370_m, +1.051_m, +0.000_m},
-		        {-1.135_m, +1.051_m, +0.000_m}};
-	}
-
-	/// The right wing leading-edge flap: its outboard edge IS the wing leading-edge segment of `outline()` (shared
-	/// vertices, so it can never drift off the wing), closed by a hinge line offset a flap chord inboard.
-	inline constexpr CartesianVector leadingEdgeFlapRight()
-	{
-		return {
-		        {+0.035_m, +2.190_m, +0.000_m}, {-0.391_m, +2.744_m, +0.000_m}, {-0.805_m, +3.401_m, +0.000_m},
-		        {-1.571_m, +4.496_m, +0.000_m}, {-2.165_m, +5.419_m, +0.000_m}, {-2.429_m, +5.239_m, +0.000_m},
-		        {-1.835_m, +4.316_m, +0.000_m}, {-1.069_m, +3.221_m, +0.000_m}, {-0.655_m, +2.564_m, +0.000_m},
-		        {-0.229_m, +2.010_m, +0.000_m}};
-	}
-
-	/// The left wing leading-edge flap (the y-mirror of the right).
-	inline constexpr CartesianVector leadingEdgeFlapLeft()
-	{
-		return {
-		        {+0.035_m, -2.190_m, +0.000_m}, {-0.391_m, -2.744_m, +0.000_m}, {-0.805_m, -3.401_m, +0.000_m},
-		        {-1.571_m, -4.496_m, +0.000_m}, {-2.165_m, -5.419_m, +0.000_m}, {-2.429_m, -5.239_m, +0.000_m},
-		        {-1.835_m, -4.316_m, +0.000_m}, {-1.069_m, -3.221_m, +0.000_m}, {-0.655_m, -2.564_m, +0.000_m},
-		        {-0.229_m, -2.010_m, +0.000_m}};
-	}
-
-	/// The left engine exhaust nozzle.
-	inline constexpr CartesianVector nozzleLeft()
-	{
-		return {
-		        {-5.460_m, -2.246_m, +0.000_m}, {-5.685_m, -2.328_m, +0.000_m}, {-6.807_m, -2.287_m, +0.000_m},
-		        {-7.107_m, -2.204_m, +0.000_m}, {-6.333_m, -1.635_m, +0.000_m}, {-6.531_m, -0.895_m, +0.000_m},
-		        {-7.196_m, -1.010_m, +0.000_m}, {-7.800_m, -1.051_m, +0.000_m}, {-7.438_m, -2.468_m, +0.000_m},
-		        {-7.273_m, -3.228_m, +0.000_m}, {-7.138_m, -3.606_m, +0.000_m}, {-6.292_m, -3.606_m, +0.000_m}};
-	}
-
-	/// The right engine exhaust nozzle.
-	inline constexpr CartesianVector nozzleRight()
-	{
-		return {
-		        {-5.460_m, +2.246_m, +0.000_m}, {-6.125_m, +3.364_m, +0.000_m}, {-6.347_m, +3.647_m, +0.000_m},
-		        {-7.147_m, +3.647_m, +0.000_m}, {-7.397_m, +2.617_m, +0.000_m}, {-7.767_m, +1.299_m, +0.000_m},
-		        {-7.790_m, +1.051_m, +0.000_m}, {-6.491_m, +0.968_m, +0.000_m}, {-6.329_m, +1.624_m, +0.000_m},
-		        {-7.099_m, +2.237_m, +0.000_m}, {-6.432_m, +2.328_m, +0.000_m}, {-5.606_m, +2.328_m, +0.000_m}};
-	}
-
-	/// The sawtooth exhaust lip between the nozzles.
-	inline constexpr CartesianVector exhaust()
-	{
-		return {
-		        {-5.584_m, -0.350_m, +0.000_m}, {-5.702_m, -0.139_m, +0.000_m}, {-5.585_m, -0.061_m, +0.000_m},
-		        {-5.592_m, +0.094_m, +0.000_m}, {-5.666_m, +0.184_m, +0.000_m}, {-5.586_m, +0.389_m, +0.000_m},
-		        {-5.665_m, +0.432_m, +0.000_m}, {-5.668_m, +0.598_m, +0.000_m}, {-6.202_m, +0.345_m, +0.000_m},
-		        {-6.202_m, -0.297_m, +0.000_m}, {-5.660_m, -0.592_m, +0.000_m}, {-5.703_m, -0.429_m, +0.000_m}};
-	}
-
-	/// The left vertical stabilizer: a swept fin on the boom, root at z=0, tip raked aft and lifted, canted outboard.
+	/// The left vertical stabilizer: a basic swept fin, root chord on the boom at z=0, tip chord raked aft, canted
+	/// outboard and lifted up (-z) so the fin stands out of the planform and tilts correctly under roll.
 	inline constexpr CartesianVector finLeft()
 	{
 		return {
@@ -195,27 +107,11 @@ namespace f35
 		        {-6.644_m, +1.639_m, -0.705_m}, {-6.700_m, +1.420_m, -0.000_m}};
 	}
 
-	/// The left fin's trailing-edge rudder hinge line, on the fin surface.
-	inline constexpr CartesianVector rudderLeft()
-	{
-		return {
-		        {-6.196_m, -1.464_m, -0.141_m}, {-6.308_m, -2.150_m, -2.350_m}, {-6.308_m, -2.150_m, -2.350_m},
-		        {-6.644_m, -1.639_m, -0.705_m}, {-6.700_m, -1.420_m, -0.000_m}, {-6.644_m, -1.464_m, -0.141_m}};
-	}
-
-	/// The right fin's trailing-edge rudder hinge line, on the fin surface.
-	inline constexpr CartesianVector rudderRight()
-	{
-		return {
-		        {-6.196_m, +1.464_m, -0.141_m}, {-6.308_m, +2.150_m, -2.350_m}, {-6.308_m, +2.150_m, -2.350_m},
-		        {-6.644_m, +1.639_m, -0.705_m}, {-6.700_m, +1.420_m, -0.000_m}, {-6.644_m, +1.464_m, -0.141_m}};
-	}
-
 	/// Every planform part, in draw order -- the single list both the runtime attach and the compile-time build
-	/// iterate, so a part is added in exactly one place.
-	inline const std::array<CartesianVector, 15>& parts()
+	/// iterate, so a part is added in exactly one place. The simple airplane: outline, canopy, and z-aware vstabs.
+	inline const std::array<CartesianVector, 4>& parts()
 	{
-		static const std::array<CartesianVector, 15> tables{outline(), canopy(), lerxLeft(), lerxRight(), intakeLeft(), intakeRight(), leadingEdgeFlapLeft(), leadingEdgeFlapRight(), nozzleLeft(), nozzleRight(), exhaust(), finLeft(), finRight(), rudderLeft(), rudderRight()};
+		static const std::array<CartesianVector, 4> tables{outline(), canopy(), finLeft(), finRight()};
 		return tables;
 	}
 
@@ -223,7 +119,7 @@ namespace f35
 	/// vertex array (so the capacity is DERIVED from the data, never a hand-picked number).
 	inline constexpr std::size_t vertexCount()
 	{
-		return outline().size() + canopy().size() + lerxLeft().size() + lerxRight().size() + intakeLeft().size() + intakeRight().size() + leadingEdgeFlapLeft().size() + leadingEdgeFlapRight().size() + nozzleLeft().size() + nozzleRight().size() + exhaust().size() + finLeft().size() + finRight().size() + rudderLeft().size() + rudderRight().size();
+		return outline().size() + canopy().size() + finLeft().size() + finRight().size();
 	}
 
 	/// Draw the whole F-35 at the given attitude onto a view -- every planform part posed and stroked (black by
@@ -257,19 +153,8 @@ namespace f35
 		Entity<Datum> airframe(position, pose);
 		airframe.attach(outline());
 		airframe.attach(canopy());
-		airframe.attach(lerxLeft());
-		airframe.attach(lerxRight());
-		airframe.attach(intakeLeft());
-		airframe.attach(intakeRight());
-		airframe.attach(leadingEdgeFlapLeft());
-		airframe.attach(leadingEdgeFlapRight());
-		airframe.attach(nozzleLeft());
-		airframe.attach(nozzleRight());
-		airframe.attach(exhaust());
 		airframe.attach(finLeft());
 		airframe.attach(finRight());
-		airframe.attach(rudderLeft());
-		airframe.attach(rudderRight());
 
 		std::array<CartesianTuple, vertexCount()> vertices{};
 		const auto&                               children = airframe.children();
