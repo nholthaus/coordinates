@@ -95,13 +95,13 @@ namespace f35
 	/// edge rake, trailing edge, taper) traced from the side view. Vertices: root-LE, tip-LE, tip-TE, root-TE.
 	inline constexpr CartesianVector finLeft()
 	{
-		return {{-4.624_m, -1.420_m, +0.000_m}, {-6.588_m, -2.150_m, -1.922_m}, {-7.856_m, -2.150_m, -1.922_m}, {-7.201_m, -1.420_m, +0.000_m}};
+		return {{-3.730_m, -1.440_m, +0.000_m}, {-5.880_m, -1.170_m, -1.920_m}, {-6.920_m, -2.100_m, -1.920_m}, {-5.920_m, -2.270_m, +0.000_m}};
 	}
 
 	/// The right vertical stabilizer (the y-mirror of the left).
 	inline constexpr CartesianVector finRight()
 	{
-		return {{-4.624_m, +1.420_m, +0.000_m}, {-6.588_m, +2.150_m, -1.922_m}, {-7.856_m, +2.150_m, -1.922_m}, {-7.201_m, +1.420_m, +0.000_m}};
+		return {{-3.730_m, +1.440_m, +0.000_m}, {-5.880_m, +1.170_m, -1.920_m}, {-6.920_m, +2.100_m, -1.920_m}, {-5.920_m, +2.270_m, +0.000_m}};
 	}
 
 	/// The fraction of the fin chord occupied by the rudder (the aft strip), measured from the side view.
