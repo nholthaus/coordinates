@@ -169,6 +169,17 @@ namespace f35
 		return flaps;
 	}
 
+	/// The trailing-edge flaperons, one per wing, on the outline's wing-TE segments (right wing TE is
+	/// outline[23]->[24], left wing TE is outline[4]->[5]). Chord and span measured from the reference.
+	inline const std::array<Flap, 2>& trailingEdgeFlaps()
+	{
+		static const std::array<Flap, 2> flaps{{
+		        {23, 24, 0.08, 0.90, 0.55_m},    // right wing
+		        {4, 5, 0.10, 0.92, 0.55_m},      // left wing
+		}};
+		return flaps;
+	}
+
 	/// Every planform part, in draw order -- the single list both the runtime attach and the compile-time build
 	/// iterate, so a part is added in exactly one place. The simple airplane: outline, canopy, and z-aware vstabs.
 	inline const std::array<CartesianVector, 4>& parts()
@@ -198,26 +209,32 @@ namespace f35
 	/// segment and `Flap` the panel uses, so the two always share the hinge exactly.
 	inline CartesianVector articulatedOutline()
 	{
-		const auto&     o = outline();
+		const auto& o = outline();
+
+		// Carve one flap's notch into the body where it sits on the segment o[i]->o[next]: run out to the flap's
+		// inset start, in to the hinge, along the hinge, back out to the inset end. Shared with the panel, so the
+		// body edge and the flap's hinge coincide exactly.
+		const auto carve = [&](CartesianVector& body, std::size_t i, std::size_t next, const Flap& flap) {
+			if (flap.edgeStart != i || flap.edgeEnd != next)
+				return;
+			const CartesianTuple a     = o[i] + (o[next] - o[i]) * flap.spanStart;
+			const CartesianTuple b     = o[i] + (o[next] - o[i]) * flap.spanEnd;
+			const auto           hinge = flapHinge(flap);
+			body.push_back(a);
+			body.push_back(hinge[0]);
+			body.push_back(hinge[1]);
+			body.push_back(b);
+		};
+
 		CartesianVector body;
 		for (std::size_t i = 0; i < o.size(); ++i)
 		{
 			body.push_back(o[i]);
 			const std::size_t next = (i + 1) % o.size();
-			// If a flap sits on the segment o[i]->o[next] (in that orientation), carve its notch: run out to the
-			// flap's inset start, in to the hinge, along the hinge, back out to the inset end, then on to o[next].
 			for (const Flap& flap : leadingEdgeFlaps())
-			{
-				if (flap.edgeStart != i || flap.edgeEnd != next)
-					continue;
-				const CartesianTuple a     = o[i] + (o[next] - o[i]) * flap.spanStart;
-				const CartesianTuple b     = o[i] + (o[next] - o[i]) * flap.spanEnd;
-				const auto           hinge = flapHinge(flap);
-				body.push_back(a);
-				body.push_back(hinge[0]);
-				body.push_back(hinge[1]);
-				body.push_back(b);
-			}
+				carve(body, i, next, flap);
+			for (const Flap& flap : trailingEdgeFlaps())
+				carve(body, i, next, flap);
 		}
 		return body;
 	}
@@ -245,13 +262,15 @@ namespace f35
 	/// The commanded deflection of each control-surface family (right-hand about each hinge axis, free edge down).
 	struct Deflections
 	{
-		radians<> leadingEdgeRight{0.0};    ///< right wing leading-edge flap
-		radians<> leadingEdgeLeft{0.0};     ///< left wing leading-edge flap
+		radians<> leadingEdgeRight{0.0};     ///< right wing leading-edge flap
+		radians<> leadingEdgeLeft{0.0};      ///< left wing leading-edge flap
+		radians<> trailingEdgeRight{0.0};    ///< right wing trailing-edge flaperon
+		radians<> trailingEdgeLeft{0.0};     ///< left wing trailing-edge flaperon
 	};
 
-	/// Draw the ARTICULATED airplane: the flap-cut body outline, canopy, vstabs, and each leading-edge flap
-	/// deflected about its hinge by the commanded angle. The flaps are posed through the airframe attitude like
-	/// every other loop, so they foreshorten and tilt with the maneuver.
+	/// Draw the ARTICULATED airplane: the flap-cut body outline, canopy, vstabs, and each control surface deflected
+	/// about its hinge by the commanded angle. The surfaces are posed through the airframe attitude like every other
+	/// loop, so they foreshorten and tilt with the maneuver.
 	inline void articulated(topography::View& view, const Pose& attitude, const Deflections& deflections, topography::Color color = {})
 	{
 		topography::drawPolyline(view, attitude, articulatedOutline(), color);
@@ -259,9 +278,12 @@ namespace f35
 		topography::drawPolyline(view, attitude, finLeft(), color);
 		topography::drawPolyline(view, attitude, finRight(), color);
 
-		const auto& flaps = leadingEdgeFlaps();    // [0] = right wing, [1] = left wing
-		topography::drawPolyline(view, attitude, deflectFlap(flaps[0], deflections.leadingEdgeRight), color);
-		topography::drawPolyline(view, attitude, deflectFlap(flaps[1], deflections.leadingEdgeLeft), color);
+		const auto& le = leadingEdgeFlaps();     // [0] = right wing, [1] = left wing
+		const auto& te = trailingEdgeFlaps();
+		topography::drawPolyline(view, attitude, deflectFlap(le[0], deflections.leadingEdgeRight), color);
+		topography::drawPolyline(view, attitude, deflectFlap(le[1], deflections.leadingEdgeLeft), color);
+		topography::drawPolyline(view, attitude, deflectFlap(te[0], deflections.trailingEdgeRight), color);
+		topography::drawPolyline(view, attitude, deflectFlap(te[1], deflections.trailingEdgeLeft), color);
 	}
 
 	//----------------------------------------------------------------------------------------------------------------------

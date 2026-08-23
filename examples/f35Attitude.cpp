@@ -110,10 +110,15 @@ static void drawAirshow(View& view, turns<> phase, bool articulated)
 		return;
 	}
 
-	// Drive the leading-edge flaps from the maneuver's roll: the wings deflect differentially (one leading edge
-	// down, the other up) proportional to the roll command, so the surfaces lead the roll like an airshow demo.
+	// Drive the control surfaces from the maneuver's roll: the wings deflect differentially (one side's edge down,
+	// the other up) proportional to the roll command. Flaperons roll the aircraft, leading-edge flaps lead the
+	// same roll, so the surfaces move together like an airshow demo -- all from the single maneuver source.
 	const radians<> roll = airshowAttitude(phase).roll();
-	f35::articulated(view, attitude, {.leadingEdgeRight = 0.4 * roll, .leadingEdgeLeft = -0.4 * roll});
+	f35::articulated(view, attitude,
+	                 {.leadingEdgeRight  = 0.4 * roll,
+	                  .leadingEdgeLeft   = -0.4 * roll,
+	                  .trailingEdgeRight = 0.6 * roll,
+	                  .trailingEdgeLeft  = -0.6 * roll});
 }
 
 //----------------------------------------------------------------------------------------------------------------------
