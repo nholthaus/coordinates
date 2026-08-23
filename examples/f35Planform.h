@@ -542,9 +542,11 @@ namespace f35
 	/// Draw the DETAILED airplane: the simple airplane plus every interior detail line -- the intakes, fuselage
 	/// seams, weapons-bay and boom panels, engine-face hatching, wing dashes, and canopy framing. The detail is
 	/// fixed structure that sits clear of the control-surface edges, so it draws only here, not on the simple jet.
-	inline void detailed(topography::View& view, const Pose& attitude, topography::Color color = {})
+	/// Draw every interior detail line at the given attitude -- the intakes, fuselage seams, weapons-bay and boom
+	/// panels, engine-face hatching, wing dashes, and canopy framing. Shared by the detailed and articulated jets
+	/// (the detail is fixed structure clear of the control-surface edges), so it is authored in exactly one place.
+	inline void drawInteriorDetail(topography::View& view, const Pose& attitude, topography::Color color = {})
 	{
-		simple(view, attitude, color);
 		const CartesianVector closed[] = {intakeUpper(), intakeLower(), intakeUpperOuter(), intakeLowerOuter(),
 		                                  weaponsBox(), spineReceptacle(), hexPanel(), roundPort(), vstabFairingUpper()};
 		for (const CartesianVector& part : closed)
@@ -562,6 +564,12 @@ namespace f35
 		                                windscreenBow(), canopyAftFrame()};
 		for (const CartesianVector& seam : open)
 			drawOpen(seam);
+	}
+
+	inline void detailed(topography::View& view, const Pose& attitude, topography::Color color = {})
+	{
+		simple(view, attitude, color);
+		drawInteriorDetail(view, attitude, color);
 	}
 
 	/// A flap panel deflected about its hinge by `angle` -- rotate every panel vertex about the hinge axis through
@@ -611,6 +619,8 @@ namespace f35
 		topography::drawPolyline(view, attitude, deflectRudder(finLeft(), deflections.rudderLeft), color);
 		topography::drawPolyline(view, attitude, deflectTaileron(taileronRight(), deflections.taileronRight), color);
 		topography::drawPolyline(view, attitude, deflectTaileron(taileronLeft(), deflections.taileronLeft), color);
+
+		drawInteriorDetail(view, attitude, color);    // interior panel lines (fixed structure, clear of the surfaces)
 	}
 
 	//----------------------------------------------------------------------------------------------------------------------
