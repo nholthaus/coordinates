@@ -167,17 +167,19 @@ namespace
 		// If the constructor and destructor are not enough for setting up
 		// and cleaning up each test, you can define the following methods:
 
+		// The tile manager is a process-wide singleton, so a prior test's loaded tiles and altered tile limit
+		// would leak into this one (numLoadedTiles / isLoaded / tileLimit expectations are order-dependent
+		// otherwise). Restore the manager to its default state before each test: shrink the cache to zero to
+		// evict every loaded tile, then set the limit back to its default (the whole-planet tile count). Each
+		// test then starts from a clean, zero-loaded manager at the default limit regardless of run order.
 		void SetUp() override
 		{
-			// Code here will be called immediately after the constructor (right
-			// before each test).
+			DTEDTileManager& manager = DTEDTileManager::instance();
+			manager.setTileLimit(0);
+			manager.setTileLimit(manager.maxNumTiles());
 		}
 
-		void TearDown() override
-		{
-			// Code here will be called immediately after each test (right
-			// before the destructor).
-		}
+		void TearDown() override {}
 	};
 
 	class DTEDTest : public ::testing::Test
