@@ -59,11 +59,34 @@ inline namespace coordinates
 		{
 		public:
 			Image() = default;
-			Image(int rows, int columns) : m_rows(rows), m_columns(columns), m_rgb(static_cast<std::size_t>(rows) * columns * 3, 0) {}
+
+			/// A `rows` x `columns` image filled with `background` (default white -- a blank canvas).
+			Image(int rows, int columns, Color background = {255, 255, 255}) : m_rows(rows), m_columns(columns), m_rgb(static_cast<std::size_t>(rows) * columns * 3)
+			{
+				fill(background);
+			}
+
+			/// An image sized to a camera's view (anything with `.height()`/`.width()`), filled with `background`.
+			template<class Camera>
+			    requires requires(const Camera& c) { c.height(); c.width(); }
+			explicit Image(const Camera& camera, Color background = {255, 255, 255}) : Image(camera.height(), camera.width(), background)
+			{
+			}
 
 			[[nodiscard]] int                             rows() const { return m_rows; }
 			[[nodiscard]] int                             columns() const { return m_columns; }
 			[[nodiscard]] const std::vector<std::uint8_t>& rgb() const { return m_rgb; }
+
+			/// Fill the whole image with a single color.
+			void fill(Color c)
+			{
+				for (std::size_t i = 0; i < m_rgb.size(); i += 3)
+				{
+					m_rgb[i + 0] = c.r;
+					m_rgb[i + 1] = c.g;
+					m_rgb[i + 2] = c.b;
+				}
+			}
 
 			/// Set a single pixel (clipped).
 			void plot(Pixel p, Color c)

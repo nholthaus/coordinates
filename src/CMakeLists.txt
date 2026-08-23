@@ -2,7 +2,7 @@ add_library(coordinates)
 
 add_library(coordinates::coordinates ALIAS coordinates)
 
-target_compile_features(coordinates PUBLIC cxx_std_23)
+target_compile_features(coordinates PUBLIC cxx_std_26)
 set_target_properties(coordinates PROPERTIES
         CXX_EXTENSIONS OFF
         POSITION_INDEPENDENT_CODE ON
@@ -37,6 +37,8 @@ set(PUBLIC_HEADERS
         dtedTileManager.h
         bodyFrame.h
         camera.h
+        view.h
+        wireframe.h
         color.h
         ellipsoid.h
         frameAxes.h

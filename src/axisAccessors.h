@@ -94,16 +94,16 @@ inline namespace coordinates
 			template<std::size_t I>
 			using slot_type = std::tuple_element_t<I, Tuple>;
 
-			[[nodiscard]] const Derived& self() const { return static_cast<const Derived&>(*this); }
+			[[nodiscard]] constexpr const Derived& self() const { return static_cast<const Derived&>(*this); }
 
 			template<std::size_t I>
-			[[nodiscard]] slot_type<I> slot() const
+			[[nodiscard]] constexpr slot_type<I> slot() const
 			{
 				return std::get<I>(self().point());
 			}
 
 			template<std::size_t I, class Value>
-			void setSlot(const Value& value)
+			constexpr void setSlot(const Value& value)
 			{
 				auto point         = static_cast<Derived&>(*this).point();
 				std::get<I>(point) = value;
@@ -118,21 +118,21 @@ inline namespace coordinates
 		struct AxisAccessors<coordinateFrames::ECEFFrame<HorizontalDatum>, Derived, Tuple> : AxisAccessorBase<Derived, Tuple>
 		{
 			using base = AxisAccessorBase<Derived, Tuple>;
-			[[nodiscard]] auto x() const { return base::template slot<0>(); }
-			[[nodiscard]] auto y() const { return base::template slot<1>(); }
-			[[nodiscard]] auto z() const { return base::template slot<2>(); }
-			void               setX(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
-			void               setY(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
-			void               setZ(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
+			[[nodiscard]] constexpr auto x() const { return base::template slot<0>(); }
+			[[nodiscard]] constexpr auto y() const { return base::template slot<1>(); }
+			[[nodiscard]] constexpr auto z() const { return base::template slot<2>(); }
+			constexpr void               setX(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
+			constexpr void               setY(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
+			constexpr void               setZ(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
 
 			/// Intersect a ray from this point (direction in ECEF, need not be normalized) with the datum's
 			/// reference ellipsoid.
-			[[nodiscard]] Intersection<HorizontalDatum> intersectRay(const CartesianTuple& directionECEF) const
-			{ return coordinates::intersectEllipsoid(base::self(), directionECEF); }
+			[[nodiscard]] constexpr Intersection<HorizontalDatum> intersectRay(const CartesianTuple& directionECEF) const
+			{ return intersectEllipsoid(base::self(), directionECEF); }
 
 			/// Ellipsoid-only line-of-sight to another ECEF point (terrain not considered).
-			[[nodiscard]] bool hasLineOfSightTo(const Derived& target) const
-			{ return coordinates::isLineOfSight(base::self(), target); }
+			[[nodiscard]] constexpr bool hasLineOfSightTo(const Derived& target) const
+			{ return isLineOfSight(base::self(), target); }
 		};
 
 		//------------------------------------------------------------------------------------------------------
@@ -143,14 +143,14 @@ inline namespace coordinates
 		{
 			using base = AxisAccessorBase<Derived, Tuple>;
 
-			[[nodiscard]] angles::Latitude  latitude() const { return angles::Latitude(base::template slot<0>()); }
-			[[nodiscard]] angles::Latitude  geodeticLatitude() const { return angles::Latitude(base::template slot<0>()); }
-			[[nodiscard]] angles::Longitude longitude() const { return angles::Longitude(base::template slot<1>()); }
-			[[nodiscard]] heights::kind_for<Datum> altitude() const { return heights::kind_for<Datum>(base::template slot<2>()); }
+			[[nodiscard]] constexpr angles::Latitude  latitude() const { return angles::Latitude(base::template slot<0>()); }
+			[[nodiscard]] constexpr angles::Latitude  geodeticLatitude() const { return angles::Latitude(base::template slot<0>()); }
+			[[nodiscard]] constexpr angles::Longitude longitude() const { return angles::Longitude(base::template slot<1>()); }
+			[[nodiscard]] constexpr heights::kind_for<Datum> altitude() const { return heights::kind_for<Datum>(base::template slot<2>()); }
 
-			void setLatitude(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
-			void setLongitude(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
-			void setAltitude(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
+			constexpr void setLatitude(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
+			constexpr void setLongitude(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
+			constexpr void setAltitude(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
 
 			/// This point's geocentric latitude, via the datum's reference ellipsoid.
 			[[nodiscard]] angles::Geocentric geocentricLatitude() const
@@ -161,14 +161,14 @@ inline namespace coordinates
 			/// This point's height above the ellipsoid (HAE), converting from the datum's vertical reference.
 			[[nodiscard]] heights::Ellipsoidal toEllipsoidHeight() const
 			{
-				return coordinates::convertToEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(
+				return convertToEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(
 				        base::template slot<0>(), base::template slot<1>(), base::template slot<2>());
 			}
 
 			/// This point's height above the geoid (MSL), converting from the datum's vertical reference.
 			[[nodiscard]] heights::Orthometric toOrthometricHeight() const
 			{
-				return coordinates::convertFromEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(
+				return convertFromEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(
 				        base::template slot<0>(), base::template slot<1>(), toEllipsoidHeight());
 			}
 
@@ -178,41 +178,41 @@ inline namespace coordinates
 
 			/// Inverse geodesic solution (distance + both bearings) to another geodetic point.
 			[[nodiscard]] GeodesicInverseResult inverseTo(const Derived& other) const
-			{ return coordinates::geodesicInverse(base::self(), other); }
+			{ return geodesicInverse(base::self(), other); }
 
 			/// Geodesic (great-circle surface) distance to another geodetic point.
 			[[nodiscard]] ranges::Geodesic distanceTo(const Derived& other) const
-			{ return ranges::Geodesic(coordinates::geodesicDistance(base::self(), other)); }
+			{ return ranges::Geodesic(geodesicDistance(base::self(), other)); }
 
 			/// Uniform-named companion to `distanceTo`: the geodesic surface distance.
 			[[nodiscard]] ranges::Geodesic geodesicDistanceTo(const Derived& other) const
-			{ return ranges::Geodesic(coordinates::geodesicDistance(base::self(), other)); }
+			{ return ranges::Geodesic(geodesicDistance(base::self(), other)); }
 
 			/// Initial bearing (forward azimuth) to another geodetic point, normalized to [0, 360).
 			[[nodiscard]] angles::Azimuth initialBearingTo(const Derived& other) const
-			{ return angles::Azimuth(coordinates::initialBearing(base::self(), other)); }
+			{ return angles::Azimuth(initialBearing(base::self(), other)); }
 
 			/// Final bearing at the destination point, normalized to [0, 360).
 			[[nodiscard]] angles::Azimuth finalBearingTo(const Derived& other) const
-			{ return angles::Azimuth(coordinates::finalBearing(base::self(), other)); }
+			{ return angles::Azimuth(finalBearing(base::self(), other)); }
 
 			/// The common bearing to another geodetic point (its initial bearing).
 			[[nodiscard]] angles::Azimuth bearingTo(const Derived& other) const
-			{ return angles::Azimuth(coordinates::initialBearing(base::self(), other)); }
+			{ return angles::Azimuth(initialBearing(base::self(), other)); }
 
 			/// Destination point reached from this point along an initial bearing over a surface distance.
 			[[nodiscard]] GeodesicDirectResult<Derived> destination(degrees<> azimuth, meters<> distance) const
-			{ return coordinates::geodesicDirect(base::self(), azimuth, distance); }
+			{ return geodesicDirect(base::self(), azimuth, distance); }
 
 			/// Straight-line (Euclidean) distance from this point to any other point.
 			template<traits::is_point Point>
 			[[nodiscard]] ranges::Euclidean euclideanDistanceTo(const Point& other) const
-			{ return ranges::Euclidean(coordinates::distance(base::self(), other)); }
+			{ return ranges::Euclidean(distance(base::self(), other)); }
 
 			/// Slant range to a target: a straight-line distance through 3-space, so a `ranges::Euclidean`.
 			template<traits::is_point Point>
 			[[nodiscard]] ranges::Euclidean slantRangeTo(const Point& other) const
-			{ return ranges::Euclidean(coordinates::distance(base::self(), other)); }
+			{ return ranges::Euclidean(distance(base::self(), other)); }
 		};
 
 		//------------------------------------------------------------------------------------------------------
@@ -222,12 +222,12 @@ inline namespace coordinates
 		struct AxisAccessors<coordinateFrames::ENUFrame<HorizontalDatum>, Derived, Tuple> : AxisAccessorBase<Derived, Tuple>
 		{
 			using base = AxisAccessorBase<Derived, Tuple>;
-			[[nodiscard]] auto east() const { return base::template slot<0>(); }
-			[[nodiscard]] auto north() const { return base::template slot<1>(); }
-			[[nodiscard]] auto up() const { return base::template slot<2>(); }
-			void               setEast(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
-			void               setNorth(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
-			void               setUp(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
+			[[nodiscard]] constexpr auto east() const { return base::template slot<0>(); }
+			[[nodiscard]] constexpr auto north() const { return base::template slot<1>(); }
+			[[nodiscard]] constexpr auto up() const { return base::template slot<2>(); }
+			constexpr void               setEast(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
+			constexpr void               setNorth(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
+			constexpr void               setUp(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
 		};
 
 		//------------------------------------------------------------------------------------------------------
@@ -237,12 +237,12 @@ inline namespace coordinates
 		struct AxisAccessors<coordinateFrames::NEDFrame<HorizontalDatum>, Derived, Tuple> : AxisAccessorBase<Derived, Tuple>
 		{
 			using base = AxisAccessorBase<Derived, Tuple>;
-			[[nodiscard]] auto north() const { return base::template slot<0>(); }
-			[[nodiscard]] auto east() const { return base::template slot<1>(); }
-			[[nodiscard]] auto down() const { return base::template slot<2>(); }
-			void               setNorth(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
-			void               setEast(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
-			void               setDown(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
+			[[nodiscard]] constexpr auto north() const { return base::template slot<0>(); }
+			[[nodiscard]] constexpr auto east() const { return base::template slot<1>(); }
+			[[nodiscard]] constexpr auto down() const { return base::template slot<2>(); }
+			constexpr void               setNorth(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
+			constexpr void               setEast(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
+			constexpr void               setDown(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
 		};
 
 		//------------------------------------------------------------------------------------------------------
@@ -252,12 +252,12 @@ inline namespace coordinates
 		struct AxisAccessors<coordinateFrames::AERFrame<HorizontalDatum>, Derived, Tuple> : AxisAccessorBase<Derived, Tuple>
 		{
 			using base = AxisAccessorBase<Derived, Tuple>;
-			[[nodiscard]] angles::Azimuth   azimuth() const { return angles::Azimuth(base::template slot<0>()); }
-			[[nodiscard]] angles::Elevation elevation() const { return angles::Elevation(base::template slot<1>()); }
-			[[nodiscard]] ranges::Euclidean range() const { return ranges::Euclidean(base::template slot<2>()); }
-			void setAzimuth(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
-			void setElevation(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
-			void setRange(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
+			[[nodiscard]] constexpr angles::Azimuth   azimuth() const { return angles::Azimuth(base::template slot<0>()); }
+			[[nodiscard]] constexpr angles::Elevation elevation() const { return angles::Elevation(base::template slot<1>()); }
+			[[nodiscard]] constexpr ranges::Euclidean range() const { return ranges::Euclidean(base::template slot<2>()); }
+			constexpr void setAzimuth(typename base::template slot_type<0> v) { base::template setSlot<0>(v); }
+			constexpr void setElevation(typename base::template slot_type<1> v) { base::template setSlot<1>(v); }
+			constexpr void setRange(typename base::template slot_type<2> v) { base::template setSlot<2>(v); }
 
 			/// Look angles (azimuth, elevation, range) of a target as seen from an observer. Azimuth/elevation/
 			/// range are inherently observer-relative, so this makes the observer explicit: it builds the AER

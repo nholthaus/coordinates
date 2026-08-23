@@ -140,10 +140,10 @@ inline namespace coordinates
 		years<>          date;           ///< Date of observation.
 	};
 
-	inline bool operator==(const FrameData& lhs, const FrameData& rhs)
+	constexpr bool operator==(const FrameData& lhs, const FrameData& rhs)
 	{ return (lhs.origin == rhs.origin && lhs.orientation == rhs.orientation && lhs.date == rhs.date); }
 
-	inline bool operator!=(const FrameData& lhs, const FrameData& rhs)
+	constexpr bool operator!=(const FrameData& lhs, const FrameData& rhs)
 	{ return !(lhs == rhs); }
 
 	inline std::ostream& operator<<(std::ostream& os, const FrameData& f)
@@ -225,10 +225,10 @@ inline namespace coordinates
 			{
 				if (f.date != 0_yr)
 				{
-					return coordinates::inversePositionVectorTransform<HorizontalDatum>(p, f.date);
+					return inversePositionVectorTransform<HorizontalDatum>(p, f.date);
 				}
 				else
-					return coordinates::inversePositionVectorTransform<HorizontalDatum>(p);
+					return inversePositionVectorTransform<HorizontalDatum>(p);
 			}
 
 			/**
@@ -245,10 +245,10 @@ inline namespace coordinates
 			{
 				if (f.date != 0_yr)
 				{
-					return coordinates::positionVectorTransform<HorizontalDatum>(p, f.date);
+					return positionVectorTransform<HorizontalDatum>(p, f.date);
 				}
 
-				return coordinates::positionVectorTransform<HorizontalDatum>(p);
+				return positionVectorTransform<HorizontalDatum>(p);
 			}
 		};
 
@@ -348,7 +348,7 @@ inline namespace coordinates
 				auto lambda(std::get<1>(point));    // longitude
 				auto h(std::get<2>(point));         // height
 
-				h = coordinates::convertToEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h).template to<meters<>>();
+				h = convertToEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h).template to<meters<>>();
 
 				return base_tuple_type(phi, lambda, h);
 			}
@@ -360,7 +360,7 @@ inline namespace coordinates
 				auto lambda(std::get<1>(point));    // longitude
 				auto h(std::get<2>(point));         // height
 
-				h = coordinates::convertFromEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h).template to<meters<>>();
+				h = convertFromEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h).template to<meters<>>();
 
 				return tuple_type(phi, lambda, h);
 			}

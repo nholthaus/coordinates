@@ -93,7 +93,7 @@ inline namespace coordinates
 		//////////////////////////////////////////////////////////////////////////
 
 		/// Default: the zero point at the datum epoch.
-		Coordinate()
+		constexpr Coordinate()
 		    : m_point{}
 		    , m_frameData(datum_type::epoch())
 		{
@@ -110,7 +110,7 @@ inline namespace coordinates
 		              || (sizeof...(Rest) + 1 == std::tuple_size_v<Tuple> + 1
 		                  && std::same_as<std::remove_cvref_t<std::tuple_element_t<sizeof...(Rest), std::tuple<First, Rest...>>>, years<>>))
 		             && std::convertible_to<First, std::tuple_element_t<0, Tuple>>)
-		explicit Coordinate(First first, Rest... rest)
+		explicit constexpr Coordinate(First first, Rest... rest)
 		{
 			auto packed = std::forward_as_tuple(std::move(first), std::move(rest)...);
 			if constexpr (sizeof...(Rest) + 1 == std::tuple_size_v<Tuple>)
@@ -126,7 +126,7 @@ inline namespace coordinates
 		}
 
 		/// From a tuple value at an optional observation date.
-		explicit Coordinate(const Tuple& point, years<> dateOfObservation = datum_type::epoch())
+		explicit constexpr Coordinate(const Tuple& point, years<> dateOfObservation = datum_type::epoch())
 		    : m_point(point)
 		    , m_frameData(dateOfObservation)
 		{
@@ -151,7 +151,7 @@ inline namespace coordinates
 		/// fully-deducible parameters (no pack in a non-deduced position).
 		template<class Frame_ = Frame>
 		    requires(traits::is_local_frame<Frame_>)
-		Coordinate(slot_type<0> c0, slot_type<1> c1, slot_type<2> c2, degrees<> latitude0, degrees<> longitude0, meters<> altitude0, years<> dateOfObservation = datum_type::epoch())
+		constexpr Coordinate(slot_type<0> c0, slot_type<1> c1, slot_type<2> c2, degrees<> latitude0, degrees<> longitude0, meters<> altitude0, years<> dateOfObservation = datum_type::epoch())
 		    : m_point(c0, c1, c2)
 		    , m_frameData(SphericalTuple(latitude0, longitude0, altitude0), dateOfObservation)
 		{
@@ -160,7 +160,7 @@ inline namespace coordinates
 		/// Local components plus the origin (any point convertible to the geodetic origin) and an optional date.
 		template<traits::is_point OriginPoint>
 		    requires(traits::is_local_frame<Frame>)
-		Coordinate(slot_type<0> c0, slot_type<1> c1, slot_type<2> c2, const OriginPoint& origin, years<> dateOfObservation = datum_type::epoch())
+		constexpr Coordinate(slot_type<0> c0, slot_type<1> c1, slot_type<2> c2, const OriginPoint& origin, years<> dateOfObservation = datum_type::epoch())
 		    : m_point(c0, c1, c2)
 		    , m_frameData(local_origin_type(origin).point(), dateOfObservation)
 		{
@@ -169,7 +169,7 @@ inline namespace coordinates
 		/// A local coordinate tuple plus the origin (any point convertible to the geodetic origin) and a date.
 		template<traits::is_point OriginPoint>
 		    requires(traits::is_local_frame<Frame>)
-		Coordinate(const Tuple& point, const OriginPoint& origin, years<> dateOfObservation = datum_type::epoch())
+		constexpr Coordinate(const Tuple& point, const OriginPoint& origin, years<> dateOfObservation = datum_type::epoch())
 		    : m_point(point)
 		    , m_frameData(local_origin_type(origin).point(), dateOfObservation)
 		{
@@ -194,21 +194,21 @@ inline namespace coordinates
 		/// while a single argument of any OTHER point type resolves to the converting constructor.
 		template<class Frame_ = Frame>
 		    requires(traits::is_local_frame<Frame_>)
-		explicit Coordinate(const local_origin_type& origin, years<> dateOfObservation = datum_type::epoch())
+		explicit constexpr Coordinate(const local_origin_type& origin, years<> dateOfObservation = datum_type::epoch())
 		    : m_point{}
 		    , m_frameData(origin.point(), dateOfObservation)
 		{
 		}
 
-		Coordinate(const Coordinate&) = default;
-		Coordinate(Coordinate&&)      = default;
-		~Coordinate()                 = default;
+		constexpr Coordinate(const Coordinate&) = default;
+		constexpr Coordinate(Coordinate&&)      = default;
+		constexpr ~Coordinate()                 = default;
 
 		/// Copy assignment. A global frame copies members directly. A local (origin-carrying) frame preserves
 		/// its OWN origin: if the source shares it, this is a plain copy; if it differs, the source is
 		/// re-projected into this coordinate's frame (so `enuAtBoston = enuAtLexington` translates rather than
 		/// silently adopting Lexington). Same behavior the per-class bodies had before the collapse.
-		Coordinate& operator=(const Coordinate& other)
+		constexpr Coordinate& operator=(const Coordinate& other)
 		{
 			if (this == &other)
 				return *this;
@@ -230,7 +230,7 @@ inline namespace coordinates
 			}
 		}
 
-		Coordinate& operator=(Coordinate&& other) noexcept
+		constexpr Coordinate& operator=(Coordinate&& other) noexcept
 		{
 			*this = static_cast<const Coordinate&>(other);
 			return *this;
@@ -288,13 +288,13 @@ inline namespace coordinates
 				using ecef_type = Coordinate<coordinateFrames::ECEFFrame<datum_type>, CartesianTuple>;
 				ecef_type intermediate;
 				intermediate.setFrameData(frame_data_type(m_frameData.date));
-				coordinates::convert(point, intermediate);
-				coordinates::convert(intermediate, *this);
+				convert(point, intermediate);
+				convert(intermediate, *this);
 			}
 			else
 			{
 				m_frameData = point.frameData();
-				coordinates::convert(point, *this);
+				convert(point, *this);
 			}
 			return *this;
 		}
@@ -327,31 +327,31 @@ inline namespace coordinates
 		//		POINT INTERFACE
 		//////////////////////////////////////////////////////////////////////////
 
-		[[nodiscard]] tuple_type      point() const { return m_point; }
-		[[nodiscard]] frame_data_type frameData() const { return m_frameData; }
+		[[nodiscard]] constexpr tuple_type      point() const { return m_point; }
+		[[nodiscard]] constexpr frame_data_type frameData() const { return m_frameData; }
 
-		void setPoint(const tuple_type& point) { m_point = point; }
-		void setPoint(tuple_type&& point) { m_point = std::move(point); }
+		constexpr void setPoint(const tuple_type& point) { m_point = point; }
+		constexpr void setPoint(tuple_type&& point) { m_point = std::move(point); }
 
 		/// Set the point from its individual axis components, converting each into the tuple's stored unit.
 		template<class... Components>
 		    requires(sizeof...(Components) == std::tuple_size_v<Tuple>)
-		void setPoint(Components... components) { m_point = Tuple(std::move(components)...); }
+		constexpr void setPoint(Components... components) { m_point = Tuple(std::move(components)...); }
 
-		void setFrameData(const frame_data_type& frameData) { m_frameData = frameData; }
-		void setFrameData(frame_data_type&& frameData) { m_frameData = std::move(frameData); }
+		constexpr void setFrameData(const frame_data_type& frameData) { m_frameData = frameData; }
+		constexpr void setFrameData(frame_data_type&& frameData) { m_frameData = std::move(frameData); }
 
 		//////////////////////////////////////////////////////////////////////////
 		//		ACCESSORS (frame-agnostic)
 		//////////////////////////////////////////////////////////////////////////
 
 		/// Date of observation (relevant only when converting between datums).
-		[[nodiscard]] years<> date() const { return m_frameData.date; }
+		[[nodiscard]] constexpr years<> date() const { return m_frameData.date; }
 
 		/// The geodetic origin this local (tangent) frame's axes are pinned to.
 		template<class Frame_ = Frame>
 		    requires(traits::is_local_frame<Frame_>)
-		[[nodiscard]] local_origin_type origin() const { return local_origin_type(m_frameData.origin, m_frameData.date); }
+		[[nodiscard]] constexpr local_origin_type origin() const { return local_origin_type(m_frameData.origin, m_frameData.date); }
 
 		/// Move the origin while preserving this point's absolute location (round-trips through ECEF). To move
 		/// the origin WITHOUT altering the local components (a moving platform), set the frame data directly.
@@ -362,9 +362,9 @@ inline namespace coordinates
 			using ecef_type = Coordinate<coordinateFrames::ECEFFrame<datum_type>, CartesianTuple>;
 			ecef_type intermediate;
 			intermediate.setFrameData(m_frameData);
-			coordinates::convert(*this, intermediate);
+			convert(*this, intermediate);
 			m_frameData.origin = origin.point();
-			coordinates::convert(intermediate, *this);
+			convert(intermediate, *this);
 		}
 
 		//////////////////////////////////////////////////////////////////////////
@@ -404,7 +404,7 @@ inline namespace coordinates
 		/// Add a vector's components to this point.
 		template<class Vector>
 		    requires(traits::is_vector<Vector> && requires(const Vector& v) { v.x(); v.y(); v.z(); })
-		Coordinate& operator+=(const Vector& v)
+		constexpr Coordinate& operator+=(const Vector& v)
 		{
 			std::get<0>(m_point) = std::get<0>(m_point) + v.x();
 			std::get<1>(m_point) = std::get<1>(m_point) + v.y();
@@ -415,7 +415,7 @@ inline namespace coordinates
 		/// Subtract a vector's components from this point.
 		template<class Vector>
 		    requires(traits::is_vector<Vector> && requires(const Vector& v) { v.x(); v.y(); v.z(); })
-		Coordinate& operator-=(const Vector& v)
+		constexpr Coordinate& operator-=(const Vector& v)
 		{
 			std::get<0>(m_point) = std::get<0>(m_point) - v.x();
 			std::get<1>(m_point) = std::get<1>(m_point) - v.y();
@@ -429,7 +429,7 @@ inline namespace coordinates
 		    requires(traits::is_local_frame<Frame> && traits::is_vector<Vector>
 		             && std::same_as<typename traits::point_traits<Vector>::reference_frame, Frame>
 		             && requires(const Vector& v) { v.vector(); v.frameData(); })
-		Coordinate& operator+=(const Vector& v)
+		constexpr Coordinate& operator+=(const Vector& v)
 		{
 			assert(m_frameData == v.frameData());
 			if (m_frameData != v.frameData())
@@ -447,7 +447,7 @@ inline namespace coordinates
 		    requires(traits::is_local_frame<Frame> && traits::is_vector<Vector>
 		             && std::same_as<typename traits::point_traits<Vector>::reference_frame, Frame>
 		             && requires(const Vector& v) { v.vector(); v.frameData(); })
-		Coordinate& operator-=(const Vector& v)
+		constexpr Coordinate& operator-=(const Vector& v)
 		{
 			assert(m_frameData == v.frameData());
 			if (m_frameData != v.frameData())
@@ -464,7 +464,7 @@ inline namespace coordinates
 		/// meaningful), then its components are added; for a global frame the components add directly.
 		template<traits::is_point P>
 		    requires(std::same_as<typename traits::point_traits<P>::reference_frame, Frame> && !traits::is_vector<P>)
-		Coordinate& operator+=(const P& p)
+		constexpr Coordinate& operator+=(const P& p)
 		{
 			const auto o = sameFrameComponents(p);
 			std::get<0>(m_point) = std::get<0>(m_point) + std::get<0>(o);
@@ -476,7 +476,7 @@ inline namespace coordinates
 		/// Subtract another same-frame point's components (re-projected into this origin for a local frame).
 		template<traits::is_point P>
 		    requires(std::same_as<typename traits::point_traits<P>::reference_frame, Frame> && !traits::is_vector<P>)
-		Coordinate& operator-=(const P& p)
+		constexpr Coordinate& operator-=(const P& p)
 		{
 			const auto o = sameFrameComponents(p);
 			std::get<0>(m_point) = std::get<0>(m_point) - std::get<0>(o);
@@ -486,7 +486,7 @@ inline namespace coordinates
 		}
 
 		/// Scale each component.
-		Coordinate& operator*=(units::dimensionless<> factor)
+		constexpr Coordinate& operator*=(units::dimensionless<> factor)
 		{
 			std::get<0>(m_point) = std::get<0>(m_point) * factor;
 			std::get<1>(m_point) = std::get<1>(m_point) * factor;
@@ -495,7 +495,7 @@ inline namespace coordinates
 		}
 
 		/// Divide each component.
-		Coordinate& operator/=(units::dimensionless<> divisor)
+		constexpr Coordinate& operator/=(units::dimensionless<> divisor)
 		{
 			std::get<0>(m_point) = std::get<0>(m_point) / divisor;
 			std::get<1>(m_point) = std::get<1>(m_point) / divisor;

@@ -129,7 +129,7 @@ inline namespace coordinates
 		 * @brief		Default constructor.
 		 * @details		Creates a vector with value (0,0,0).
 		 */
-		VectorECEF()
+		constexpr VectorECEF()
 		    : m_x(0)
 		    , m_y(0)
 		    , m_z(0)
@@ -145,7 +145,7 @@ inline namespace coordinates
 		 * @param[in]	Y	Y component.
 		 * @param[in]	Z	Z component.
 		 */
-		VectorECEF(distance_unit_type X, distance_unit_type Y, distance_unit_type Z)
+		constexpr VectorECEF(distance_unit_type X, distance_unit_type Y, distance_unit_type Z)
 		    : m_x(X)
 		    , m_y(Y)
 		    , m_z(Z)
@@ -159,7 +159,7 @@ inline namespace coordinates
 		 *			as necessary.
 		 * @param[in]	v	Tuple containing the vector components.
 		 */
-		explicit VectorECEF(const tuple_type& v)
+		constexpr explicit VectorECEF(const tuple_type& v)
 		    : m_x(std::get<0>(v))
 		    , m_y(std::get<1>(v))
 		    , m_z(std::get<2>(v))
@@ -175,7 +175,7 @@ inline namespace coordinates
 		 * @param[in]		enu		ENU vector to convert.
 		 */
 		template<template<class> class ENUUnits>
-		VectorECEF(const VectorENU<Datum, ENUUnits, T>& enu);
+		constexpr VectorECEF(const VectorENU<Datum, ENUUnits, T>& enu);
 
 		/**
 		 * @brief		Conversion constructor from a VectorNED.
@@ -185,32 +185,32 @@ inline namespace coordinates
 		 * @param[in]		ned		NED vector to convert.
 		 */
 		template<template<class> class NEDUnits>
-		VectorECEF(const VectorNED<Datum, NEDUnits, T>& ned);
+		constexpr VectorECEF(const VectorNED<Datum, NEDUnits, T>& ned);
 
 		//////////////////////////////////////////////////////////////////////////
 		//		ACCESSORS
 		//////////////////////////////////////////////////////////////////////////
 
-		[[nodiscard]] distance_unit_type x() const { return m_x; }
-		[[nodiscard]] distance_unit_type y() const { return m_y; }
-		[[nodiscard]] distance_unit_type z() const { return m_z; }
+		[[nodiscard]] constexpr distance_unit_type x() const { return m_x; }
+		[[nodiscard]] constexpr distance_unit_type y() const { return m_y; }
+		[[nodiscard]] constexpr distance_unit_type z() const { return m_z; }
 
 
 
-		[[nodiscard]] frame_data_type frameData() const { return m_frameData; }
-		void setFrameData(const frame_data_type& f) { m_frameData = f; }
+		[[nodiscard]] constexpr frame_data_type frameData() const { return m_frameData; }
+		constexpr void setFrameData(const frame_data_type& f) { m_frameData = f; }
 
 /**
 		 * @brief		Vector as a tuple.
 		 * @returns		Vector components as a (meters, meters, meters) tuple.
 		 */
-		[[nodiscard]] tuple_type vector() const { return tuple_type(m_x, m_y, m_z); }
+		[[nodiscard]] constexpr tuple_type vector() const { return tuple_type(m_x, m_y, m_z); }
 
 		/**
 		 * @brief		Set the vector value from a tuple.
 		 * @param[in]	v	Tuple containing the vector components.
 		 */
-		void setVector(const tuple_type& v)
+		constexpr void setVector(const tuple_type& v)
 		{
 			m_x = std::get<0>(v);
 			m_y = std::get<1>(v);
@@ -224,7 +224,7 @@ inline namespace coordinates
 		 */
 		template<class... Args>
 		    requires(sizeof...(Args) > 0) && std::constructible_from<tuple_type, Args...>
-		void setVector(Args... args)
+		constexpr void setVector(Args... args)
 		{ this->setVector(std::make_tuple<Args...>(std::forward<Args>(args)...)); }
 
 		/**
@@ -232,14 +232,14 @@ inline namespace coordinates
 		 */
 		template<class... Args>
 		    requires(sizeof...(Args) > 0) && std::constructible_from<tuple_type, Args...>
-		static tuple_type makeTuple(Args... args)
+		static constexpr tuple_type makeTuple(Args... args)
 		{ return std::make_tuple<Args...>(std::forward<Args>(args)...); }
 
 		//////////////////////////////////////////////////////////////////////////
 		//		ARITHMETIC
 		//////////////////////////////////////////////////////////////////////////
 
-		VectorECEF& operator+=(const VectorECEF& v)
+		constexpr VectorECEF& operator+=(const VectorECEF& v)
 		{
 			m_x = m_x + v.x();
 			m_y = m_y + v.y();
@@ -247,7 +247,7 @@ inline namespace coordinates
 			return *this;
 		}
 
-		VectorECEF& operator-=(const VectorECEF& v)
+		constexpr VectorECEF& operator-=(const VectorECEF& v)
 		{
 			m_x = m_x - v.x();
 			m_y = m_y - v.y();
@@ -276,7 +276,7 @@ template<class Datum,
          typename T>
     requires(coordinates::traits::is_datum<Datum> || coordinates::traits::is_horizontal_datum<Datum>)
 template<template<class> class ENUUnits>
-VectorECEF<Datum, DistanceUnits, T>::VectorECEF(const VectorENU<Datum, ENUUnits, T>& enu)
+constexpr VectorECEF<Datum, DistanceUnits, T>::VectorECEF(const VectorENU<Datum, ENUUnits, T>& enu)
     : m_x(0)
     , m_y(0)
     , m_z(0)
@@ -300,7 +300,7 @@ template<class Datum,
          typename T>
     requires(coordinates::traits::is_datum<Datum> || coordinates::traits::is_horizontal_datum<Datum>)
 template<template<class> class NEDUnits>
-VectorECEF<Datum, DistanceUnits, T>::VectorECEF(const VectorNED<Datum, NEDUnits, T>& ned)
+constexpr VectorECEF<Datum, DistanceUnits, T>::VectorECEF(const VectorNED<Datum, NEDUnits, T>& ned)
     : m_x(0)
     , m_y(0)
     , m_z(0)
@@ -327,7 +327,7 @@ concept ecef_point =
                         coordinateFrames::ECEFFrame<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<P>::reference_frame>::datum_type>>;
 
 template<ecef_point EcefPoint>
-VectorECEF<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EcefPoint>::reference_frame>::datum_type> operator-(const EcefPoint& lhs, const EcefPoint& rhs)
+constexpr VectorECEF<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EcefPoint>::reference_frame>::datum_type> operator-(const EcefPoint& lhs, const EcefPoint& rhs)
 {
 	using Datum = typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EcefPoint>::reference_frame>::datum_type;
 	return VectorECEF<Datum>(lhs.x() - rhs.x(), lhs.y() - rhs.y(), lhs.z() - rhs.z());
@@ -335,7 +335,7 @@ VectorECEF<typename coordinates::traits::frame_traits<typename coordinates::trai
 
 template<ecef_point EcefPoint, class VecDatum, template<class> class VecUnits, typename T>
     requires(std::same_as<ecef_horizontal_datum_t<VecDatum>, typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EcefPoint>::reference_frame>::datum_type>)
-EcefPoint operator+(EcefPoint lhs, const VectorECEF<VecDatum, VecUnits, T>& rhs)
+constexpr EcefPoint operator+(EcefPoint lhs, const VectorECEF<VecDatum, VecUnits, T>& rhs)
 {
 	lhs.setX(lhs.x() + rhs.x());
 	lhs.setY(lhs.y() + rhs.y());
@@ -345,7 +345,7 @@ EcefPoint operator+(EcefPoint lhs, const VectorECEF<VecDatum, VecUnits, T>& rhs)
 
 template<ecef_point EcefPoint, class VecDatum, template<class> class VecUnits, typename T>
     requires(std::same_as<ecef_horizontal_datum_t<VecDatum>, typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EcefPoint>::reference_frame>::datum_type>)
-EcefPoint operator-(EcefPoint lhs, const VectorECEF<VecDatum, VecUnits, T>& rhs)
+constexpr EcefPoint operator-(EcefPoint lhs, const VectorECEF<VecDatum, VecUnits, T>& rhs)
 {
 	lhs.setX(lhs.x() - rhs.x());
 	lhs.setY(lhs.y() - rhs.y());
@@ -363,7 +363,7 @@ template<class VL, class VR>
 		requires(const VL& v) { typename VL::datum_type; v.vector(); v.frameData(); } &&
 		requires(const VR& v) { typename VR::datum_type; v.vector(); v.frameData(); } &&
 		std::is_same_v<typename VL::datum_type, typename VR::datum_type>)
-VectorECEF<typename VL::datum_type> operator+(const VL& lhs, const VR& rhs)
+constexpr VectorECEF<typename VL::datum_type> operator+(const VL& lhs, const VR& rhs)
 {
 	VectorECEF<typename VL::datum_type> l(lhs);
 	VectorECEF<typename VL::datum_type> r(rhs);
@@ -379,7 +379,7 @@ template<class VL, class VR>
 		requires(const VL& v) { typename VL::datum_type; v.vector(); v.frameData(); } &&
 		requires(const VR& v) { typename VR::datum_type; v.vector(); v.frameData(); } &&
 		std::is_same_v<typename VL::datum_type, typename VR::datum_type>)
-VectorECEF<typename VL::datum_type> operator-(const VL& lhs, const VR& rhs)
+constexpr VectorECEF<typename VL::datum_type> operator-(const VL& lhs, const VR& rhs)
 {
 	VectorECEF<typename VL::datum_type> l(lhs);
 	VectorECEF<typename VL::datum_type> r(rhs);
@@ -399,7 +399,7 @@ template<ecef_point EcefPoint, class AnyVector>
 		requires(const AnyVector& v) { typename AnyVector::datum_type; v.vector(); v.frameData(); } &&
 		std::is_same_v<ecef_horizontal_datum_t<typename AnyVector::datum_type>, typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EcefPoint>::reference_frame>::datum_type>
 	)
-EcefPoint operator+(EcefPoint lhs, const AnyVector& rhs)
+constexpr EcefPoint operator+(EcefPoint lhs, const AnyVector& rhs)
 {
 	VectorECEF<typename AnyVector::datum_type, meters> v(rhs);
 	return lhs + v;
@@ -410,7 +410,7 @@ template<ecef_point EcefPoint, class AnyVector>
 		requires(const AnyVector& v) { typename AnyVector::datum_type; v.vector(); v.frameData(); } &&
 		std::is_same_v<typename AnyVector::datum_type, typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EcefPoint>::reference_frame>::datum_type>
 	)
-EcefPoint operator-(EcefPoint lhs, const AnyVector& rhs)
+constexpr EcefPoint operator-(EcefPoint lhs, const AnyVector& rhs)
 {
 	using Datum = typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EcefPoint>::reference_frame>::datum_type;
 	VectorECEF<Datum, meters> v(rhs);
@@ -426,7 +426,7 @@ EcefPoint operator-(EcefPoint lhs, const AnyVector& rhs)
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
 	requires(std::is_arithmetic_v<S>)
-VectorECEF<Datum, VecUnits, std::common_type_t<T, S>>
+constexpr VectorECEF<Datum, VecUnits, std::common_type_t<T, S>>
 operator*(const VectorECEF<Datum, VecUnits, T>& v, const S s)
 {
 	using R = std::common_type_t<T, S>;
@@ -441,7 +441,7 @@ operator*(const VectorECEF<Datum, VecUnits, T>& v, const S s)
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
 	requires(std::is_arithmetic_v<S>)
-VectorECEF<Datum, VecUnits, std::common_type_t<T, S>>
+constexpr VectorECEF<Datum, VecUnits, std::common_type_t<T, S>>
 operator*(const S s, const VectorECEF<Datum, VecUnits, T>& v)
 {
 	return v * s;
@@ -449,7 +449,7 @@ operator*(const S s, const VectorECEF<Datum, VecUnits, T>& v)
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
 	requires(std::is_arithmetic_v<S>)
-VectorECEF<Datum, VecUnits, std::common_type_t<T, S>>
+constexpr VectorECEF<Datum, VecUnits, std::common_type_t<T, S>>
 operator/(const VectorECEF<Datum, VecUnits, T>& v, const S s)
 {
 	using R = std::common_type_t<T, S>;
@@ -468,7 +468,7 @@ operator/(const VectorECEF<Datum, VecUnits, T>& v, const S s)
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
 	requires(std::is_arithmetic_v<S>)
-VectorECEF<Datum, VecUnits, T>&
+constexpr VectorECEF<Datum, VecUnits, T>&
 operator*=(VectorECEF<Datum, VecUnits, T>& v, const S s)
 {
 	v = v * s;
@@ -477,7 +477,7 @@ operator*=(VectorECEF<Datum, VecUnits, T>& v, const S s)
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
 	requires(std::is_arithmetic_v<S>)
-VectorECEF<Datum, VecUnits, T>&
+constexpr VectorECEF<Datum, VecUnits, T>&
 operator/=(VectorECEF<Datum, VecUnits, T>& v, const S s)
 {
 	v = v / s;

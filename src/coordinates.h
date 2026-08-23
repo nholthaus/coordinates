@@ -77,6 +77,8 @@
 #include <entity.h>
 
 #include <camera.h>
+#include <view.h>
+#include <wireframe.h>
 #include <hillshadeCanvas.h>
 
 #if defined(COORDINATES_ENABLE_LOS) && COORDINATES_ENABLE_LOS

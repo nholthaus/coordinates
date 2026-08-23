@@ -103,7 +103,7 @@ inline namespace coordinates
 		 * @brief		Default constructor.
 		 * @details		Creates a vector with value (0,0,0) anchored to origin (0,0,0).
 		 */
-		VectorENU()
+		constexpr VectorENU()
 		    : m_east(0)
 		    , m_north(0)
 		    , m_up(0)
@@ -119,7 +119,7 @@ inline namespace coordinates
 		 * @param[in]	origin	Geodetic origin anchoring this ENU frame.
 		 * @param[in]	dateOfObservation	Date of observation (for datum conversions if needed).
 		 */
-		VectorENU(distance_unit_type east,
+		constexpr VectorENU(distance_unit_type east,
 		          distance_unit_type north,
 		          distance_unit_type up,
 		          const origin_type& origin,
@@ -138,7 +138,7 @@ inline namespace coordinates
 		 * @param[in]	origin	Geodetic origin anchoring this ENU frame.
 		 * @param[in]	dateOfObservation	Date of observation.
 		 */
-		explicit VectorENU(const tuple_type& v, const origin_type& origin, years<> dateOfObservation = Datum::epoch())
+		constexpr explicit VectorENU(const tuple_type& v, const origin_type& origin, years<> dateOfObservation = Datum::epoch())
 		    : m_east(std::get<0>(v))
 		    , m_north(std::get<1>(v))
 		    , m_up(std::get<2>(v))
@@ -151,7 +151,7 @@ inline namespace coordinates
 		 * @details		Converts an ECEF free vector to an ENU anchored vector using the stored origin in the ECEF frame data.
 		 */
 		template<template<class> class ECEFUnits>
-		VectorENU(const VectorECEF<Datum, ECEFUnits, T>& ecef)
+		constexpr VectorENU(const VectorECEF<Datum, ECEFUnits, T>& ecef)
 		    : m_east(0)
 		    , m_north(0)
 		    , m_up(0)
@@ -180,7 +180,7 @@ inline namespace coordinates
 		 * @details		Uses ECEF as the least-common-ancestor frame for conversion.
 		 */
 		template<template<class> class NEDUnits>
-		VectorENU(const VectorNED<Datum, NEDUnits, T>& ned)
+		constexpr VectorENU(const VectorNED<Datum, NEDUnits, T>& ned)
 		    : VectorENU(VectorECEF<Datum, meters, T>(ned))
 		{
 		}
@@ -189,28 +189,28 @@ inline namespace coordinates
 		//		ACCESSORS
 		//////////////////////////////////////////////////////////////////////////
 
-		[[nodiscard]] distance_unit_type east() const
+		[[nodiscard]] constexpr distance_unit_type east() const
 		{ return m_east; }
-		[[nodiscard]] distance_unit_type north() const
+		[[nodiscard]] constexpr distance_unit_type north() const
 		{ return m_north; }
-		[[nodiscard]] distance_unit_type up() const
+		[[nodiscard]] constexpr distance_unit_type up() const
 		{ return m_up; }
 
-		[[nodiscard]] frame_data_type frameData() const
+		[[nodiscard]] constexpr frame_data_type frameData() const
 		{ return m_frameData; }
 
 		/**
 		 * @brief		Vector as a tuple.
 		 * @returns		Vector components as a (meters, meters, meters) tuple.
 		 */
-		[[nodiscard]] tuple_type vector() const
+		[[nodiscard]] constexpr tuple_type vector() const
 		{ return tuple_type(m_east, m_north, m_up); }
 
 		/**
 		 * @brief		Set the vector value from a tuple.
 		 * @param[in]	v	Tuple containing (e,n,u).
 		 */
-		void setVector(const tuple_type& v)
+		constexpr void setVector(const tuple_type& v)
 		{
 			m_east  = std::get<0>(v);
 			m_north = std::get<1>(v);
@@ -231,7 +231,7 @@ inline namespace coordinates
 		 */
 		template<class... Args>
 		    requires(sizeof...(Args) > 0) && std::constructible_from<tuple_type, Args...>
-		void setVector(Args... args)
+		constexpr void setVector(Args... args)
 		{ this->setVector(std::make_tuple<Args...>(std::forward<Args>(args)...)); }
 
 		/**
@@ -239,14 +239,14 @@ inline namespace coordinates
 		 */
 		template<class... Args>
 		    requires(sizeof...(Args) > 0) && std::constructible_from<tuple_type, Args...>
-		static tuple_type makeTuple(Args... args)
+		static constexpr tuple_type makeTuple(Args... args)
 		{ return std::make_tuple<Args...>(std::forward<Args>(args)...); }
 
 		//////////////////////////////////////////////////////////////////////////
 		//		ARITHMETIC
 		//////////////////////////////////////////////////////////////////////////
 
-		VectorENU& operator+=(const VectorENU& v)
+		constexpr VectorENU& operator+=(const VectorENU& v)
 		{
 			requireSameFrameData(m_frameData, v.m_frameData, "VectorENU frame mismatch in operator+=");
 			m_east  = m_east + v.east();
@@ -255,7 +255,7 @@ inline namespace coordinates
 			return *this;
 		}
 
-		VectorENU& operator-=(const VectorENU& v)
+		constexpr VectorENU& operator-=(const VectorENU& v)
 		{
 			requireSameFrameData(m_frameData, v.m_frameData, "VectorENU frame mismatch in operator-=");
 			m_east  = m_east - v.east();
@@ -290,7 +290,7 @@ inline namespace coordinates
 		 */
 		template<typename AzElUnit, template<class> class OriginAngleUnits, template<class> class OriginHeightUnits>
 		    requires(units::traits::is_angle_unit_v<AzElUnit>)
-		static VectorENU fromAER(AzElUnit azimuth, AzElUnit elevation, const PositionGeodetic<Datum, OriginAngleUnits, OriginHeightUnits>& origin)
+		static constexpr VectorENU fromAER(AzElUnit azimuth, AzElUnit elevation, const PositionGeodetic<Datum, OriginAngleUnits, OriginHeightUnits>& origin)
 		{
 			// Range is arbitrary; use 1 meter to yield a unit-length direction vector in ENU.
 			const meters<T> range{1};
@@ -327,7 +327,7 @@ concept enu_point =
                         coordinateFrames::ENUFrame<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<P>::reference_frame>::datum_type>>;
 
 template<enu_point EnuPoint>
-VectorENU<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type> operator-(const EnuPoint& lhs, const EnuPoint& rhs)
+constexpr VectorENU<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type> operator-(const EnuPoint& lhs, const EnuPoint& rhs)
 {
 	using Datum = typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type;
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionENU frame mismatch in operator-");
@@ -339,7 +339,7 @@ VectorENU<typename coordinates::traits::frame_traits<typename coordinates::trait
 }
 
 template<enu_point EnuPoint, template<class> class VecUnits, typename T>
-EnuPoint operator+(EnuPoint lhs, const VectorENU<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
+constexpr EnuPoint operator+(EnuPoint lhs, const VectorENU<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
 {
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionENU frame mismatch in operator+");
 	lhs.setEast(lhs.east() + rhs.east());
@@ -349,7 +349,7 @@ EnuPoint operator+(EnuPoint lhs, const VectorENU<typename coordinates::traits::f
 }
 
 template<enu_point EnuPoint, template<class> class VecUnits, typename T>
-EnuPoint operator-(EnuPoint lhs, const VectorENU<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
+constexpr EnuPoint operator-(EnuPoint lhs, const VectorENU<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<EnuPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
 {
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionENU frame mismatch in operator-");
 	lhs.setEast(lhs.east() - rhs.east());
@@ -358,15 +358,13 @@ EnuPoint operator-(EnuPoint lhs, const VectorENU<typename coordinates::traits::f
 	return lhs;
 }
 
-#include <type_traits>
-
 //----------------------------------
 //  SCALAR MULTIPLY / DIVIDE (ENU)
 //----------------------------------
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
     requires(std::is_arithmetic_v<S>)
-VectorENU<Datum, VecUnits, std::common_type_t<T, S>> operator*(const VectorENU<Datum, VecUnits, T>& v, const S s)
+constexpr VectorENU<Datum, VecUnits, std::common_type_t<T, S>> operator*(const VectorENU<Datum, VecUnits, T>& v, const S s)
 {
 	using R = std::common_type_t<T, S>;
 	VectorENU<Datum, VecUnits, R> out(v);
@@ -378,12 +376,12 @@ VectorENU<Datum, VecUnits, std::common_type_t<T, S>> operator*(const VectorENU<D
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
     requires(std::is_arithmetic_v<S>)
-VectorENU<Datum, VecUnits, std::common_type_t<T, S>> operator*(const S s, const VectorENU<Datum, VecUnits, T>& v)
+constexpr VectorENU<Datum, VecUnits, std::common_type_t<T, S>> operator*(const S s, const VectorENU<Datum, VecUnits, T>& v)
 { return v * s; }
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
     requires(std::is_arithmetic_v<S>)
-VectorENU<Datum, VecUnits, std::common_type_t<T, S>> operator/(const VectorENU<Datum, VecUnits, T>& v, const S s)
+constexpr VectorENU<Datum, VecUnits, std::common_type_t<T, S>> operator/(const VectorENU<Datum, VecUnits, T>& v, const S s)
 {
 	using R = std::common_type_t<T, S>;
 	VectorENU<Datum, VecUnits, R> out(VecUnits<R>(v.east()) / static_cast<R>(s),
@@ -401,7 +399,7 @@ VectorENU<Datum, VecUnits, std::common_type_t<T, S>> operator/(const VectorENU<D
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
     requires(std::is_arithmetic_v<S>)
-VectorENU<Datum, VecUnits, T>& operator*=(VectorENU<Datum, VecUnits, T>& v, const S s)
+constexpr VectorENU<Datum, VecUnits, T>& operator*=(VectorENU<Datum, VecUnits, T>& v, const S s)
 {
 	v = v * s;
 	return v;
@@ -409,7 +407,7 @@ VectorENU<Datum, VecUnits, T>& operator*=(VectorENU<Datum, VecUnits, T>& v, cons
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
     requires(std::is_arithmetic_v<S>)
-VectorENU<Datum, VecUnits, T>& operator/=(VectorENU<Datum, VecUnits, T>& v, const S s)
+constexpr VectorENU<Datum, VecUnits, T>& operator/=(VectorENU<Datum, VecUnits, T>& v, const S s)
 {
 	v = v / s;
 	return v;

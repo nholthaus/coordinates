@@ -12,10 +12,22 @@ project(coordinates
 # scan that CMake enables by default for C++20/23, which adds measurable overhead.
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
-# Use ccache as a compiler launcher when available, to skip re-compiling unchanged TUs.
-find_program(CCACHE_PROGRAM ccache)
-if (CCACHE_PROGRAM)
-	set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+# Use ccache as a compiler launcher when available, to skip re-compiling unchanged TUs. Opt-out with
+# -DCOORDINATES_USE_CCACHE=OFF. `find_program` only proves a path exists, not that it can RUN in this build
+# environment (a sandboxed IDE build shell may not see it) -- so actually execute `ccache --version` and only
+# wire the launcher if it succeeds, otherwise skip it with a warning rather than failing every compile.
+option(COORDINATES_USE_CCACHE "Use ccache as the compiler launcher when it is available and runnable" ON)
+if (COORDINATES_USE_CCACHE)
+	find_program(CCACHE_PROGRAM ccache)
+	if (CCACHE_PROGRAM)
+		execute_process(COMMAND "${CCACHE_PROGRAM}" --version
+				RESULT_VARIABLE _ccache_runs
+				OUTPUT_QUIET ERROR_QUIET)
+		if (_ccache_runs EQUAL 0)
+			set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+		endif()
+		# If ccache was found but does not run in this environment, silently build without it (no warning noise).
+	endif()
 endif()
 
 include(GNUInstallDirs)

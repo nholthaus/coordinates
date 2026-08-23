@@ -36,6 +36,7 @@
 
 #include <gtest/gtest.h>
 
+#include "dtedTile.h"
 #include "hillshadeCanvas.h"
 
 inline namespace coordinates
@@ -49,7 +50,7 @@ inline namespace coordinates
 		// plot sets exactly the addressed pixel; out-of-bounds plots are ignored.
 		TEST(HillshadeCanvasImageTest, plotSetsPixelAndClips)
 		{
-			Image img(4, 4);
+			Image img(4, 4, Color{0, 0, 0});    // explicit black background so an unpainted pixel is a known 0
 			img.plot(Pixel{1, 2}, Color{10, 20, 30});
 			const auto& rgb = img.rgb();
 			const std::size_t i = (static_cast<std::size_t>(1) * 4 + 2) * 3;

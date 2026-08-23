@@ -145,13 +145,13 @@ inline namespace coordinates
 		//////////////////////////////////////////////////////////////////////////
 
 		/// An empty entity (no position, identity pose, no motion). Fill it with `set*`.
-		Entity() = default;
+		constexpr Entity() = default;
 
 		/// The natural-use-case constructor: a position, and optionally an orientation and motion. Every case is
 		/// a prefix of the argument list -- a bare point `Entity{p}`, a posed thing `Entity{p, pose}`, or a moving
 		/// body `Entity{p, pose, velocity, rate}`. Field of view is set separately (`setFieldOfView`), added in a
 		/// later step, since it is the least common field.
-		explicit Entity(const position_type& position, const Pose& pose = Pose::identity(), const velocity_type& velocity = velocity_type{}, const rate_type& angularRate = rate_type{})
+		explicit constexpr Entity(const position_type& position, const Pose& pose = Pose::identity(), const velocity_type& velocity = velocity_type{}, const rate_type& angularRate = rate_type{})
 		    : m_position(position)
 		    , m_pose(pose)
 		    , m_velocity(velocity)
@@ -159,21 +159,82 @@ inline namespace coordinates
 		{
 		}
 
+		/// Deep copy: clones the whole child subtree and re-points each clone's parent to this new tree, so a
+		/// copied entity is a fully independent rigid body (no child dangles back to the original). The `m_parent`
+		/// of the copy itself is left null -- a copy is a fresh root until re-attached.
+		constexpr Entity(const Entity& other)
+		    : m_position(other.m_position)
+		    , m_pose(other.m_pose)
+		    , m_fieldOfView(other.m_fieldOfView)
+		    , m_velocity(other.m_velocity)
+		    , m_angularRate(other.m_angularRate)
+		{
+			cloneChildrenFrom(other);
+		}
+
+		/// Deep copy-assignment (copy-and-swap-free: clear, then clone), keeping this entity a fresh root.
+		constexpr Entity& operator=(const Entity& other)
+		{
+			if (this != &other)
+			{
+				m_position    = other.m_position;
+				m_pose        = other.m_pose;
+				m_fieldOfView = other.m_fieldOfView;
+				m_velocity    = other.m_velocity;
+				m_angularRate = other.m_angularRate;
+				m_children.clear();
+				cloneChildrenFrom(other);
+			}
+			return *this;
+		}
+
+		/// Move: steals the child subtree and re-points the top-level children's parent to this entity.
+		constexpr Entity(Entity&& other) noexcept
+		    : m_position(other.m_position)
+		    , m_pose(other.m_pose)
+		    , m_fieldOfView(std::move(other.m_fieldOfView))
+		    , m_velocity(other.m_velocity)
+		    , m_angularRate(other.m_angularRate)
+		    , m_children(std::move(other.m_children))
+		{
+			for (auto& child : m_children)
+				child->m_parent = this;
+		}
+
+		/// Move-assignment (steal + re-point the top-level children's parent).
+		constexpr Entity& operator=(Entity&& other) noexcept
+		{
+			if (this != &other)
+			{
+				m_position    = other.m_position;
+				m_pose        = other.m_pose;
+				m_fieldOfView = std::move(other.m_fieldOfView);
+				m_velocity    = other.m_velocity;
+				m_angularRate = other.m_angularRate;
+				m_children    = std::move(other.m_children);
+				for (auto& child : m_children)
+					child->m_parent = this;
+			}
+			return *this;
+		}
+
+		constexpr ~Entity() = default;
+
 		//////////////////////////////////////////////////////////////////////////
 		//		SETTERS
 		//////////////////////////////////////////////////////////////////////////
 
-		void setPosition(const position_type& position) { m_position = position; }        ///< the entity's location
-		void setPose(const Pose& pose) { m_pose = pose; }                                  ///< orientation relative to the parent
-		void setVelocity(const velocity_type& velocity) { m_velocity = velocity; }         ///< linear velocity in the ECEF frame
-		void setAngularRate(const rate_type& angularRate) { m_angularRate = angularRate; } ///< body angular rate
+		constexpr void setPosition(const position_type& position) { m_position = position; }        ///< the entity's location
+		constexpr void setPose(const Pose& pose) { m_pose = pose; }                                  ///< orientation relative to the parent
+		constexpr void setVelocity(const velocity_type& velocity) { m_velocity = velocity; }         ///< linear velocity in the ECEF frame
+		constexpr void setAngularRate(const rate_type& angularRate) { m_angularRate = angularRate; } ///< body angular rate
 
 		//////////////////////////////////////////////////////////////////////////
 		//		GETTERS (world-resolved by default)
 		//////////////////////////////////////////////////////////////////////////
 
 		/// The entity's position in WORLD coordinates (a root's own position; a child resolved up the chain).
-		[[nodiscard]] position_type position() const
+		[[nodiscard]] constexpr position_type position() const
 		{
 			if (m_parent == nullptr)
 				return m_position;
@@ -183,7 +244,7 @@ inline namespace coordinates
 		}
 
 		/// The entity's position expressed relative to another entity's frame.
-		[[nodiscard]] position_type position(const Entity& relativeTo) const
+		[[nodiscard]] constexpr position_type position(const Entity& relativeTo) const
 		{
 			position_type result;
 			result.setPoint(relativeTo.pose().inverse().transformPoint(position().point()));
@@ -192,7 +253,7 @@ inline namespace coordinates
 
 		/// The entity's pose in WORLD coordinates: a root's own pose, or a child's local pose composed up the
 		/// parent chain (`worldFromParent * parentFromChild`).
-		[[nodiscard]] Pose pose() const
+		[[nodiscard]] constexpr Pose pose() const
 		{
 			if (m_parent == nullptr)
 				return localPose();
@@ -200,10 +261,10 @@ inline namespace coordinates
 		}
 
 		/// The entity's pose expressed relative to another entity's frame.
-		[[nodiscard]] Pose pose(const Entity& relativeTo) const { return relativeTo.pose().inverse() * pose(); }
+		[[nodiscard]] constexpr Pose pose(const Entity& relativeTo) const { return relativeTo.pose().inverse() * pose(); }
 
-		[[nodiscard]] const velocity_type& velocity() const { return m_velocity; }       ///< linear velocity (ECEF frame)
-		[[nodiscard]] const rate_type&     angularRate() const { return m_angularRate; } ///< body angular rate
+		[[nodiscard]] constexpr const velocity_type& velocity() const { return m_velocity; }       ///< linear velocity (ECEF frame)
+		[[nodiscard]] constexpr const rate_type&     angularRate() const { return m_angularRate; } ///< body angular rate
 
 		//////////////////////////////////////////////////////////////////////////
 		//		CHILDREN (rigid attachment -- the entity tree is the rigid body)
@@ -222,14 +283,14 @@ inline namespace coordinates
 			CartesianTuple offset{0.0_m, 0.0_m, 0.0_m};    ///< the child origin in the parent's body axes
 			Pose           orientation{Pose::identity()};  ///< the child's rotation relative to the parent's axes
 
-			Mount() = default;
-			Mount(CartesianTuple offsetIn, Pose orientationIn = Pose::identity()) : offset(offsetIn), orientation(orientationIn) {}
+			constexpr Mount() = default;
+			constexpr Mount(CartesianTuple offsetIn, Pose orientationIn = Pose::identity()) : offset(offsetIn), orientation(orientationIn) {}
 		};
 
 		/// Attach a child entity rigidly at a mount; the parent OWNS the child and returns a reference to it for
 		/// further configuration. The child's local pose is the mount (offset + orientation) relative to this
 		/// entity, so the child resolves to world through this parent.
-		Entity& attach(const Mount& mount)
+		constexpr Entity& attach(const Mount& mount)
 		{
 			auto child      = std::make_unique<Entity>();
 			child->m_parent = this;
@@ -242,7 +303,7 @@ inline namespace coordinates
 		/// Attach a whole sequence of body-axis points as child entities, in order, each at its offset (identity
 		/// orientation). Returns the child pointers in the same order, so a caller can treat them as an ordered
 		/// polyline (e.g. an outline) that resolves to world rigidly through this parent's pose.
-		std::vector<Entity*> attach(const CartesianVector& offsets)
+		constexpr std::vector<Entity*> attach(const CartesianVector& offsets)
 		{
 			std::vector<Entity*> children;
 			children.reserve(offsets.size());
@@ -251,15 +312,15 @@ inline namespace coordinates
 			return children;
 		}
 
-		[[nodiscard]] const std::vector<std::unique_ptr<Entity>>& children() const { return m_children; }
-		[[nodiscard]] const Entity*                               parent() const { return m_parent; }
+		[[nodiscard]] constexpr const std::vector<std::unique_ptr<Entity>>& children() const { return m_children; }
+		[[nodiscard]] constexpr const Entity*                               parent() const { return m_parent; }
 
 		//////////////////////////////////////////////////////////////////////////
 		//		FIELD OF VIEW (optional)
 		//////////////////////////////////////////////////////////////////////////
 
-		void                              setFieldOfView(const FieldOfView& fieldOfView) { m_fieldOfView = fieldOfView; }
-		[[nodiscard]] std::optional<FieldOfView> fieldOfView() const { return m_fieldOfView; }
+		constexpr void                              setFieldOfView(const FieldOfView& fieldOfView) { m_fieldOfView = fieldOfView; }
+		[[nodiscard]] constexpr std::optional<FieldOfView> fieldOfView() const { return m_fieldOfView; }
 
 		//////////////////////////////////////////////////////////////////////////
 		//		RAYS & VISIBILITY (derived; minimal inputs)
@@ -289,7 +350,7 @@ inline namespace coordinates
 			const LineOfSight<Datum> los{PositionGeodetic<Datum>(here)};
 			return los.lineOfSightTerrain(PositionGeodetic<Datum>(there));
 #else
-			return coordinates::isLineOfSight(here, there);
+			return isLineOfSight(here, there);
 #endif
 		}
 
@@ -330,11 +391,30 @@ inline namespace coordinates
 		///				composing with the parent's world pose places the child.
 		///	@return		the pose relative to the parent (or world, for a root).
 		//  ----------------------------------------------------------------------------
-		[[nodiscard]] Pose localPose() const
+		[[nodiscard]] constexpr Pose localPose() const
 		{
 			if (m_parent == nullptr)
 				return Pose(m_position.point(), m_pose.rotation());
 			return m_pose;
+		}
+
+		//	----------------------------------------------------------------------------
+		//	FUNCTION: cloneChildrenFrom [private]
+		//  ----------------------------------------------------------------------------
+		///	@brief		Deep-clone another entity's child subtree into this entity, re-pointing every clone's parent.
+		///	@details	Each source child is cloned (which recurses through its own subtree), then its parent is set
+		///				to this entity, so the copied tree is fully self-consistent and independent of the source.
+		///	@param[in]	other	the entity whose children to clone.
+		//  ----------------------------------------------------------------------------
+		constexpr void cloneChildrenFrom(const Entity& other)
+		{
+			m_children.reserve(other.m_children.size());
+			for (const auto& child : other.m_children)
+			{
+				auto copy      = std::make_unique<Entity>(*child);    // recursive deep copy of the subtree
+				copy->m_parent = this;
+				m_children.push_back(std::move(copy));
+			}
 		}
 
 		position_type                        m_position;                    ///< location (world for a root, unused for a child)

@@ -23,7 +23,7 @@ add_executable(coordTest
         ${_test_suite_sources}
 )
 
-target_compile_features(coordTest PRIVATE cxx_std_23)
+target_compile_features(coordTest PRIVATE cxx_std_26)
 set_target_properties(coordTest PROPERTIES
         CXX_EXTENSIONS OFF
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/unitTests"

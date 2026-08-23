@@ -87,10 +87,10 @@ inline namespace coordinates
 		//		CONSTRUCTORS
 		//////////////////////////////////////////////////////////////////////////
 
-		Ray() = default;
+		constexpr Ray() = default;
 
 		/// From an origin and a direction; the direction is normalized on construction.
-		Ray(const origin_type& origin, const direction_type& direction)
+		constexpr Ray(const origin_type& origin, const direction_type& direction)
 		    : m_origin(origin)
 		    , m_direction(normalized(direction))
 		{
@@ -100,15 +100,15 @@ inline namespace coordinates
 		//		GETTERS
 		//////////////////////////////////////////////////////////////////////////
 
-		[[nodiscard]] const origin_type&    origin() const { return m_origin; }       ///< the ray's start point
-		[[nodiscard]] const direction_type& direction() const { return m_direction; } ///< the ray's unit direction
+		[[nodiscard]] constexpr const origin_type&    origin() const { return m_origin; }       ///< the ray's start point
+		[[nodiscard]] constexpr const direction_type& direction() const { return m_direction; } ///< the ray's unit direction
 
 		//////////////////////////////////////////////////////////////////////////
 		//		OPERATIONS
 		//////////////////////////////////////////////////////////////////////////
 
 		/// The point a metric distance `range` along the ray from the origin.
-		[[nodiscard]] origin_type pointAt(meters<> range) const
+		[[nodiscard]] constexpr origin_type pointAt(meters<> range) const
 		{
 			const auto d = m_direction.vector();
 			origin_type p;
@@ -126,7 +126,7 @@ inline namespace coordinates
 		/// A ray from a sensor pose along a body-axis direction: the body direction is rotated into the parent
 		/// frame by the pose, and the ray starts at the pose's translation. The parent frame IS `Frame`, so a
 		/// pose whose translation is in `Frame` (e.g. an aircraft-in-ECEF pose) yields a `Ray<Frame>`.
-		[[nodiscard]] static Ray fromPose(const Pose& pose, const CartesianTuple& bodyDirection)
+		[[nodiscard]] static constexpr Ray fromPose(const Pose& pose, const CartesianTuple& bodyDirection)
 		{
 			origin_type origin;
 			origin.setPoint(pose.translation());
@@ -181,11 +181,11 @@ inline namespace coordinates
 		///	@param[in]	direction	the direction to normalize.
 		///	@return		the unit-length direction, sharing the input's frame data.
 		//  ----------------------------------------------------------------------------
-		static direction_type normalized(const direction_type& direction)
+		static constexpr direction_type normalized(const direction_type& direction)
 		{
 			const auto   v   = direction.vector();
 			const double dx  = std::get<0>(v).value(), dy = std::get<1>(v).value(), dz = std::get<2>(v).value();
-			const double len = std::sqrt(dx * dx + dy * dy + dz * dz);
+			const double len = units::sqrt(dx * dx + dy * dy + dz * dz);
 			if (len == 0.0)
 				return direction;
 			direction_type unit(meters<>(dx / len), meters<>(dy / len), meters<>(dz / len));

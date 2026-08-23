@@ -17,7 +17,7 @@ set(_example_tile "${CMAKE_SOURCE_DIR}/test/resources/w115_n37.dt2")
 # and the runtime DTED tile staged next to the binary.
 function(coordinates_add_example name)
 	add_executable(${name} ${name}.cpp)
-	target_compile_features(${name} PRIVATE cxx_std_23)
+	target_compile_features(${name} PRIVATE cxx_std_26)
 	target_link_libraries(${name} PRIVATE coordinates::coordinates)
 	coordinates_set_warnings(${name})
 	if (EXISTS "${_example_tile}")

@@ -90,21 +90,21 @@ inline namespace coordinates
 		//////////////////////////////////////////////////////////////////////////
 
 		/// The zero vector at the datum epoch.
-		Vector()
+		constexpr Vector()
 		    : m_vector{}
 		    , m_frameData(datum_type::epoch())
 		{
 		}
 
 		/// From three components at the datum epoch.
-		Vector(Unit x, Unit y, Unit z)
+		constexpr Vector(Unit x, Unit y, Unit z)
 		    : m_vector(x, y, z)
 		    , m_frameData(datum_type::epoch())
 		{
 		}
 
 		/// From a `Vector3` at the datum epoch.
-		explicit Vector(const storage_type& v)
+		constexpr explicit Vector(const storage_type& v)
 		    : m_vector(v)
 		    , m_frameData(datum_type::epoch())
 		{
@@ -113,7 +113,7 @@ inline namespace coordinates
 		/// From components anchored to a geodetic origin (for a local/tangent frame), at an optional date.
 		template<traits::is_point OriginPoint>
 		    requires(traits::is_local_frame<Frame>)
-		Vector(Unit x, Unit y, Unit z, const OriginPoint& origin, years<> dateOfObservation = datum_type::epoch())
+		constexpr Vector(Unit x, Unit y, Unit z, const OriginPoint& origin, years<> dateOfObservation = datum_type::epoch())
 		    : m_vector(x, y, z)
 		    , m_frameData(PositionGeodetic<datum_type>(origin).point(), dateOfObservation)
 		{
@@ -122,7 +122,7 @@ inline namespace coordinates
 		/// Converting constructor: rotate any other frame's vector into this frame.
 		template<class V>
 		    requires(traits::is_vector<V> && !std::same_as<std::remove_cvref_t<V>, Vector>)
-		Vector(const V& other)
+		constexpr Vector(const V& other)
 		    : Vector()
 		{
 			*this = other;
@@ -137,7 +137,7 @@ inline namespace coordinates
 		/// only the inter-frame rotation remains. This coordinate's own origin/date are preserved.
 		template<class V>
 		    requires(traits::is_vector<V> && !std::same_as<std::remove_cvref_t<V>, Vector>)
-		Vector& operator=(const V& other)
+		constexpr Vector& operator=(const V& other)
 		{
 			using SourceFrame = typename traits::point_traits<V>::reference_frame;
 			using meters      = units::length::meters<>;
@@ -160,8 +160,8 @@ inline namespace coordinates
 			Coordinate<Frame, CartesianTuple> dstOrg;
 			dstTip.setFrameData(m_frameData);
 			dstOrg.setFrameData(m_frameData);
-			coordinates::convert(srcTip, dstTip);
-			coordinates::convert(srcOrg, dstOrg);
+			convert(srcTip, dstTip);
+			convert(srcOrg, dstOrg);
 
 			const auto tip = dstTip.point();
 			const auto org = dstOrg.point();
@@ -174,36 +174,36 @@ inline namespace coordinates
 		//		VECTOR INTERFACE (satisfies the `is_vector` concept)
 		//////////////////////////////////////////////////////////////////////////
 
-		[[nodiscard]] tuple_type vector() const { return m_vector.tuple(); }
-		void                     setVector(const tuple_type& v) { m_vector = storage_type(v); }
+		[[nodiscard]] constexpr tuple_type vector() const { return m_vector.tuple(); }
+		constexpr void                     setVector(const tuple_type& v) { m_vector = storage_type(v); }
 
 		template<class... Args>
 		    requires(sizeof...(Args) == 3)
-		void setVector(Args... args) { m_vector = storage_type(std::move(args)...); }
+		constexpr void setVector(Args... args) { m_vector = storage_type(std::move(args)...); }
 
-		[[nodiscard]] frame_data_type frameData() const { return m_frameData; }
-		void                          setFrameData(const frame_data_type& frameData) { m_frameData = frameData; }
+		[[nodiscard]] constexpr frame_data_type frameData() const { return m_frameData; }
+		constexpr void                          setFrameData(const frame_data_type& frameData) { m_frameData = frameData; }
 
 		/// Date of observation (relevant only when converting between datums).
-		[[nodiscard]] years<> date() const { return m_frameData.date; }
+		[[nodiscard]] constexpr years<> date() const { return m_frameData.date; }
 
 		//////////////////////////////////////////////////////////////////////////
 		//		ALGEBRA (forwarded to the storage vector)
 		//////////////////////////////////////////////////////////////////////////
 
-		[[nodiscard]] Unit                        magnitude() const { return m_vector.magnitude(); }
-		[[nodiscard]] typename storage_type::scalar_type magnitudeSquared() const { return m_vector.magnitudeSquared(); }
-		[[nodiscard]] bool                        isNull() const { return m_vector.isNull(); }
+		[[nodiscard]] constexpr Unit                        magnitude() const { return m_vector.magnitude(); }
+		[[nodiscard]] constexpr typename storage_type::scalar_type magnitudeSquared() const { return m_vector.magnitudeSquared(); }
+		[[nodiscard]] constexpr bool                        isNull() const { return m_vector.isNull(); }
 
 		/// Dot product with a same-frame vector (an area-dimensioned scalar).
 		template<class V>
 		    requires(traits::is_vector<V> && std::same_as<typename traits::point_traits<V>::reference_frame, Frame>)
-		[[nodiscard]] auto dot(const V& other) const { return m_vector.dot(storage_type(other.vector())); }
+		[[nodiscard]] constexpr auto dot(const V& other) const { return m_vector.dot(storage_type(other.vector())); }
 
 		/// Cross product with a same-frame vector (an area-dimensioned same-frame vector).
 		template<class V>
 		    requires(traits::is_vector<V> && std::same_as<typename traits::point_traits<V>::reference_frame, Frame>)
-		[[nodiscard]] Vector<Frame, typename storage_type::scalar_type> cross(const V& other) const
+		[[nodiscard]] constexpr Vector<Frame, typename storage_type::scalar_type> cross(const V& other) const
 		{
 			const auto c = m_vector.cross(storage_type(other.vector()));
 			Vector<Frame, typename storage_type::scalar_type> result(c.x(), c.y(), c.z());
@@ -211,29 +211,29 @@ inline namespace coordinates
 			return result;
 		}
 
-		Vector& operator+=(const Vector& v)
+		constexpr Vector& operator+=(const Vector& v)
 		{
 			m_vector += v.m_vector;
 			return *this;
 		}
-		Vector& operator-=(const Vector& v)
+		constexpr Vector& operator-=(const Vector& v)
 		{
 			m_vector -= v.m_vector;
 			return *this;
 		}
-		Vector& operator*=(units::dimensionless<> factor)
+		constexpr Vector& operator*=(units::dimensionless<> factor)
 		{
 			m_vector *= factor;
 			return *this;
 		}
-		Vector& operator/=(units::dimensionless<> divisor)
+		constexpr Vector& operator/=(units::dimensionless<> divisor)
 		{
 			m_vector /= divisor;
 			return *this;
 		}
 
 		/// The underlying frame-agnostic algebra vector (for direct `Vector3` use, incl. Eigen interop).
-		[[nodiscard]] const storage_type& components() const { return m_vector; }
+		[[nodiscard]] constexpr const storage_type& components() const { return m_vector; }
 
 		/// Streams as `(x, y, z)`.
 		friend std::ostream& operator<<(std::ostream& os, const Vector& v) { return os << v.m_vector; }
@@ -249,28 +249,28 @@ inline namespace coordinates
 
 	/// The sum of two same-frame vectors.
 	template<class Frame, class Unit>
-	[[nodiscard]] Vector<Frame, Unit> operator+(Vector<Frame, Unit> lhs, const Vector<Frame, Unit>& rhs)
+	[[nodiscard]] constexpr Vector<Frame, Unit> operator+(Vector<Frame, Unit> lhs, const Vector<Frame, Unit>& rhs)
 	{
 		return lhs += rhs;
 	}
 
 	/// The difference of two same-frame vectors.
 	template<class Frame, class Unit>
-	[[nodiscard]] Vector<Frame, Unit> operator-(Vector<Frame, Unit> lhs, const Vector<Frame, Unit>& rhs)
+	[[nodiscard]] constexpr Vector<Frame, Unit> operator-(Vector<Frame, Unit> lhs, const Vector<Frame, Unit>& rhs)
 	{
 		return lhs -= rhs;
 	}
 
 	/// A vector scaled by a dimensionless factor.
 	template<class Frame, class Unit>
-	[[nodiscard]] Vector<Frame, Unit> operator*(Vector<Frame, Unit> v, units::dimensionless<> factor)
+	[[nodiscard]] constexpr Vector<Frame, Unit> operator*(Vector<Frame, Unit> v, units::dimensionless<> factor)
 	{
 		return v *= factor;
 	}
 
 	/// A vector scaled by a dimensionless factor.
 	template<class Frame, class Unit>
-	[[nodiscard]] Vector<Frame, Unit> operator*(units::dimensionless<> factor, Vector<Frame, Unit> v)
+	[[nodiscard]] constexpr Vector<Frame, Unit> operator*(units::dimensionless<> factor, Vector<Frame, Unit> v)
 	{
 		return v *= factor;
 	}

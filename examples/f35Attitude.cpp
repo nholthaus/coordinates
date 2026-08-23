@@ -45,13 +45,16 @@
 //
 //--------------------------------------------------------------------------------------------------
 
-#include <cmath>
-#include <cstdio>
 #include <cstdlib>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <iostream>
+#include <ranges>
 #include <string>
-#include <vector>
 
 #include "coordinates.h"
+#include "f35Planform.h"
 
 using namespace coordinates;
 using namespace coordinates::topography;
@@ -60,53 +63,63 @@ using namespace units::literals;
 
 using Wgs = WGS84_G1674;
 
-//----------------------------------
-//	F-35 PLANFORM (body axes, meters; +x forward, +y right) -- traced from a 3-view reference.
-//----------------------------------
-static const CartesianVector OUTLINE = {
-    {-2.195_m, -5.376_m, 0.0_m}, {-3.738_m, -5.376_m, 0.0_m}, {-4.616_m, -1.906_m, 0.0_m},
-    {-4.809_m, -1.906_m, 0.0_m}, {-5.215_m, -2.078_m, 0.0_m}, {-5.323_m, -2.185_m, 0.0_m},
-    {-6.308_m, -3.663_m, 0.0_m}, {-7.186_m, -3.663_m, 0.0_m}, {-7.850_m, -0.985_m, 0.0_m},
-    {-6.479_m, -0.814_m, 0.0_m}, {-5.879_m, -0.643_m, 0.0_m}, {-5.879_m, -0.514_m, 0.0_m},
-    {-6.051_m, -0.407_m, 0.0_m}, {-6.051_m, 0.407_m, 0.0_m}, {-5.879_m, 0.514_m, 0.0_m},
-    {-5.901_m, 0.664_m, 0.0_m}, {-6.608_m, 0.835_m, 0.0_m}, {-7.850_m, 0.985_m, 0.0_m},
-    {-7.186_m, 3.641_m, 0.0_m}, {-6.329_m, 3.663_m, 0.0_m}, {-5.301_m, 2.163_m, 0.0_m},
-    {-5.215_m, 2.078_m, 0.0_m}, {-4.809_m, 1.906_m, 0.0_m}, {-4.616_m, 1.906_m, 0.0_m},
-    {-3.738_m, 5.355_m, 0.0_m}, {-2.195_m, 5.376_m, 0.0_m}, {0.011_m, 2.142_m, 0.0_m},
-    {0.739_m, 1.778_m, 0.0_m}, {3.181_m, 1.692_m, 0.0_m}, {3.609_m, 1.478_m, 0.0_m},
-    {3.266_m, 1.157_m, 0.0_m}, {3.266_m, 1.007_m, 0.0_m}, {3.502_m, 0.900_m, 0.0_m},
-    {4.209_m, 0.771_m, 0.0_m}, {6.758_m, 0.471_m, 0.0_m}, {7.315_m, 0.278_m, 0.0_m},
-    {7.850_m, 0.000_m, 0.0_m}, {7.229_m, -0.321_m, 0.0_m}, {6.779_m, -0.471_m, 0.0_m},
-    {3.566_m, -0.878_m, 0.0_m}, {3.288_m, -0.985_m, 0.0_m}, {3.266_m, -1.157_m, 0.0_m},
-    {3.609_m, -1.478_m, 0.0_m}, {3.181_m, -1.692_m, 0.0_m}, {0.739_m, -1.778_m, 0.0_m},
-    {0.011_m, -2.142_m, 0.0_m}, {-2.174_m, -5.355_m, 0.0_m},
-};
-static const CartesianVector CANOPY = {
-    {4.304_m, -0.478_m, 0.0_m}, {5.101_m, -0.478_m, 0.0_m}, {5.101_m, 0.518_m, 0.0_m},
-    {4.503_m, 0.558_m, 0.0_m}, {4.383_m, 0.478_m, 0.0_m}, {3.786_m, 0.398_m, 0.0_m},
-    {3.786_m, -0.359_m, 0.0_m}, {4.264_m, -0.438_m, 0.0_m},
-};
-static const CartesianVector FIN_R = {
-    {-3.802_m, 1.478_m, 0.000_m},     // root leading  (inboard boom edge, z = 0)
-    {-5.665_m, 2.249_m, -2.000_m},    // tip leading   (outboard + up)
-    {-6.586_m, 2.206_m, -2.000_m},    // tip trailing
-    {-5.601_m, 1.414_m, 0.000_m},     // root trailing (inboard boom edge, z = 0)
-};
-static const CartesianVector FIN_L = {
-    {-3.802_m, -1.478_m, 0.000_m}, {-5.665_m, -2.249_m, -2.000_m},
-    {-6.586_m, -2.206_m, -2.000_m}, {-5.601_m, -1.414_m, 0.000_m},
-};
-static const CartesianVector INTAKE_L = {
-    {0.120_m, -1.474_m, 0.0_m}, {2.351_m, -1.474_m, 0.0_m}, {2.789_m, -1.435_m, 0.0_m},
-    {2.909_m, -1.355_m, 0.0_m}, {1.713_m, -1.275_m, 0.0_m}, {-0.199_m, -1.275_m, 0.0_m},
-    {-0.677_m, -1.355_m, 0.0_m}, {0.080_m, -1.435_m, 0.0_m},
-};
-static const CartesianVector INTAKE_R = {
-    {0.040_m, 1.275_m, 0.0_m}, {2.710_m, 1.315_m, 0.0_m}, {2.909_m, 1.395_m, 0.0_m},
-    {2.710_m, 1.474_m, 0.0_m}, {0.558_m, 1.514_m, 0.0_m}, {-0.598_m, 1.395_m, 0.0_m},
-    {-0.638_m, 1.355_m, 0.0_m}, {-0.398_m, 1.315_m, 0.0_m}, {0.000_m, 1.315_m, 0.0_m},
-};
+// The F-35 planform is defined ONCE in f35Planform.h. Prove the whole airframe assembles and its vertices resolve
+// through the pose at COMPILE TIME: `buildF35` is consteval, so this constant exists only if the entire
+// Entity/Pose/Coordinate composition is constexpr-clean. The runtime animation below builds the same shape live.
+constexpr auto COMPILE_TIME_F35 = f35::buildF35(PositionECEF<Wgs>(6378137.0_m, 0.0_m, 0.0_m));
+static_assert(COMPILE_TIME_F35.size() == f35::vertexCount(), "the F-35 planform builds at compile time");
 
+//----------------------------------------------------------------------------------------------------------------------
+//	FUNCTION: airshowAttitude [static]
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief		The airframe attitude at a normalized loop phase [0, 1): a rolling wobble with coupled pitch and yaw.
+/// @details	Every channel is a full-cycle sinusoid of the phase, so the attitude at phase 1 equals the attitude
+///				at phase 0 and the animation loops with no seam. This is the maneuver the example demonstrates.
+/// @param[in]	phase	the loop phase as a fraction of one full turn.
+/// @return		the airframe pose (identity translation; yaw/pitch/roll from the phase).
+//----------------------------------------------------------------------------------------------------------------------
+static Pose airshowAttitude(turns<> phase)
+{
+	return {{0.0_m, 0.0_m, 0.0_m}, {10.0_deg * sin(phase), -8.0_deg + 10.0_deg * sin(phase), 55.0_deg * sin(phase * 2.0)}};
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//	FUNCTION: writePpm [static]
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief		Write an image to a binary P6 PPM file (the frame-output plumbing, kept out of the demo loop).
+/// @param[in]	path	the file to write.
+/// @param[in]	image	the image to serialize.
+//----------------------------------------------------------------------------------------------------------------------
+static void writePpm(const std::filesystem::path& path, const Image& image)
+{
+	std::ofstream file(path, std::ios::binary);
+	file << std::format("P6\n{} {}\n255\n", image.columns(), image.rows());
+	file.write(reinterpret_cast<const char*>(image.rgb().data()), static_cast<std::streamsize>(image.rgb().size()));
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//	FUNCTION: encodeVideo [static]
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief		Encode the rendered frames into a looping MP4 and GIF with ffmpeg, or skip cleanly if it is absent.
+/// @param[in]	frameDir	the directory holding the numbered frame_####.ppm files (also the output location).
+//----------------------------------------------------------------------------------------------------------------------
+static void encodeVideo(const std::filesystem::path& frameDir)
+{
+	if (std::system("ffmpeg -version >/dev/null 2>&1") != 0)
+	{
+		std::cout << std::format("ffmpeg not found; wrote frames only. Install ffmpeg to encode the video.\n");
+		return;
+	}
+	const std::string frames = (frameDir / "frame_%04d.ppm").string();
+	std::system(std::format("ffmpeg -y -framerate 30 -i \"{}\" -c:v libx264 -pix_fmt yuv420p -movflags +faststart \"{}\"",
+	                        frames, (frameDir / "f35_loop.mp4").string()).c_str());
+	// GIF via a two-pass palette (palettegen/paletteuse): a single-pass palette misquantizes the sparse dark
+	// strokes on white and fringes them (they came out yellow); the exact palette keeps them black.
+	std::system(std::format("ffmpeg -y -framerate 30 -i \"{}\" -vf \"fps=25,scale=480:-1:flags=lanczos,split[s0][s1];"
+	                        "[s0]palettegen[p];[s1][p]paletteuse\" \"{}\"",
+	                        frames, (frameDir / "f35_loop.gif").string()).c_str());
+	std::cout << std::format("Encoded {}/f35_loop.mp4 and f35_loop.gif\n", frameDir.string());
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 //	FUNCTION: main
@@ -123,76 +136,31 @@ static const CartesianVector INTAKE_R = {
 ///						frames span one loop (defaults: "frames", 120).
 /// @return		0 on success.
 //----------------------------------------------------------------------------------------------------------------------
-int main(int argc, char** argv)
+int main(const int argc, char** argv)
 {
-	const std::string frameDir   = (argc > 1) ? argv[1] : "frames";
-	const int         frameCount = (argc > 2) ? std::atoi(argv[2]) : 120;
+	const std::filesystem::path frameDir   = (argc > 1) ? argv[1] : "frames";
+	const int                   frameCount = (argc > 2) ? std::stoi(argv[2]) : 120;
+	std::filesystem::create_directories(frameDir);
 
-	// One airframe entity; every planform part is a set of child vertices at fixed body offsets. Built once,
-	// re-posed each frame -- the children never move in the body frame, only the airframe's pose changes.
-	Entity<Wgs> airframe;
-	auto        outline = airframe.attach(OUTLINE);
-	auto        canopy  = airframe.attach(CANOPY);
-	auto        intakeL = airframe.attach(INTAKE_L);
-	auto        intakeR = airframe.attach(INTAKE_R);
-	auto        vstabL  = airframe.attach(FIN_L);
-	auto        vstabR  = airframe.attach(FIN_R);
-
-	// A pinhole camera ahead-of and above the airframe, looking aft and down onto its top: the canonical high
-	// rear-quarter F-35 photo angle. One `lookAt` places it; the camera derives its own basis and focal length.
-	const int W = 860, H = 650;
-	Camera    camera(W, H);
+	// The camera is placed in the airframe's own body axes (+x forward, +y right, +z down): the eye sits ~15 m
+	// AHEAD (+x), 9 m ABOVE (-z), a touch left (-y), and looks at a point ~2 m behind the nose -- the canonical
+	// high rear-quarter view. `lookAt` derives the right/up/forward basis and the focal length from those points.
+	Camera camera(860, 650);
 	camera.lookAt({15.0_m, -1.0_m, -9.0_m}, {-2.0_m, 0.0_m, 0.0_m});
 
-	auto drawLoop = [&](Image& img, const std::vector<Entity<Wgs>*>& v, Color col) {
-		for (std::size_t i = 0; i < v.size(); ++i)
-		{
-			const Pixel a = camera.project(v[i]->position().point());
-			const Pixel b = camera.project(v[(i + 1) % v.size()]->position().point());
-			if (!Camera::sees(a) || !Camera::sees(b))
-				continue;
-			img.line(a, b, col);
-			img.line(Pixel{a.row + 1, a.column}, Pixel{b.row + 1, b.column}, col);    // 2 px for a crisp stroke
-		}
-	};
-
-	for (int frame = 0; frame < frameCount; ++frame)
+	// The example's whole point: pose the once-defined F-35 through the maneuver and draw it -- correct at every
+	// attitude for free, because the pose composition does all the foreshortening and tilt.
+	for (const int frame : std::views::iota(0, frameCount))
 	{
-		// Full-cycle sinusoids of the loop phase: the maneuver returns exactly to its start, so the video loops
-		// seamlessly. A rolling wobble with a coupled pitch/yaw oscillation reads as a lively airshow pass.
-		const units::angle::turns<> phase{static_cast<double>(frame) / frameCount};
-		const degrees<>             yaw   = 10.0_deg * sin(phase);
-		const degrees<>             pitch = -8.0_deg + 10.0_deg * sin(phase);
-		const degrees<>             roll  = 55.0_deg * sin(phase * 2.0);
-		airframe.setPose(Pose(CartesianTuple(0.0_m, 0.0_m, 0.0_m), rotation::EulerAngles{yaw, pitch, roll}));
+		const Pose attitude = airshowAttitude(turns{static_cast<double>(frame) / frameCount});
 
-		Image img(H, W);
-		for (int r = 0; r < H; ++r)
-			for (int c = 0; c < W; ++c)
-				img.plot(Pixel{r, c}, Color{238, 242, 247});
-		const Color ink{20, 20, 20};
-		drawLoop(img, outline, ink);
-		drawLoop(img, intakeL, ink);
-		drawLoop(img, intakeR, ink);
-		drawLoop(img, canopy, ink);
-		drawLoop(img, vstabL, ink);
-		drawLoop(img, vstabR, ink);
+		View view(camera);
+		f35::draw(view, attitude);
 
-		char path[512];
-		std::snprintf(path, sizeof(path), "%s/frame_%04d.ppm", frameDir.c_str(), frame);
-		std::FILE* f = std::fopen(path, "wb");
-		if (!f)
-		{
-			std::fprintf(stderr, "cannot open %s -- create the directory first\n", path);
-			return 1;
-		}
-		std::fprintf(f, "P6\n%d %d\n255\n", W, H);
-		std::fwrite(img.rgb().data(), 1, img.rgb().size(), f);
-		std::fclose(f);
+		writePpm(frameDir / std::format("frame_{:04}.ppm", frame), view.image());
 	}
 
-	std::printf("F-35 entity tree: airframe + %zu children (%zu outline, %zu canopy, %zu+%zu intakes, %zu+%zu vstab)\n",
-	            airframe.children().size(), outline.size(), canopy.size(), intakeL.size(), intakeR.size(), vstabL.size(), vstabR.size());
-	std::printf("Wrote %d loop frames to %s/frame_####.ppm\n", frameCount, frameDir.c_str());
+	std::cout << std::format("Wrote {} F-35 loop frames to {}/frame_####.ppm\n", frameCount, frameDir.string());
+	encodeVideo(frameDir);
 	return 0;
 }

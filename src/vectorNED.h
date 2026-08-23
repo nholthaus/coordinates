@@ -52,13 +52,13 @@ inline namespace coordinates
 {
 	namespace detail
 	{
-		inline void requireSameFrameData(const FrameData& lhs, const FrameData& rhs, const char* message)
+		constexpr void requireSameFrameData(const FrameData& lhs, const FrameData& rhs, const char* message)
 		{
 #ifndef NDEBUG
 			assert((lhs == rhs) && message);
 #endif
 
-			if (!(lhs == rhs))
+			if (lhs != rhs)
 				throw std::logic_error(message);
 		}
 	}    // namespace detail
@@ -113,7 +113,7 @@ inline namespace coordinates
 		 * @brief		Default constructor.
 		 * @details		Creates a vector with value (0,0,0) anchored to origin (0,0,0).
 		 */
-		VectorNED()
+		constexpr VectorNED()
 		    : m_north(0)
 		    , m_east(0)
 		    , m_down(0)
@@ -129,7 +129,7 @@ inline namespace coordinates
 		 * @param[in]	origin	Geodetic origin anchoring this NED frame.
 		 * @param[in]	dateOfObservation	Date of observation.
 		 */
-		VectorNED(distance_unit_type north,
+		constexpr VectorNED(distance_unit_type north,
 		          distance_unit_type east,
 		          distance_unit_type down,
 		          const origin_type& origin,
@@ -148,7 +148,7 @@ inline namespace coordinates
 		 * @param[in]	origin	Geodetic origin anchoring this NED frame.
 		 * @param[in]	dateOfObservation	Date of observation.
 		 */
-		explicit VectorNED(const tuple_type& v, const origin_type& origin, years<> dateOfObservation = Datum::epoch())
+		constexpr explicit VectorNED(const tuple_type& v, const origin_type& origin, years<> dateOfObservation = Datum::epoch())
 		    : m_north(std::get<0>(v))
 		    , m_east(std::get<1>(v))
 		    , m_down(std::get<2>(v))
@@ -161,7 +161,7 @@ inline namespace coordinates
 		 * @details		Converts an ECEF free vector to a NED anchored vector using the stored origin in the ECEF frame data.
 		 */
 		template<template<class> class ECEFUnits>
-		VectorNED(const VectorECEF<Datum, ECEFUnits, T>& ecef)
+		constexpr VectorNED(const VectorECEF<Datum, ECEFUnits, T>& ecef)
 		    : m_north(0)
 		    , m_east(0)
 		    , m_down(0)
@@ -190,7 +190,7 @@ inline namespace coordinates
 		 * @details		Uses ECEF as the least-common-ancestor frame for conversion.
 		 */
 		template<template<class> class ENUUnits>
-		VectorNED(const VectorENU<Datum, ENUUnits, T>& enu)
+		constexpr VectorNED(const VectorENU<Datum, ENUUnits, T>& enu)
 		    : VectorNED(VectorECEF<Datum, meters, T>(enu))
 		{
 		}
@@ -199,27 +199,27 @@ inline namespace coordinates
 		//		ACCESSORS
 		//////////////////////////////////////////////////////////////////////////
 
-		[[nodiscard]] distance_unit_type north() const
+		[[nodiscard]] constexpr distance_unit_type north() const
 		{ return m_north; }
-		[[nodiscard]] distance_unit_type east() const
+		[[nodiscard]] constexpr distance_unit_type east() const
 		{ return m_east; }
-		[[nodiscard]] distance_unit_type down() const
+		[[nodiscard]] constexpr distance_unit_type down() const
 		{ return m_down; }
 
-		[[nodiscard]] frame_data_type frameData() const
+		[[nodiscard]] constexpr frame_data_type frameData() const
 		{ return m_frameData; }
 
 		/**
 		 * @brief		Vector as a tuple.
 		 * @returns		Vector components as a (meters, meters, meters) tuple.
 		 */
-		[[nodiscard]] tuple_type vector() const
+		[[nodiscard]] constexpr tuple_type vector() const
 		{ return tuple_type(m_north, m_east, m_down); }
 
 		/**
 		 * @brief		Set the vector value from a tuple.
 		 */
-		void setVector(const tuple_type& v)
+		constexpr void setVector(const tuple_type& v)
 		{
 			m_north = std::get<0>(v);
 			m_east  = std::get<1>(v);
@@ -231,7 +231,7 @@ inline namespace coordinates
 		 */
 		template<class... Args>
 		    requires(sizeof...(Args) > 0) && std::constructible_from<tuple_type, Args...>
-		void setVector(Args... args)
+		constexpr void setVector(Args... args)
 		{ this->setVector(std::make_tuple<Args...>(std::forward<Args>(args)...)); }
 
 		/**
@@ -239,14 +239,14 @@ inline namespace coordinates
 		 */
 		template<class... Args>
 		    requires(sizeof...(Args) > 0) && std::constructible_from<tuple_type, Args...>
-		static tuple_type makeTuple(Args... args)
+		static constexpr tuple_type makeTuple(Args... args)
 		{ return std::make_tuple<Args...>(std::forward<Args>(args)...); }
 
 		//////////////////////////////////////////////////////////////////////////
 		//		ARITHMETIC
 		//////////////////////////////////////////////////////////////////////////
 
-		VectorNED& operator+=(const VectorNED& v)
+		constexpr VectorNED& operator+=(const VectorNED& v)
 		{
 			requireSameFrameData(m_frameData, v.m_frameData, "VectorNED frame mismatch in operator+=");
 			m_north = m_north + v.north();
@@ -255,7 +255,7 @@ inline namespace coordinates
 			return *this;
 		}
 
-		VectorNED& operator-=(const VectorNED& v)
+		constexpr VectorNED& operator-=(const VectorNED& v)
 		{
 			requireSameFrameData(m_frameData, v.m_frameData, "VectorNED frame mismatch in operator-=");
 			m_north = m_north - v.north();
@@ -291,7 +291,7 @@ concept ned_point =
                         coordinateFrames::NEDFrame<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<P>::reference_frame>::datum_type>>;
 
 template<ned_point NedPoint>
-VectorNED<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type> operator-(const NedPoint& lhs, const NedPoint& rhs)
+constexpr VectorNED<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type> operator-(const NedPoint& lhs, const NedPoint& rhs)
 {
 	using Datum = typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type;
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionNED frame mismatch in operator-");
@@ -303,7 +303,7 @@ VectorNED<typename coordinates::traits::frame_traits<typename coordinates::trait
 }
 
 template<ned_point NedPoint, template<class> class VecUnits, typename T>
-NedPoint operator+(NedPoint lhs, const VectorNED<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
+constexpr NedPoint operator+(NedPoint lhs, const VectorNED<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
 {
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionNED frame mismatch in operator+");
 	lhs.setNorth(lhs.north() + rhs.north());
@@ -313,7 +313,7 @@ NedPoint operator+(NedPoint lhs, const VectorNED<typename coordinates::traits::f
 }
 
 template<ned_point NedPoint, template<class> class VecUnits, typename T>
-NedPoint operator-(NedPoint lhs, const VectorNED<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
+constexpr NedPoint operator-(NedPoint lhs, const VectorNED<typename coordinates::traits::frame_traits<typename coordinates::traits::point_traits<NedPoint>::reference_frame>::datum_type, VecUnits, T>& rhs)
 {
 	requireSameFrameData(lhs.frameData(), rhs.frameData(), "PositionNED frame mismatch in operator-");
 	lhs.setNorth(lhs.north() - rhs.north());
@@ -322,15 +322,13 @@ NedPoint operator-(NedPoint lhs, const VectorNED<typename coordinates::traits::f
 	return lhs;
 }
 
-#include <type_traits>
-
 //----------------------------------
 //  SCALAR MULTIPLY / DIVIDE (NED)
 //----------------------------------
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
 	requires(std::is_arithmetic_v<S>)
-VectorNED<Datum, VecUnits, std::common_type_t<T, S>>
+constexpr VectorNED<Datum, VecUnits, std::common_type_t<T, S>>
 operator*(const VectorNED<Datum, VecUnits, T>& v, const S s)
 {
 	using R = std::common_type_t<T, S>;
@@ -347,7 +345,7 @@ operator*(const VectorNED<Datum, VecUnits, T>& v, const S s)
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
 	requires(std::is_arithmetic_v<S>)
-VectorNED<Datum, VecUnits, std::common_type_t<T, S>>
+constexpr VectorNED<Datum, VecUnits, std::common_type_t<T, S>>
 operator*(const S s, const VectorNED<Datum, VecUnits, T>& v)
 {
 	return v * s;
@@ -355,7 +353,7 @@ operator*(const S s, const VectorNED<Datum, VecUnits, T>& v)
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
 	requires(std::is_arithmetic_v<S>)
-VectorNED<Datum, VecUnits, std::common_type_t<T, S>>
+constexpr VectorNED<Datum, VecUnits, std::common_type_t<T, S>>
 operator/(const VectorNED<Datum, VecUnits, T>& v, const S s)
 {
 	using R = std::common_type_t<T, S>;
@@ -376,7 +374,7 @@ operator/(const VectorNED<Datum, VecUnits, T>& v, const S s)
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
 	requires(std::is_arithmetic_v<S>)
-VectorNED<Datum, VecUnits, T>&
+constexpr VectorNED<Datum, VecUnits, T>&
 operator*=(VectorNED<Datum, VecUnits, T>& v, const S s)
 {
 	v = v * s;
@@ -385,7 +383,7 @@ operator*=(VectorNED<Datum, VecUnits, T>& v, const S s)
 
 template<is_datum Datum, template<class> class VecUnits, typename T, typename S>
 	requires(std::is_arithmetic_v<S>)
-VectorNED<Datum, VecUnits, T>&
+constexpr VectorNED<Datum, VecUnits, T>&
 operator/=(VectorNED<Datum, VecUnits, T>& v, const S s)
 {
 	v = v / s;

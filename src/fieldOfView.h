@@ -75,13 +75,13 @@ inline namespace coordinates
 		//----------------------------------
 
 		/// A field of view about the forward (+x) boresight with the given half-angles.
-		FieldOfView(degrees<> horizontalHalfAngle, degrees<> verticalHalfAngle)
+		constexpr FieldOfView(degrees<> horizontalHalfAngle, degrees<> verticalHalfAngle)
 		    : FieldOfView(CartesianTuple(1.0_m, 0.0_m, 0.0_m), horizontalHalfAngle, verticalHalfAngle)
 		{
 		}
 
 		/// A field of view about an arbitrary body-axis boresight with the given half-angles.
-		FieldOfView(const CartesianTuple& boresight, degrees<> horizontalHalfAngle, degrees<> verticalHalfAngle)
+		constexpr FieldOfView(const CartesianTuple& boresight, degrees<> horizontalHalfAngle, degrees<> verticalHalfAngle)
 		    : m_boresight(normalized(boresight))
 		    , m_horizontalHalfAngle(horizontalHalfAngle)
 		    , m_verticalHalfAngle(verticalHalfAngle)
@@ -92,9 +92,9 @@ inline namespace coordinates
 		//	GETTERS
 		//----------------------------------
 
-		[[nodiscard]] const CartesianTuple&    boresight() const { return m_boresight; }
-		[[nodiscard]] degrees<>  horizontalHalfAngle() const { return m_horizontalHalfAngle; }
-		[[nodiscard]] degrees<>  verticalHalfAngle() const { return m_verticalHalfAngle; }
+		[[nodiscard]] constexpr const CartesianTuple&    boresight() const { return m_boresight; }
+		[[nodiscard]] constexpr degrees<>  horizontalHalfAngle() const { return m_horizontalHalfAngle; }
+		[[nodiscard]] constexpr degrees<>  verticalHalfAngle() const { return m_verticalHalfAngle; }
 
 		//----------------------------------
 		//	CONTAINMENT
@@ -161,10 +161,10 @@ inline namespace coordinates
 		///	@param[in]	direction	the direction to normalize.
 		///	@return		the unit-length direction.
 		//  ----------------------------------------------------------------------------
-		static CartesianTuple normalized(const CartesianTuple& direction)
+		static constexpr CartesianTuple normalized(const CartesianTuple& direction)
 		{
 			const double dx = std::get<0>(direction).value(), dy = std::get<1>(direction).value(), dz = std::get<2>(direction).value();
-			const double n  = std::sqrt(dx * dx + dy * dy + dz * dz);
+			const double n  = units::sqrt(dx * dx + dy * dy + dz * dz);
 			if (n == 0.0)
 				return CartesianTuple(1.0_m, 0.0_m, 0.0_m);
 			return CartesianTuple(meters<>(dx / n), meters<>(dy / n), meters<>(dz / n));
