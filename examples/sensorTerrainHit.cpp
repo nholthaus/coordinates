@@ -168,12 +168,10 @@ static Pixel drawAircraftGlyph(Image& frame, Pixel nadir, degrees<> yaw, degrees
 		}
 	};
 
-	// The map glyph: the outline simplified to its 16 most shape-defining vertices (Visvalingam-Whyatt), reduced
-	// ONCE at compile time (`GLYPH_OUTLINE` below), so at this scale the F-35 reads like the full 47-point outline
-	// without the filler -- and no per-frame recomputation.
+	// The map glyph: just the outline simplified to its 16 most shape-defining vertices (Visvalingam-Whyatt),
+	// reduced ONCE at compile time (`GLYPH_OUTLINE` below), so at this scale the F-35 reads like the full outline
+	// without the interior detail lines -- and no per-frame recomputation.
 	strokeLoop(GLYPH_OUTLINE);
-	strokeLoop(f35::finLeft());
-	strokeLoop(f35::finRight());
 
 	const Pixel podPixel = projectBody(podStation, nadir, yaw, roll, pixelsPerMeter);
 	frame.disc(podPixel, 2, Color{40, 160, 255});    // cyan pod

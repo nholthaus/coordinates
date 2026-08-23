@@ -74,13 +74,93 @@ static_assert(COMPILE_TIME_F35.size() == f35::vertexCount(), "the F-35 planform 
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief		The airframe attitude at a normalized loop phase [0, 1): a rolling wobble with coupled pitch and yaw.
 /// @details	Every channel is a full-cycle sinusoid of the phase, so the attitude at phase 1 equals the attitude
-///				at phase 0 and the animation loops with no seam. This is the maneuver the example demonstrates.
+///				at phase 0 and the animation loops with no seam. This is the ONE source of truth for the maneuver;
+///				the airframe pose AND the control-surface deflections are both derived from it, so changing the
+///				maneuver here moves the whole aircraft -- surfaces included -- with no other edit.
 /// @param[in]	phase	the loop phase as a fraction of one full turn.
-/// @return		the airframe pose (identity translation; yaw/pitch/roll from the phase).
+/// @return		the airframe orientation as intrinsic Z-Y-X yaw/pitch/roll.
 //----------------------------------------------------------------------------------------------------------------------
-static Pose airshowAttitude(turns<> phase)
+static rotation::EulerAngles airshowAttitude(turns<> phase)
 {
-	return {{0.0_m, 0.0_m, 0.0_m}, {10.0_deg * sin(phase), -8.0_deg + 10.0_deg * sin(phase), 55.0_deg * sin(phase * 2.0)}};
+	return {10.0_deg * sin(phase), -8.0_deg + 10.0_deg * sin(phase), 55.0_deg * sin(phase * 2.0)};
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//	FUNCTION: deflect [static]
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief		Deflect a control-surface loop about its hinge -- rotate every vertex `angle` about the hinge axis
+///				through the hinge point, in body axes.
+/// @details	A movable surface is a rigid sub-body hinged to the airframe: the deflection is a `Pose` that
+///				rotates about the hinge point (translate to the hinge, rotate about the axis, translate back), and
+///				the library's `Pose::transformPoint` applies it. The deflected loop is then drawn through the
+///				airframe attitude like any other part, so the control surface composes up the chain for free.
+/// @param[in]	loop	the surface's body-frame vertices.
+/// @param[in]	hinge	a point on the hinge line, in body axes.
+/// @param[in]	axis	the hinge axis direction (need not be normalized).
+/// @param[in]	angle	the deflection angle (right-hand about `axis`).
+/// @return		the deflected loop, in body axes.
+//----------------------------------------------------------------------------------------------------------------------
+static CartesianVector deflect(const CartesianVector& loop, const CartesianTuple& hinge, const CartesianTuple& axis, radians<> angle)
+{
+	const auto                 n = axis.normalized();
+	const rotation::Quaternion q = toQuaternion(rotation::AxisAngle(n.x(), n.y(), n.z(), angle));
+	CartesianVector            out;
+	out.reserve(loop.size());
+	for (const CartesianTuple& v : loop)
+		out.push_back(q.rotate(v - hinge) + hinge);    // rotate about the hinge point
+	return out;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//	FUNCTION: drawAirshow [static]
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief		Draw the F-35 at a loop phase with its control surfaces ARTICULATED: flaperons deflect with the
+///				roll command and rudders with the yaw, so the jet flies the maneuver like a real airshow demo.
+/// @details	The fixed structure draws through the airframe attitude unchanged; the movable loops (flaperons,
+///				rudders) are first `deflect`ed about their hinges, then drawn through the same attitude. The
+///				deflections are DERIVED from the maneuver, not hand-authored: a control surface commands an angular
+///				RATE, so the ailerons track the maneuver's roll rate and the rudders its yaw rate (both obtained by
+///				finite-differencing `airshowAttitude` about the phase). Because the surfaces come from the same
+///				single source of truth as the pose, any maneuver -- or any airframe with flaps and rudders -- just
+///				"works": the surfaces lead the roll and coordinate the yaw with no per-aircraft tuning.
+/// @param[in]	view		the view (camera + image) to draw onto.
+/// @param[in]	phase		the loop phase as a fraction of one full turn.
+//----------------------------------------------------------------------------------------------------------------------
+static void drawAirshow(View& view, turns<> phase)
+{
+	const rotation::EulerAngles att = airshowAttitude(phase);
+	const Pose                  attitude({0.0_m, 0.0_m, 0.0_m}, att);
+
+	// Control surfaces command angular RATES, so derive them from the maneuver's roll/yaw rates -- a central
+	// finite difference of `airshowAttitude` about the phase. `gain` maps deg-of-attitude-per-turn to surface
+	// deflection; the result is clamped to a realistic throw. This ties articulation to the maneuver SSOT.
+	const turns<>   h    = 0.002_tr;
+	const auto      rate = [&](auto pick) { return (pick(airshowAttitude(phase + h)) - pick(airshowAttitude(phase - h))) / (2.0 * h / 1.0_tr); };
+	const auto      clamp = [](degrees<> a, degrees<> lim) { return units::max(-lim, units::min(lim, a)); };
+	const radians<> aileron = clamp(0.09 * rate([](auto e) { return e.roll(); }), 25.0_deg);
+	const radians<> rudder  = clamp(0.80 * rate([](auto e) { return e.yaw(); }),  25.0_deg);
+	const radians<> leFlap  = clamp(0.60 * rate([](auto e) { return e.pitch(); }) + 12.0_deg, 30.0_deg);
+
+	// Fixed structure.
+	for (const CartesianVector& part : {f35::outline(), f35::canopy(), f35::lerxLeft(), f35::lerxRight(),
+	                                    f35::intakeLeft(), f35::intakeRight(), f35::ventLeft(), f35::ventRight(),
+	                                    f35::nozzleLeft(), f35::nozzleRight(), f35::exhaust(),
+	                                    f35::finLeft(), f35::finRight()})
+		drawPolyline(view, attitude, part);
+
+	// Flaperons hinge on a spanwise (body-Y) line at the wing trailing edge; deflecting rotates the trailing edge
+	// up/down. The two oppose (right-wing-down roll = right flaperon up, left down), so `aileron` negates per side.
+	drawPolyline(view, attitude, deflect(f35::flapLeft(),  {-3.20_m, -2.80_m, 0.0_m}, {0.0_m, 1.0_m, 0.0_m}, -aileron));
+	drawPolyline(view, attitude, deflect(f35::flapRight(), {-3.20_m,  2.80_m, 0.0_m}, {0.0_m, 1.0_m, 0.0_m},  aileron));
+
+	// Leading-edge flaps hinge on the swept wing leading edge; deflecting droops the strip down. The hinge axis is
+	// the LE direction (swept aft-and-outboard), so the flap rotates leading-edge-down about it, both wings alike.
+	drawPolyline(view, attitude, deflect(f35::leFlapLeft(),  {0.10_m, -2.25_m, 0.0_m}, {-3.15_m, -2.75_m, 0.0_m}, -leFlap));
+	drawPolyline(view, attitude, deflect(f35::leFlapRight(), {0.10_m,  2.25_m, 0.0_m}, {-3.15_m,  2.75_m, 0.0_m},  leFlap));
+
+	// Rudders hinge on their fin's near-vertical trailing edge; deflecting yaws the surface. Both toe the same way.
+	drawPolyline(view, attitude, deflect(f35::rudderLeft(),  {-6.60_m, -1.80_m, -1.20_m}, {0.30_m, 0.20_m, -1.0_m}, rudder));
+	drawPolyline(view, attitude, deflect(f35::rudderRight(), {-6.60_m,  1.80_m, -1.20_m}, {0.30_m, 0.20_m, -1.0_m}, rudder));
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -155,10 +235,8 @@ int main(const int argc, char** argv)
 	// attitude for free, because the pose composition does all the foreshortening and tilt.
 	for (const int frame : std::views::iota(0, frameCount))
 	{
-		const Pose attitude = airshowAttitude(turns{static_cast<double>(frame) / frameCount});
-
 		View view(camera);
-		f35::draw(view, attitude);
+		drawAirshow(view, turns{static_cast<double>(frame) / frameCount});
 
 		writePpm(frameDir / std::format("frame_{:04}.ppm", frame), view.image());
 	}
