@@ -165,7 +165,18 @@ static Pixel drawAircraftGlyph(Image& frame, Pixel nadir, degrees<> yaw, degrees
 		}
 	};
 
-	strokeLoop(f35::outline());
+	// At this map scale the airframe is only a few dozen pixels, so a coarse silhouette reads the same as the full
+	// 47-point outline -- keep every third vertex (and always the last, to close the loop cleanly).
+	const auto downsample = [](const CartesianVector& part, std::size_t stride) {
+		CartesianVector coarse;
+		for (std::size_t i = 0; i < part.size(); i += stride)
+			coarse.push_back(part[i]);
+		if ((part.size() - 1) % stride != 0)
+			coarse.push_back(part.back());
+		return coarse;
+	};
+
+	strokeLoop(downsample(f35::outline(), 3));    // the fins are only four points each -- drawn in full
 	strokeLoop(f35::finLeft());
 	strokeLoop(f35::finRight());
 
