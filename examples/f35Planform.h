@@ -80,8 +80,8 @@ namespace f35
 		        {-5.303_m, -2.130_m, +0.000_m}, {-4.643_m, -1.841_m, +0.000_m}, {-4.553_m, -1.935_m, +0.000_m},
 		        {-4.430_m, -2.566_m, +0.000_m}, {-4.141_m, -3.616_m, +0.000_m}, {-3.812_m, -5.038_m, +0.000_m},
 		        {-3.682_m, -5.419_m, +0.000_m}, {-2.220_m, -5.419_m, +0.000_m}, {-2.147_m, -5.361_m, +0.000_m},
-		        {-1.371_m, -4.173_m, +0.000_m}, {-1.267_m, -4.069_m, +0.000_m}, {-0.342_m, -2.650_m, +0.000_m},
-		        {-0.051_m, -2.235_m, +0.000_m}, {+0.499_m, -1.916_m, +0.000_m}, {+1.015_m, -1.751_m, +0.000_m},
+		        {-1.571_m, -4.496_m, +0.000_m}, {-0.805_m, -3.401_m, +0.000_m}, {-0.391_m, -2.744_m, +0.000_m},
+		        {+0.035_m, -2.190_m, +0.000_m}, {+0.636_m, -1.878_m, +0.000_m}, {+1.015_m, -1.751_m, +0.000_m},
 		        {+1.582_m, -1.710_m, +0.000_m}, {+2.654_m, -1.710_m, +0.000_m}, {+2.734_m, -1.669_m, +0.000_m},
 		        {+3.222_m, -1.669_m, +0.000_m}, {+3.593_m, -1.450_m, +0.000_m}, {+3.171_m, -1.032_m, +0.000_m},
 		        {+3.728_m, -0.846_m, +0.000_m}, {+4.358_m, -0.721_m, +0.000_m}, {+6.092_m, -0.556_m, +0.000_m},
@@ -106,13 +106,9 @@ namespace f35
 		return {
 		        {+3.523_m, -1.463_m, +0.000_m}, {+3.105_m, -1.092_m, +0.000_m}, {+1.825_m, -0.762_m, +0.000_m},
 		        {+0.609_m, -0.639_m, +0.000_m}, {-0.492_m, -0.598_m, +0.000_m}, {-1.949_m, -0.680_m, +0.000_m},
-		        {-3.222_m, -0.845_m, +0.000_m}, {-4.191_m, -0.845_m, +0.000_m}, {-5.682_m, -0.696_m, +0.000_m},
-		        {-6.444_m, -0.933_m, +0.000_m}, {-6.284_m, -1.537_m, +0.000_m}, {-6.112_m, -1.298_m, +0.000_m},
-		        {-4.879_m, -1.216_m, +0.000_m}, {-3.759_m, -1.392_m, +0.000_m}, {-3.722_m, -1.497_m, +0.000_m},
-		        {-4.332_m, -1.751_m, +0.000_m}, {-3.812_m, -1.900_m, +0.000_m}, {-3.127_m, -4.734_m, +0.000_m},
-		        {-3.806_m, -4.759_m, +0.000_m}, {-3.662_m, -5.362_m, +0.000_m}, {-2.625_m, -5.378_m, +0.000_m},
-		        {-0.686_m, -2.458_m, +0.000_m}, {-0.161_m, -2.287_m, +0.000_m}, {+0.679_m, -1.794_m, +0.000_m},
-		        {+1.521_m, -1.669_m, +0.000_m}, {+3.219_m, -1.628_m, +0.000_m}};
+		        {-3.222_m, -0.845_m, +0.000_m}, {-3.812_m, -1.900_m, +0.000_m}, {-0.686_m, -2.458_m, +0.000_m},
+		        {-0.161_m, -2.287_m, +0.000_m}, {+0.679_m, -1.794_m, +0.000_m}, {+1.521_m, -1.669_m, +0.000_m},
+		        {+3.219_m, -1.628_m, +0.000_m}};
 	}
 
 	/// The right forebody chine / LERX shoulder panel.
@@ -121,13 +117,8 @@ namespace f35
 		return {
 		        {+3.523_m, +1.463_m, +0.000_m}, {+3.189_m, +1.669_m, +0.000_m}, {+1.213_m, +1.713_m, +0.000_m},
 		        {+0.541_m, +1.875_m, +0.000_m}, {-0.208_m, +2.328_m, +0.000_m}, {-0.624_m, +2.396_m, +0.000_m},
-		        {-2.628_m, +5.378_m, +0.000_m}, {-3.662_m, +5.378_m, +0.000_m}, {-3.801_m, +4.801_m, +0.000_m},
-		        {-3.111_m, +4.727_m, +0.000_m}, {-3.837_m, +1.850_m, +0.000_m}, {-4.299_m, +1.751_m, +0.000_m},
-		        {-3.694_m, +1.457_m, +0.000_m}, {-4.719_m, +1.257_m, +0.000_m}, {-5.754_m, +1.257_m, +0.000_m},
-		        {-6.202_m, +1.399_m, +0.000_m}, {-6.242_m, +1.585_m, +0.000_m}, {-6.424_m, +0.886_m, +0.000_m},
-		        {-5.679_m, +0.721_m, +0.000_m}, {-4.622_m, +0.845_m, +0.000_m}, {-2.922_m, +0.845_m, +0.000_m},
-		        {-2.439_m, +0.762_m, +0.000_m}, {-0.939_m, +0.639_m, +0.000_m}, {+0.761_m, +0.639_m, +0.000_m},
-		        {+2.154_m, +0.845_m, +0.000_m}, {+3.145_m, +1.126_m, +0.000_m}};
+		        {-2.922_m, +0.845_m, +0.000_m}, {-2.439_m, +0.762_m, +0.000_m}, {-0.939_m, +0.639_m, +0.000_m},
+		        {+0.761_m, +0.639_m, +0.000_m}, {+2.154_m, +0.845_m, +0.000_m}, {+3.145_m, +1.126_m, +0.000_m}};
 	}
 
 	/// The left DSI intake lip.
@@ -246,28 +237,67 @@ namespace f35
 		        {-6.644_m, +1.639_m, -0.705_m}, {-6.700_m, +1.420_m, -0.000_m}, {-6.644_m, +1.464_m, -0.141_m}};
 	}
 
-	/// The left wing leading-edge flap.
-	inline constexpr CartesianVector leFlapLeft()
-	{
-		return {
-		        {+0.100_m, -2.250_m, +0.000_m}, {-3.050_m, -5.000_m, +0.000_m}, {-3.600_m, -4.700_m, +0.000_m},
-		        {-0.500_m, -2.100_m, +0.000_m}};
-	}
-
-	/// The right wing leading-edge flap.
+	/// The right wing leading-edge flap: a thin strip along the leading edge (its outboard edge IS the wing LE),
+	/// root to near the tip, offset a shallow chord aft to the hinge line.
 	inline constexpr CartesianVector leFlapRight()
 	{
 		return {
-		        {+0.100_m, +2.250_m, +0.000_m}, {-3.050_m, +5.000_m, +0.000_m}, {-3.600_m, +4.700_m, +0.000_m},
-		        {-0.500_m, +2.100_m, +0.000_m}};
+		        {+0.035_m, +2.190_m, +0.000_m}, {-0.391_m, +2.744_m, +0.000_m}, {-0.805_m, +3.401_m, +0.000_m},
+		        {-1.571_m, +4.496_m, +0.000_m}, {-2.021_m, +4.396_m, +0.000_m}, {-1.255_m, +3.301_m, +0.000_m},
+		        {-0.841_m, +2.644_m, +0.000_m}, {-0.415_m, +2.090_m, +0.000_m}};
 	}
 
-	/// Every planform part, in draw order -- the single list both the runtime attach and the compile-time build
-	/// iterate, so a part is added in exactly one place.
-	inline const std::array<CartesianVector, 19>& parts()
+	/// The left wing leading-edge flap (the y-mirror of the right).
+	inline constexpr CartesianVector leFlapLeft()
 	{
-		static const std::array<CartesianVector, 19> tables{outline(), canopy(), lerxLeft(), lerxRight(), intakeLeft(), intakeRight(), ventLeft(), ventRight(), flapLeft(), flapRight(), nozzleLeft(), nozzleRight(), exhaust(), finLeft(), finRight(), rudderLeft(), rudderRight(), leFlapLeft(), leFlapRight()};
+		return {
+		        {+0.035_m, -2.190_m, +0.000_m}, {-0.391_m, -2.744_m, +0.000_m}, {-0.805_m, -3.401_m, +0.000_m},
+		        {-1.571_m, -4.496_m, +0.000_m}, {-2.021_m, -4.396_m, +0.000_m}, {-1.255_m, -3.301_m, +0.000_m},
+		        {-0.841_m, -2.644_m, +0.000_m}, {-0.415_m, -2.090_m, +0.000_m}};
+	}
+
+	/// The FIXED structure: everything that does not move relative to the airframe. Shared by both the simple and
+	/// the articulated jet.
+	inline const std::array<CartesianVector, 13>& fixedParts()
+	{
+		static const std::array<CartesianVector, 13> tables{outline(), canopy(), lerxLeft(), lerxRight(), intakeLeft(), intakeRight(),
+		                                                    ventLeft(), ventRight(), nozzleLeft(), nozzleRight(), exhaust(), finLeft(), finRight()};
 		return tables;
+	}
+
+	/// The control-surface families, each driven by a different maneuver channel.
+	enum class Surface { Flaperon, LeadingEdgeFlap, Rudder };
+
+	//	----------------------------------------------------------------------------
+	//	STRUCT		Movable
+	//  ----------------------------------------------------------------------------
+	///	@brief		A movable control surface: its body-frame loop, the hinge it rotates about, and its family.
+	///	@details	Drawn flush (the simple jet) the loop's shared edges lie on the wing/fin outline; deflected (the
+	///				articulated jet) it rotates about `hinge`+`axis` so only its hinge edge stays put. `sign` lets a
+	///				pair oppose (ailerons) or move together (rudders); `surface` selects which maneuver channel drives it.
+	//  ----------------------------------------------------------------------------
+	struct Movable
+	{
+		CartesianVector loop;       ///< the surface outline in body axes
+		CartesianTuple  hinge;      ///< a point on the hinge line
+		CartesianTuple  axis;       ///< the hinge axis direction (need not be normalized)
+		double          sign;       ///< the deflection sense for this surface (+1 or -1)
+		Surface         surface;    ///< which control-surface family (picks the driving channel)
+	};
+
+	/// The movable control surfaces with their hinges: flaperons (roll), leading-edge flaps (pitch/lift), rudders
+	/// (yaw). Paired surfaces carry opposite signs where they oppose (ailerons) and equal where they don't.
+	inline const std::array<Movable, 6>& movableParts()
+	{
+		static const std::array<Movable, 6> surfaces{{
+		        {flapRight(), {-3.20_m, +2.80_m, 0.0_m}, {0.0_m, 1.0_m, 0.0_m}, +1.0, Surface::Flaperon},
+		        {flapLeft(), {-3.20_m, -2.80_m, 0.0_m}, {0.0_m, 1.0_m, 0.0_m}, -1.0, Surface::Flaperon},
+		        {leFlapRight(), {0.035_m, +2.19_m, 0.0_m}, {-1.606_m, +2.306_m, 0.0_m}, +1.0, Surface::LeadingEdgeFlap},
+		        {leFlapLeft(), {0.035_m, -2.19_m, 0.0_m}, {-1.606_m, -2.306_m, 0.0_m}, +1.0, Surface::LeadingEdgeFlap},
+		        {rudderRight(), {-6.60_m, +1.80_m, -1.20_m}, {0.30_m, 0.20_m, -1.0_m}, +1.0, Surface::Rudder},
+		        {rudderLeft(), {-6.60_m, -1.80_m, -1.20_m}, {0.30_m, 0.20_m, -1.0_m}, +1.0, Surface::Rudder},
+		}};
+		return surfaces;
 	}
 
 	/// The total number of planform vertices across every part -- a compile-time constant that sizes the baked
@@ -277,12 +307,50 @@ namespace f35
 		return outline().size() + canopy().size() + lerxLeft().size() + lerxRight().size() + intakeLeft().size() + intakeRight().size() + ventLeft().size() + ventRight().size() + flapLeft().size() + flapRight().size() + nozzleLeft().size() + nozzleRight().size() + exhaust().size() + finLeft().size() + finRight().size() + rudderLeft().size() + rudderRight().size() + leFlapLeft().size() + leFlapRight().size();
 	}
 
-	/// Draw the whole F-35 at the given attitude onto a view -- every planform part posed and stroked (black by
-	/// default) as a closed loop by the library's `drawPolyline`. The view carries its own camera and image.
-	inline void draw(topography::View& view, const Pose& attitude, topography::Color color = {})
+	/// Rotate a body-frame loop about a hinge (a point + axis) by `angle` -- the rigid deflection of a control
+	/// surface. Translate to the hinge, rotate about the axis, translate back; each vertex through `Pose`.
+	inline CartesianVector deflect(const CartesianVector& loop, const CartesianTuple& hinge, const CartesianTuple& axis, radians<> angle)
 	{
-		for (const CartesianVector& part : parts())
+		const auto                 n = axis.normalized();
+		const rotation::Quaternion q = rotation::toQuaternion(rotation::AxisAngle(n.x(), n.y(), n.z(), angle));
+		CartesianVector            out;
+		out.reserve(loop.size());
+		for (const CartesianTuple& v : loop)
+			out.push_back(q.rotate(v - hinge) + hinge);    // rotate about the hinge point
+		return out;
+	}
+
+	/// The commanded deflection of each control-surface family (right-hand about each hinge axis).
+	struct Deflections
+	{
+		radians<> flaperon{0.0};    ///< aileron/flaperon throw (roll)
+		radians<> leFlap{0.0};      ///< leading-edge flap droop (pitch/lift)
+		radians<> rudder{0.0};      ///< rudder toe (yaw)
+	};
+
+	/// The SIMPLE F-35: fixed structure and every control surface drawn FLUSH (no deflection), one coherent
+	/// silhouette. This is the clean jet.
+	inline void simple(topography::View& view, const Pose& attitude, topography::Color color = {})
+	{
+		for (const CartesianVector& part : fixedParts())
 			topography::drawPolyline(view, attitude, part, color);
+		for (const Movable& m : movableParts())
+			topography::drawPolyline(view, attitude, m.loop, color);
+	}
+
+	/// The ARTICULATED F-35: the same fixed structure, with each control surface DEFLECTED about its hinge by its
+	/// family's commanded angle. The movable panels swing off the mold line; the fixed wing keeps the shared edges.
+	inline void articulated(topography::View& view, const Pose& attitude, const Deflections& deflections, topography::Color color = {})
+	{
+		for (const CartesianVector& part : fixedParts())
+			topography::drawPolyline(view, attitude, part, color);
+		for (const Movable& m : movableParts())
+		{
+			const radians<> angle = (m.surface == Surface::Flaperon)        ? deflections.flaperon
+			                        : (m.surface == Surface::LeadingEdgeFlap) ? deflections.leFlap
+			                                                                  : deflections.rudder;
+			topography::drawPolyline(view, attitude, deflect(m.loop, m.hinge, m.axis, m.sign * angle), color);
+		}
 	}
 
 	//----------------------------------------------------------------------------------------------------------------------
