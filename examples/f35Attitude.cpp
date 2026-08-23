@@ -105,20 +105,23 @@ static void writePpm(const std::filesystem::path& path, const Image& image)
 //----------------------------------------------------------------------------------------------------------------------
 static void encodeVideo(const std::filesystem::path& frameDir)
 {
-	if (std::system("ffmpeg -version >/dev/null 2>&1") != 0)
+	// Run a shell command, reporting (never ignoring) a non-zero exit -- glibc marks system() warn_unused_result.
+	const auto run = [](const std::string& command) { return std::system(command.c_str()) == 0; };
+
+	if (!run("ffmpeg -version >/dev/null 2>&1"))
 	{
-		std::cout << std::format("ffmpeg not found; wrote frames only. Install ffmpeg to encode the video.\n");
+		std::cout << "ffmpeg not found; wrote frames only. Install ffmpeg to encode the video.\n";
 		return;
 	}
 	const std::string frames = (frameDir / "frame_%04d.ppm").string();
-	std::system(std::format("ffmpeg -y -framerate 30 -i \"{}\" -c:v libx264 -pix_fmt yuv420p -movflags +faststart \"{}\"",
-	                        frames, (frameDir / "f35_loop.mp4").string()).c_str());
+	const bool         mp4    = run(std::format("ffmpeg -y -framerate 30 -i \"{}\" -c:v libx264 -pix_fmt yuv420p -movflags +faststart \"{}\"",
+	                                            frames, (frameDir / "f35_loop.mp4").string()));
 	// GIF via a two-pass palette (palettegen/paletteuse): a single-pass palette misquantizes the sparse dark
 	// strokes on white and fringes them (they came out yellow); the exact palette keeps them black.
-	std::system(std::format("ffmpeg -y -framerate 30 -i \"{}\" -vf \"fps=25,scale=480:-1:flags=lanczos,split[s0][s1];"
-	                        "[s0]palettegen[p];[s1][p]paletteuse\" \"{}\"",
-	                        frames, (frameDir / "f35_loop.gif").string()).c_str());
-	std::cout << std::format("Encoded {}/f35_loop.mp4 and f35_loop.gif\n", frameDir.string());
+	const bool gif = run(std::format("ffmpeg -y -framerate 30 -i \"{}\" -vf \"fps=25,scale=480:-1:flags=lanczos,split[s0][s1];"
+	                                 "[s0]palettegen[p];[s1][p]paletteuse\" \"{}\"",
+	                                 frames, (frameDir / "f35_loop.gif").string()));
+	std::cout << std::format("{} {}/f35_loop.mp4 and f35_loop.gif\n", (mp4 && gif) ? "Encoded" : "ffmpeg reported an error encoding", frameDir.string());
 }
 
 //----------------------------------------------------------------------------------------------------------------------
