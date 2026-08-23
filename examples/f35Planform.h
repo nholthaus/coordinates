@@ -268,6 +268,204 @@ namespace f35
 		return flaps;
 	}
 
+	//	----------------------------------------------------------------------------
+	//	INTERIOR DETAIL LINES (the DETAILED airplane only -- panels, seams, intakes,
+	//	engine-face hatching; none overlap the structural outline/flaps/tails).
+	//	----------------------------------------------------------------------------
+
+	/// The upper DSI intake lip (inner oval line).
+	inline constexpr CartesianVector intakeUpper()
+	{
+		return {
+		        {-0.397_m, -1.702_m, +0.000_m}, {+0.019_m, -1.702_m, +0.000_m}, {+0.284_m, -1.513_m, +0.000_m},
+		        {+1.721_m, -1.513_m, +0.000_m}, {+1.759_m, -1.627_m, +0.000_m}, {+2.062_m, -1.702_m, +0.000_m},
+		        {+2.516_m, -1.702_m, +0.000_m}, {+2.516_m, -1.475_m, +0.000_m}, {-0.397_m, -1.475_m, +0.000_m},
+		        {-0.397_m, -1.702_m, +0.000_m}};
+	}
+
+	/// The lower DSI intake lip (inner oval line).
+	inline constexpr CartesianVector intakeLower()
+	{
+		return {
+		        {-0.397_m, +1.702_m, +0.000_m}, {-0.397_m, +1.475_m, +0.000_m}, {+2.516_m, +1.475_m, +0.000_m},
+		        {+2.516_m, +1.702_m, +0.000_m}, {+2.062_m, +1.702_m, +0.000_m}, {+1.759_m, +1.627_m, +0.000_m},
+		        {+1.721_m, +1.513_m, +0.000_m}, {+0.284_m, +1.513_m, +0.000_m}, {+0.019_m, +1.702_m, +0.000_m},
+		        {-0.397_m, +1.702_m, +0.000_m}};
+	}
+
+	/// The upper DSI intake outer perimeter.
+	inline constexpr CartesianVector intakeUpperOuter()
+	{
+		return {
+		        {-1.003_m, -1.438_m, +0.000_m}, {+0.322_m, -1.702_m, +0.000_m}, {+1.721_m, -1.627_m, +0.000_m},
+		        {+2.667_m, -1.702_m, +0.000_m}, {+2.856_m, -1.665_m, +0.000_m}, {+2.743_m, -1.551_m, +0.000_m},
+		        {+2.894_m, -1.475_m, +0.000_m}, {+2.894_m, -1.362_m, +0.000_m}, {+2.667_m, -1.173_m, +0.000_m},
+		        {+2.024_m, -1.173_m, +0.000_m}, {+1.986_m, -1.248_m, +0.000_m}, {+0.322_m, -1.173_m, +0.000_m},
+		        {-0.813_m, -1.286_m, +0.000_m}, {-1.003_m, -1.438_m, +0.000_m}};
+	}
+
+	/// The lower DSI intake outer perimeter.
+	inline constexpr CartesianVector intakeLowerOuter()
+	{
+		return {
+		        {-1.003_m, +1.438_m, +0.000_m}, {-0.813_m, +1.286_m, +0.000_m}, {+0.322_m, +1.173_m, +0.000_m},
+		        {+1.986_m, +1.248_m, +0.000_m}, {+2.024_m, +1.173_m, +0.000_m}, {+2.667_m, +1.173_m, +0.000_m},
+		        {+2.894_m, +1.362_m, +0.000_m}, {+2.894_m, +1.475_m, +0.000_m}, {+2.743_m, +1.551_m, +0.000_m},
+		        {+2.856_m, +1.665_m, +0.000_m}, {+2.667_m, +1.702_m, +0.000_m}, {+1.721_m, +1.627_m, +0.000_m},
+		        {+0.322_m, +1.702_m, +0.000_m}, {-1.003_m, +1.438_m, +0.000_m}};
+	}
+
+	/// The upper fuselage-side spine seam.
+	inline constexpr CartesianVector spineSeamUpper()
+	{
+		return {
+		        {-5.429_m, -0.605_m, +0.000_m}, {-3.386_m, -0.643_m, +0.000_m}, {+1.835_m, -0.416_m, +0.000_m},
+		        {+3.197_m, -0.574_m, +0.000_m}, {+3.651_m, -0.504_m, +0.000_m}, {+4.332_m, -0.631_m, +0.000_m},
+		        {+5.240_m, -0.562_m, +0.000_m}};
+	}
+
+	/// The lower fuselage-side spine seam.
+	inline constexpr CartesianVector spineSeamLower()
+	{
+		return {
+		        {+5.240_m, +0.562_m, +0.000_m}, {+4.332_m, +0.631_m, +0.000_m}, {+3.651_m, +0.504_m, +0.000_m},
+		        {+3.197_m, +0.574_m, +0.000_m}, {+1.835_m, +0.416_m, +0.000_m}, {-3.386_m, +0.643_m, +0.000_m},
+		        {-5.429_m, +0.605_m, +0.000_m}};
+	}
+
+	/// The forward centerline weapons-bay / gun panel.
+	inline constexpr CartesianVector weaponsBox()
+	{
+		return {
+		        {+0.359_m, -0.265_m, +0.000_m}, {+0.738_m, -0.227_m, +0.000_m}, {+0.965_m, -0.265_m, +0.000_m},
+		        {+1.003_m, -0.378_m, +0.000_m}, {+1.343_m, -0.378_m, +0.000_m}, {+1.381_m, -0.227_m, +0.000_m},
+		        {+1.230_m, -0.189_m, +0.000_m}, {+1.230_m, -0.038_m, +0.000_m}, {+1.381_m, +0.000_m, +0.000_m},
+		        {+1.343_m, +0.378_m, +0.000_m}, {+0.662_m, +0.227_m, +0.000_m}, {+0.359_m, +0.303_m, +0.000_m},
+		        {+0.359_m, +0.000_m, +0.000_m}, {+0.473_m, -0.038_m, +0.000_m}, {+0.359_m, -0.265_m, +0.000_m}};
+	}
+
+	/// The refuel receptacle panel on the spine.
+	inline constexpr CartesianVector spineReceptacle()
+	{
+		return {
+		        {-0.435_m, +0.000_m, +0.000_m}, {-0.208_m, -0.265_m, +0.000_m}, {+0.397_m, -0.265_m, +0.000_m},
+		        {+0.473_m, -0.189_m, +0.000_m}, {+0.359_m, -0.265_m, +0.000_m}, {-0.208_m, -0.265_m, +0.000_m},
+		        {-0.322_m, -0.113_m, +0.000_m}, {-0.284_m, +0.000_m, +0.000_m}, {+0.473_m, +0.000_m, +0.000_m},
+		        {-0.322_m, +0.076_m, +0.000_m}, {-0.208_m, +0.303_m, +0.000_m}, {+0.359_m, +0.303_m, +0.000_m},
+		        {+0.473_m, +0.189_m, +0.000_m}, {+0.359_m, +0.303_m, +0.000_m}, {-0.208_m, +0.303_m, +0.000_m},
+		        {-0.435_m, +0.000_m, +0.000_m}};
+	}
+
+	/// The refuel receptacle divider bar.
+	inline constexpr CartesianVector spineReceptacleBar()
+	{
+		return {
+		        {-0.322_m, +0.000_m, +0.000_m}, {+0.435_m, +0.000_m, +0.000_m}};
+	}
+
+	/// The hexagonal access panel on the boom.
+	inline constexpr CartesianVector hexPanel()
+	{
+		return {
+		        {-3.613_m, -0.076_m, +0.000_m}, {-3.424_m, -0.227_m, +0.000_m}, {-3.159_m, -0.227_m, +0.000_m},
+		        {-3.045_m, +0.076_m, +0.000_m}, {-3.159_m, +0.189_m, +0.000_m}, {-3.424_m, +0.189_m, +0.000_m},
+		        {-3.613_m, +0.076_m, +0.000_m}, {-3.613_m, -0.076_m, +0.000_m}};
+	}
+
+	/// The small port on the boom, forward of the weapons panel.
+	inline constexpr CartesianVector roundPort()
+	{
+		return {
+		        {+0.700_m, -0.189_m, +0.000_m}, {+0.927_m, -0.189_m, +0.000_m}, {+0.851_m, -0.113_m, +0.000_m},
+		        {+0.851_m, +0.113_m, +0.000_m}, {+0.927_m, +0.151_m, +0.000_m}, {+0.700_m, +0.151_m, +0.000_m},
+		        {+0.776_m, +0.113_m, +0.000_m}, {+0.776_m, -0.113_m, +0.000_m}, {+0.700_m, -0.189_m, +0.000_m}};
+	}
+
+	/// Engine nozzle hatch stroke 1.
+	inline constexpr CartesianVector nozzleHatch1()
+	{
+		return {
+		        {-5.883_m, -0.492_m, +0.000_m}, {-5.504_m, -0.492_m, +0.000_m}};
+	}
+
+	/// Engine nozzle hatch stroke 2.
+	inline constexpr CartesianVector nozzleHatch2()
+	{
+		return {
+		        {-6.185_m, -0.340_m, +0.000_m}, {-5.504_m, -0.340_m, +0.000_m}};
+	}
+
+	/// Engine nozzle hatch stroke 3.
+	inline constexpr CartesianVector nozzleHatch3()
+	{
+		return {
+		        {-6.185_m, -0.189_m, +0.000_m}, {-5.504_m, -0.189_m, +0.000_m}};
+	}
+
+	/// Engine nozzle hatch stroke 4.
+	inline constexpr CartesianVector nozzleHatch4()
+	{
+		return {
+		        {-6.185_m, -0.038_m, +0.000_m}, {-5.504_m, -0.038_m, +0.000_m}};
+	}
+
+	/// Engine nozzle hatch stroke 5.
+	inline constexpr CartesianVector nozzleHatch5()
+	{
+		return {
+		        {-6.185_m, +0.113_m, +0.000_m}, {-5.504_m, +0.113_m, +0.000_m}};
+	}
+
+	/// Engine nozzle hatch stroke 6.
+	inline constexpr CartesianVector nozzleHatch6()
+	{
+		return {
+		        {-6.185_m, +0.265_m, +0.000_m}, {-5.504_m, +0.265_m, +0.000_m}};
+	}
+
+	/// Engine nozzle hatch stroke 7.
+	inline constexpr CartesianVector nozzleHatch7()
+	{
+		return {
+		        {-6.110_m, +0.416_m, +0.000_m}, {-5.504_m, +0.416_m, +0.000_m}};
+	}
+
+	/// The upper wing panel dash line.
+	inline constexpr CartesianVector wingDashUpper()
+	{
+		return {
+		        {-1.873_m, -3.594_m, +0.000_m}, {-1.381_m, -2.837_m, +0.000_m}};
+	}
+
+	/// The lower wing panel dash line.
+	inline constexpr CartesianVector wingDashLower()
+	{
+		return {
+		        {-1.381_m, +2.837_m, +0.000_m}, {-1.873_m, +3.594_m, +0.000_m}};
+	}
+
+	/// The canopy windscreen bow frame.
+	inline constexpr CartesianVector windscreenBow()
+	{
+		return {
+		        {+6.337_m, -0.227_m, +0.000_m}, {+6.337_m, +0.227_m, +0.000_m}};
+	}
+
+	/// The aft canopy bulkhead frame.
+	inline constexpr CartesianVector canopyAftFrame()
+	{
+		return {
+		        {+3.575_m, -0.378_m, +0.000_m}, {+3.575_m, +0.643_m, +0.000_m}};
+	}
+
+	/// The vertical-stabilizer root fairing vent.
+	inline constexpr CartesianVector vstabFairingUpper()
+	{
+		return {
+		        {-3.386_m, -1.248_m, +0.000_m}, {-2.970_m, -1.400_m, +0.000_m}, {-2.970_m, -1.059_m, +0.000_m},
+		        {-3.235_m, -1.097_m, +0.000_m}, {-3.386_m, -1.248_m, +0.000_m}};
+	}
+
 	/// Every planform part, in draw order -- the single list both the runtime attach and the compile-time build
 	/// iterate, so a part is added in exactly one place. The simple airplane: outline, canopy, and z-aware vstabs.
 	inline const std::array<CartesianVector, 4>& parts()
@@ -339,6 +537,31 @@ namespace f35
 	inline void simple(topography::View& view, const Pose& attitude, topography::Color color = {})
 	{
 		draw(view, attitude, color);
+	}
+
+	/// Draw the DETAILED airplane: the simple airplane plus every interior detail line -- the intakes, fuselage
+	/// seams, weapons-bay and boom panels, engine-face hatching, wing dashes, and canopy framing. The detail is
+	/// fixed structure that sits clear of the control-surface edges, so it draws only here, not on the simple jet.
+	inline void detailed(topography::View& view, const Pose& attitude, topography::Color color = {})
+	{
+		simple(view, attitude, color);
+		const CartesianVector closed[] = {intakeUpper(), intakeLower(), intakeUpperOuter(), intakeLowerOuter(),
+		                                  weaponsBox(), spineReceptacle(), hexPanel(), roundPort(), vstabFairingUpper()};
+		for (const CartesianVector& part : closed)
+			topography::drawPolyline(view, attitude, part, color);
+
+		// Open seams (not closed loops): draw each as consecutive 2-point segments so the polyline is not wrapped
+		// end-to-start. A 2-point segment drawn as a loop simply retraces itself, which is harmless.
+		const auto drawOpen = [&](const CartesianVector& seam) {
+			for (std::size_t i = 0; i + 1 < seam.size(); ++i)
+				topography::drawPolyline(view, attitude, CartesianVector{seam[i], seam[i + 1]}, color);
+		};
+		const CartesianVector open[] = {spineSeamUpper(), spineSeamLower(), spineReceptacleBar(),
+		                                nozzleHatch1(), nozzleHatch2(), nozzleHatch3(), nozzleHatch4(), nozzleHatch5(),
+		                                nozzleHatch6(), nozzleHatch7(), wingDashUpper(), wingDashLower(),
+		                                windscreenBow(), canopyAftFrame()};
+		for (const CartesianVector& seam : open)
+			drawOpen(seam);
 	}
 
 	/// A flap panel deflected about its hinge by `angle` -- rotate every panel vertex about the hinge axis through

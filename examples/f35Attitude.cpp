@@ -101,12 +101,24 @@ static rotation::EulerAngles airshowAttitude(turns<> phase)
 /// @param[in]	phase		the loop phase as a fraction of one full turn.
 /// @param[in]	articulated	draw the deflecting-control-surface jet rather than the flush simple airplane.
 //----------------------------------------------------------------------------------------------------------------------
-static void drawAirshow(View& view, turns<> phase, bool articulated)
+enum class Fidelity
+{
+	Simple,        ///< outline, canopy, z-aware vstabs -- the clean jet
+	Detailed,      ///< the simple jet plus every interior detail line -- the hero render
+	Articulated    ///< the flap-cut jet with control surfaces deflecting to fly the maneuver
+};
+
+static void drawAirshow(View& view, turns<> phase, Fidelity fidelity)
 {
 	const Pose attitude({0.0_m, 0.0_m, 0.0_m}, airshowAttitude(phase));
-	if (!articulated)
+	if (fidelity == Fidelity::Simple)
 	{
 		f35::simple(view, attitude);
+		return;
+	}
+	if (fidelity == Fidelity::Detailed)
+	{
+		f35::detailed(view, attitude);
 		return;
 	}
 
@@ -192,17 +204,20 @@ static void encodeVideo(const std::filesystem::path& frameDir)
 ///				IS the rigid body, so the planform foreshortens, rolls, and the standing vstabs tilt with no
 ///				per-vertex trig. Frames are written as zero-padded P6 PPMs for an external encoder to assemble.
 /// @param[in]	argc	argument count.
-/// @param[in]	argv	[frameDirectory] [frameCount] [--articulated] -- output directory for the numbered frames,
-///						how many frames span one loop (defaults: "frames", 120), and whether to fly the articulated
-///						jet (deflecting control surfaces) rather than the flush simple airplane.
+/// @param[in]	argv	[frameDirectory] [frameCount] [--detailed|--articulated] -- output directory for the
+///						numbered frames, how many frames span one loop (defaults: "frames", 120), and which
+///						fidelity to fly: the flush simple jet (default), the detailed jet (every interior line),
+///						or the articulated jet (deflecting control surfaces).
 /// @return		0 on success.
 //----------------------------------------------------------------------------------------------------------------------
 int main(const int argc, char** argv)
 {
-	// `--articulated` may appear anywhere; the remaining arguments are the positional frame directory and count.
+	// A fidelity flag may appear anywhere; the remaining arguments are the positional frame directory and count.
 	const std::vector<std::string> args(argv + 1, argv + argc);
-	const bool                     articulated = std::ranges::find(args, "--articulated") != args.end();
-	std::vector<std::string>       positional;
+	const Fidelity                 fidelity = (std::ranges::find(args, "--articulated") != args.end()) ? Fidelity::Articulated
+	                                          : (std::ranges::find(args, "--detailed") != args.end())  ? Fidelity::Detailed
+	                                                                                                   : Fidelity::Simple;
+	std::vector<std::string> positional;
 	std::ranges::copy_if(args, std::back_inserter(positional), [](const std::string& a) { return !a.starts_with("--"); });
 
 	const std::filesystem::path frameDir   = !positional.empty() ? positional[0] : "frames";
@@ -220,13 +235,13 @@ int main(const int argc, char** argv)
 	for (const int frame : std::views::iota(0, frameCount))
 	{
 		View view(camera);
-		drawAirshow(view, turns{static_cast<double>(frame) / frameCount}, articulated);
+		drawAirshow(view, turns{static_cast<double>(frame) / frameCount}, fidelity);
 
 		writePpm(frameDir / std::format("frame_{:04}.ppm", frame), view.image());
 	}
 
-	std::cout << std::format("Wrote {} {} F-35 loop frames to {}/frame_####.ppm\n",
-	                         frameCount, articulated ? "articulated" : "simple", frameDir.string());
+	const char* mode = (fidelity == Fidelity::Articulated) ? "articulated" : (fidelity == Fidelity::Detailed) ? "detailed" : "simple";
+	std::cout << std::format("Wrote {} {} F-35 loop frames to {}/frame_####.ppm\n", frameCount, mode, frameDir.string());
 	encodeVideo(frameDir);
 	return 0;
 }
