@@ -77,6 +77,7 @@
 #include <entity.h>
 
 #include <camera.h>
+#include <simplify.h>
 #include <view.h>
 #include <wireframe.h>
 #include <hillshadeCanvas.h>

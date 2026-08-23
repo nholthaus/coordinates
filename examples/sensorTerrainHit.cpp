@@ -149,12 +149,15 @@ static Pixel projectBody(const CartesianTuple& body, Pixel nadir, degrees<> yaw,
 /// @param[in]		podStation	the pod's body-axis mount offset (the wing station it rides).
 /// @return		the pod pixel (the wing-mounted sensor's screen position).
 //----------------------------------------------------------------------------------------------------------------------
+// The F-35 outline reduced to its 16 most shape-defining vertices, computed ONCE at compile time.
+constexpr auto GLYPH_OUTLINE = simplify<16>(f35::outline());
+
 static Pixel drawAircraftGlyph(Image& frame, Pixel nadir, degrees<> yaw, degrees<> roll, const CartesianTuple& podStation)
 {
 	const double pixelsPerMeter = 1.6;    // sizes the 15.7 m airframe to a legible map glyph
 	const Color  white{255, 255, 255};
 
-	const auto strokeLoop = [&](const CartesianVector& part) {
+	const auto strokeLoop = [&](const auto& part) {
 		const auto toPixel = [&](const CartesianTuple& v) { return projectBody(v, nadir, yaw, roll, pixelsPerMeter); };
 		// Each edge joins vertex i to the next, the last wrapping back to the first, closing the loop.
 		for (const std::size_t i : std::views::iota(std::size_t{0}, part.size()))
@@ -165,9 +168,10 @@ static Pixel drawAircraftGlyph(Image& frame, Pixel nadir, degrees<> yaw, degrees
 		}
 	};
 
-	// At this map scale the airframe is only a few dozen pixels, so draw the hand-reduced ~13-point silhouette
-	// (shape-defining vertices only) rather than the full 47-point outline -- the F-35 reads the same, uncluttered.
-	strokeLoop(f35::silhouette());
+	// The map glyph: the outline simplified to its 16 most shape-defining vertices (Visvalingam-Whyatt), reduced
+	// ONCE at compile time (`GLYPH_OUTLINE` below), so at this scale the F-35 reads like the full 47-point outline
+	// without the filler -- and no per-frame recomputation.
+	strokeLoop(GLYPH_OUTLINE);
 	strokeLoop(f35::finLeft());
 	strokeLoop(f35::finRight());
 

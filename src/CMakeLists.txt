@@ -37,6 +37,7 @@ set(PUBLIC_HEADERS
         dtedTileManager.h
         bodyFrame.h
         camera.h
+        simplify.h
         view.h
         wireframe.h
         color.h
