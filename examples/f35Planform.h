@@ -107,6 +107,55 @@ namespace f35
 	/// The fraction of the fin chord occupied by the rudder (the aft strip), measured from the side view.
 	inline constexpr double rudderChordFraction() { return 0.20; }
 
+	//	----------------------------------------------------------------------------
+	//	ALL-MOVING HORIZONTAL TAILS (stabilators) -- the WHOLE surface pivots about a
+	//	spanwise quarter-chord axis: together for pitch, differential for roll.
+	//	----------------------------------------------------------------------------
+
+	/// The right all-moving horizontal tail (stabilator) as a closed quad, DERIVED from the outline's taileron
+	/// vertices (root-LE, tip-LE, tip-TE, root-TE = outline indices 25, 26, 27, 28), so it shares those points with
+	/// the body and never drifts. The whole surface pivots for pitch/roll.
+	inline CartesianVector taileronRight()
+	{
+		const auto& o = outline();
+		return {o[25], o[26], o[27], o[28]};    // root-LE, tip-LE, tip-TE, root-TE
+	}
+
+	/// The left all-moving horizontal tail (the y-mirror; outline indices 3, 2, 1, 0 = root-LE, tip-LE, tip-TE, root-TE).
+	inline CartesianVector taileronLeft()
+	{
+		const auto& o = outline();
+		return {o[3], o[2], o[1], o[0]};
+	}
+
+	/// The fraction of the stabilator chord at which the spanwise pivot shaft sits (the aerodynamic center).
+	inline constexpr double taileronPivotChordFraction() { return 0.25; }
+
+	/// The stabilator's spanwise pivot axis: the quarter-chord points at the root and tip. The surface rotates
+	/// about the line through them (leading edge up/down). `t` is `taileronRight()`/`taileronLeft()`.
+	inline std::array<CartesianTuple, 2> taileronPivot(const CartesianVector& t)
+	{
+		const double         f       = taileronPivotChordFraction();
+		const CartesianTuple rootLE = t[0], tipLE = t[1], tipTE = t[2], rootTE = t[3];
+		const CartesianTuple rootPivot = rootLE + (rootTE - rootLE) * f;
+		const CartesianTuple tipPivot  = tipLE + (tipTE - tipLE) * f;
+		return {rootPivot, tipPivot};
+	}
+
+	/// A stabilator deflected by `angle` about its spanwise quarter-chord pivot -- rotate the whole quad about the
+	/// pivot axis through the root pivot point. Positive angle pitches the leading edge up (trailing edge down).
+	inline CartesianVector deflectTaileron(const CartesianVector& t, radians<> angle)
+	{
+		const auto                 pivot = taileronPivot(t);
+		const auto                 axis  = (pivot[1] - pivot[0]).normalized();
+		const rotation::Quaternion q =
+		        rotation::toQuaternion(rotation::AxisAngle(axis.x().value(), axis.y().value(), axis.z().value(), angle));
+		CartesianVector deflected;
+		for (const CartesianTuple& v : t)
+			deflected.push_back(q.rotate(v - pivot[0]) + pivot[0]);
+		return deflected;
+	}
+
 	/// A fin's rudder panel: a 4-point quad on the aft strip of the fin, DERIVED from the fin's trailing-edge
 	/// corners (tip = index 2, root = index 4) pulled forward toward the leading edge by the rudder chord, so the
 	/// panel shares the fin's trailing edge and hinges on a straight line parallel to it. `fin` is `finLeft()` or
@@ -265,9 +314,17 @@ namespace f35
 			body.push_back(b);
 		};
 
+		// The all-moving tailerons are cut out entirely: the body skips each taileron's outer trapezoid vertices
+		// and runs straight along its root chord (root-LE to root-TE, on the fuselage boom), because the whole
+		// surface belongs to the deflecting stabilator. Right taileron outer vertices = {26,27}, left = {1,2}
+		// (the root corners 25/28 and 3/0 stay, so the body runs straight along each root chord).
+		const auto skipped = [](std::size_t i) { return i == 26 || i == 27 || i == 1 || i == 2; };
+
 		CartesianVector body;
 		for (std::size_t i = 0; i < o.size(); ++i)
 		{
+			if (skipped(i))
+				continue;
 			body.push_back(o[i]);
 			const std::size_t next = (i + 1) % o.size();
 			for (const Flap& flap : leadingEdgeFlaps())
@@ -307,6 +364,8 @@ namespace f35
 		radians<> trailingEdgeLeft{0.0};     ///< left wing trailing-edge flaperon
 		radians<> rudderRight{0.0};          ///< right fin rudder (yaw)
 		radians<> rudderLeft{0.0};           ///< left fin rudder (yaw)
+		radians<> taileronRight{0.0};        ///< right all-moving horizontal tail (pitch together, roll differential)
+		radians<> taileronLeft{0.0};         ///< left all-moving horizontal tail
 	};
 
 	/// Draw the ARTICULATED airplane: the flap-cut body outline, canopy, vstabs, and each control surface deflected
@@ -327,6 +386,8 @@ namespace f35
 		topography::drawPolyline(view, attitude, deflectFlap(te[1], deflections.trailingEdgeLeft), color);
 		topography::drawPolyline(view, attitude, deflectRudder(finRight(), deflections.rudderRight), color);
 		topography::drawPolyline(view, attitude, deflectRudder(finLeft(), deflections.rudderLeft), color);
+		topography::drawPolyline(view, attitude, deflectTaileron(taileronRight(), deflections.taileronRight), color);
+		topography::drawPolyline(view, attitude, deflectTaileron(taileronLeft(), deflections.taileronLeft), color);
 	}
 
 	//----------------------------------------------------------------------------------------------------------------------

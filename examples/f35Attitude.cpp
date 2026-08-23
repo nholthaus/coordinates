@@ -110,19 +110,34 @@ static void drawAirshow(View& view, turns<> phase, bool articulated)
 		return;
 	}
 
-	// Drive the control surfaces from the maneuver: the wings deflect differentially with the roll command (one
-	// side's edge down, the other up) and both rudders toe together with the yaw command. Flaperons roll the
-	// aircraft, leading-edge flaps lead the roll, rudders coordinate the yaw -- all from the single maneuver source,
-	// so the whole aircraft moves like an airshow demo with no per-surface tuning.
-	const radians<> roll = airshowAttitude(phase).roll();
-	const radians<> yaw  = airshowAttitude(phase).yaw();
+	// Drive each control-surface family from the maneuver axis it actually commands on an F-35, with the correct
+	// sense and a realistic throw. All from the single maneuver source, so the whole aircraft flies coherently:
+	//   * Flaperons roll the aircraft: differential, right-wing-down roll = right flaperon trailing-edge UP, left
+	//     DOWN (deflectFlap positive = free edge DOWN, so right = -roll, left = +roll).
+	//   * Tailerons (all-moving) are the primary pitch AND roll surface: they deflect TOGETHER with the pitch
+	//     command (nose-up pitch = trailing edge up = leading edge down = negative taileron angle, since
+	//     deflectTaileron positive pitches the leading edge UP) and DIFFERENTIALLY with the roll command.
+	//   * Rudders coordinate the yaw: both toe the same way with the yaw command.
+	//   * Leading-edge flaps are lift devices, drooped SYMMETRICALLY with nose-up pitch (angle of attack), not a
+	//     roll control -- both droop the same amount.
+	const rotation::EulerAngles att   = airshowAttitude(phase);
+	const radians<>             roll  = att.roll();
+	const radians<>             pitch = att.pitch();
+	const radians<>             yaw   = att.yaw();
+
+	const radians<> taileronPitch = -0.5 * pitch;    // nose-up pitch -> leading edge down (both)
+	const radians<> taileronRoll  = 0.5 * roll;      // right-wing-down roll -> right LE down, left up
+	const radians<> leDroop       = units::max(radians<>(0.0), -0.4 * pitch + 0.10_rad);    // AoA-scheduled droop
+
 	f35::articulated(view, attitude,
-	                 {.leadingEdgeRight  = 0.4 * roll,
-	                  .leadingEdgeLeft   = -0.4 * roll,
-	                  .trailingEdgeRight = 0.6 * roll,
-	                  .trailingEdgeLeft  = -0.6 * roll,
+	                 {.leadingEdgeRight = leDroop,
+	                  .leadingEdgeLeft  = leDroop,
+	                  .trailingEdgeRight = -0.6 * roll,
+	                  .trailingEdgeLeft  = +0.6 * roll,
 	                  .rudderRight       = 1.2 * yaw,
-	                  .rudderLeft        = 1.2 * yaw});
+	                  .rudderLeft        = 1.2 * yaw,
+	                  .taileronRight     = taileronPitch + taileronRoll,
+	                  .taileronLeft      = taileronPitch - taileronRoll});
 }
 
 //----------------------------------------------------------------------------------------------------------------------
