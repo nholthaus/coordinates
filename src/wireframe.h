@@ -67,14 +67,13 @@ inline namespace coordinates
 		//----------------------------------------------------------------------------------------------------------------------
 		inline void drawPolyline(Image& image, const Camera& camera, const Pose& pose, const CartesianVector& polyline, Color color)
 		{
-			const auto pixels = polyline | std::views::transform([&](const CartesianTuple& p) { return camera.project(pose.transformPoint(p)); })
-			                  | std::ranges::to<std::vector>();
+			const auto toPixel = [&](const CartesianTuple& p) { return camera.project(pose.transformPoint(p)); };
 
-			// Each edge joins pixel i to the next, the last wrapping back to the first, closing the loop.
-			for (const std::size_t i : std::views::iota(std::size_t{0}, pixels.size()))
+			// Each edge joins vertex i to the next, the last wrapping back to the first, closing the loop.
+			for (const std::size_t i : std::views::iota(std::size_t{0}, polyline.size()))
 			{
-				const Pixel a = pixels[i];
-				const Pixel b = pixels[(i + 1) % pixels.size()];
+				const Pixel a = toPixel(polyline[i]);
+				const Pixel b = toPixel(polyline[(i + 1) % polyline.size()]);
 				if (Camera::sees(a) && Camera::sees(b))
 				{
 					image.line(a, b, color);

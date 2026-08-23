@@ -139,11 +139,10 @@ int main(const int argc, char** argv)
 	// Resolve every azimuth once: the ray endpoint pixel (the terrain hit if blocked, else a far point the canvas
 	// clips to the tile edge) and, when blocked, the red hit pixel. Painting the WHOLE footprint before any frame
 	// makes the footprint identical on every frame, so only the yellow ray moves -- a seamless loop.
-	const auto beams = azimuths | std::views::transform([&](int azimuth)
+	const auto resolve = [&](int azimuth) -> Beam
 	{
 		const auto beam = ray(antenna, units::angle::degrees<>(azimuth), 0.0_deg);    // level, azimuth `azimuth`
 		const auto hit  = terrainIntersection(beam);
-
 		if (hit.has_value())
 		{
 			const Pixel terrain = canvas.project(hit->hit);    // the terrain-hit point projects directly
@@ -151,7 +150,11 @@ int main(const int argc, char** argv)
 		}
 		// Open horizon: draw the beam far along its direction; the canvas clips the line to the tile edge.
 		return Beam{canvas.project(Lla(beam.pointAt(300000.0_m))), antennaPixel, false};
-	}) | std::ranges::to<std::vector>();
+	};
+	std::vector<Beam> beams;
+	beams.reserve(360);
+	for (const int azimuth : azimuths)
+		beams.push_back(resolve(azimuth));
 
 	// The base every frame draws over: the finished red footprint + the white antenna marker.
 	Image footprint = canvas.blank();

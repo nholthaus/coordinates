@@ -105,13 +105,13 @@ static rotation::Quaternion nedToEcefAttitude(const Lla& position, degrees<> yaw
 /// @param[in]	angularRate	the phase's angular frequency, so the roll cue tracks the yaw's rate of change.
 /// @return		the commanded yaw/pitch/roll at that phase.
 //----------------------------------------------------------------------------------------------------------------------
-static FlightAttitude maneuver(radians<> phase, radians_per_second<> angularRate)
+static FlightAttitude maneuver(radians<> phase, hertz<> angularRate)
 {
 	const degrees<> yawAmplitude{40.0};
 	const auto      yaw = degrees<>(270.0) + yawAmplitude * sin(phase);
 	// Coordinated-turn roll cue: proportional to the yaw's rate of change (its analytic derivative), clamped.
-	const degrees_per_second<> yawRate = yawAmplitude * cos(phase) * angularRate.value() / s;
-	const auto                 roll    = degrees<>(std::clamp((12.0 * s * yawRate).value(), -45.0, 45.0));
+	const degrees_per_second<> yawRate = yawAmplitude * cos(phase) * angularRate;
+	const auto                 roll    = std::clamp(degrees<>(12.0_s * yawRate), degrees<>(-45.0), degrees<>(45.0));
 	const auto                 pitch   = degrees<>(-4.0) + degrees<>(6.0) * sin(phase + radians<>(1.0));
 	return {yaw, pitch, roll};
 }
@@ -155,12 +155,11 @@ static Pixel drawAircraftGlyph(Image& frame, Pixel nadir, degrees<> yaw, degrees
 	const Color  white{255, 255, 255};
 
 	const auto strokeLoop = [&](const CartesianVector& part) {
-		const auto pixels = part | std::views::transform([&](const CartesianTuple& v) { return projectBody(v, nadir, yaw, roll, pixelsPerMeter); })
-		                  | std::ranges::to<std::vector>();
-		// Each edge joins pixel i to the next, the last wrapping back to the first, closing the loop.
-		for (const std::size_t i : std::views::iota(std::size_t{0}, pixels.size()))
+		const auto toPixel = [&](const CartesianTuple& v) { return projectBody(v, nadir, yaw, roll, pixelsPerMeter); };
+		// Each edge joins vertex i to the next, the last wrapping back to the first, closing the loop.
+		for (const std::size_t i : std::views::iota(std::size_t{0}, part.size()))
 		{
-			const Pixel a = pixels[i], b = pixels[(i + 1) % pixels.size()];
+			const Pixel a = toPixel(part[i]), b = toPixel(part[(i + 1) % part.size()]);
 			frame.line(a, b, white);
 			frame.line({a.row + 1, a.column}, {b.row + 1, b.column}, white);
 		}
@@ -222,8 +221,8 @@ int main(int argc, char** argv)
 	Pixel prevNad{-1, -1};
 
 	// The maneuver spans two full turns of the phase across the track; the angular frequency drives the roll cue.
-	const radians<>             perStep     = radians<>(2.0 * (2.0 * std::numbers::pi) / steps);
-	const radians_per_second<> angularRate = perStep / dt;
+	const radians<> perStep     = radians<>(2.0 * (2.0 * std::numbers::pi) / steps);
+	const hertz<>   angularRate = perStep / dt / 1.0_rad;
 
 	for (const int i : std::views::iota(0, steps))
 	{
@@ -247,34 +246,56 @@ int main(int argc, char** argv)
 			path.line(prevNad, nad, Color{0, 220, 255});    // persistent flight path, cyan
 		prevNad = nad;
 
-		Pixel hitPixel{-1, -1};
-		if (hit.has_value())
-		{
-			hitPixel = canvas.project(hit->hit);
-			path.plot(hitPixel, Color{255, 60, 60});    // persistent red hit trail
-			++hits;
-		}
-		else
-			++misses;
+		hit.has_value() ? ++hits : ++misses;
 
-		// Per-frame overlay: the aircraft glyph (heading + bank) and the live sensor ray, on a copy of the path.
+		// The pod's mount aims +x along the boresight, so a cone of half-angle `coneHalfAngle` about +x is the set
+		// of body directions (cos a, sin a cos t, sin a sin t) for clock angle t. March each to the terrain through
+		// the pod's world pose and project the hit: the ring is the FOV footprint on the ground.
+		const degrees<>       coneHalfAngle{4.0};
+		const dimensionless<> sinA = sin(coneHalfAngle), cosA = cos(coneHalfAngle);
+		std::vector<Pixel>    footprint;
+		for (const int k : std::views::iota(0, 48))
+		{
+			const radians<>      clock   = radians<>(2.0 * std::numbers::pi * k / 48);
+			const CartesianTuple edge    = {m * cosA, m * sinA * cos(clock), m * sinA * sin(clock)};
+			const auto           edgeHit = terrainIntersection(Ray<Entity<Wgs>::frame_type>::fromPose(pod.pose(), edge));
+			if (edgeHit.has_value())
+				footprint.push_back(canvas.project(edgeHit->hit));
+		}
+
+		// Stamp the footprint ring onto the PERSISTENT layer each step: the overlapping rings accumulate into a
+		// swept-coverage band tracing where the sensor has looked over the whole track (dim orange).
+		for (const std::size_t k : std::views::iota(std::size_t{0}, footprint.size()))
+			path.line(footprint[k], footprint[(k + 1) % footprint.size()], Color{150, 90, 30});
+
+		// Per-frame overlay: the aircraft glyph, the two cone-bound rays, and the current bright footprint.
 		if (!frameDir.empty())
 		{
 			Image       frame    = path;
 			const Pixel podPixel = drawAircraftGlyph(frame, nad, att.yaw, att.roll, podMount.offset);
-			if (hit.has_value())
-				frame.line(podPixel, hitPixel, Color{255, 240, 0});    // live sensor ray, yellow
+
+			for (const std::size_t k : std::views::iota(std::size_t{0}, footprint.size()))    // current footprint, bright orange
+				frame.line(footprint[k], footprint[(k + 1) % footprint.size()], Color{255, 150, 40});
+
+			// The two roll-plane bound rays (clock +/-90 deg), pod -> footprint edge, yellow.
+			for (const double side : {1.0, -1.0})
+			{
+				const auto boundHit = terrainIntersection(Ray<Entity<Wgs>::frame_type>::fromPose(pod.pose(), CartesianTuple(m * cosA, 0.0_m, m * sinA * side)));
+				if (boundHit.has_value())
+					frame.line(podPixel, canvas.project(boundHit->hit), Color{255, 240, 0});
+			}
+
 			canvas.writePpm(frame, (frameDir / std::format("frame_{:04}.ppm", frameNo++)).string());
 		}
 	}
 
-	// Final still: a bold aircraft marker at the start, over the path + hit trail.
+	// Final still: a bold aircraft marker at the start, over the path + swept coverage band.
 	path.disc(canvas.project(startLla), 4, Color{255, 255, 255});
 	path.disc(canvas.project(startLla), 1, Color{0, 0, 0});
 	canvas.writePpm(path, outPath);
 
 	std::cout << std::format("Terrain hits: {}  misses: {}\n", hits, misses);
-	std::cout << "Colours: cyan = flight path, yellow = live sensor ray, red = terrain-hit trail, white = aircraft.\n";
+	std::cout << "Colours: cyan = flight path, yellow = cone-bound rays, orange = swept sensor coverage, white = aircraft.\n";
 	std::cout << std::format("Still: {}{}\n", outPath, frameDir.empty() ? "" : "   (frames in the given dir)");
 	return 0;
 }
