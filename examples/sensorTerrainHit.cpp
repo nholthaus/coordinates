@@ -43,13 +43,16 @@
 //--------------------------------------------------------------------------------------------------
 
 #include <algorithm>
-#include <cmath>
-#include <numbers>
-#include <cstdio>
+#include <filesystem>
+#include <format>
+#include <iostream>
+#include <ranges>
 #include <string>
 
 #include "coordinates.h"
 #include "dtedTile.h"
+#include "lineOfSight.h"    // terrainIntersection (coordinates.h includes it only when LOS is enabled)
+#include "f35Planform.h"
 
 using namespace coordinates;
 using namespace coordinates::topography;
@@ -58,6 +61,14 @@ using namespace units::literals;
 
 using Wgs = WGS84_G1674;
 using Lla = PositionGeodetic<Wgs>;
+
+/// The aircraft attitude the maneuver commands at a point along the track: heading, pitch, and bank.
+struct FlightAttitude
+{
+	degrees<> yaw;      ///< heading, from north, positive east
+	degrees<> pitch;    ///< nose-up positive
+	degrees<> roll;     ///< right-wing-down positive
+};
 
 //----------------------------------------------------------------------------------------------------------------------
 //	FUNCTION: nedToEcefAttitude [static]
@@ -79,10 +90,89 @@ static rotation::Quaternion nedToEcefAttitude(const Lla& position, degrees<> yaw
 	// NED axes expressed in ECEF, obtained by converting local-frame unit vectors through the frame graph.
 	const VectorNED<Wgs> northNed(1.0_m, 0.0_m, 0.0_m, position), eastNed(0.0_m, 1.0_m, 0.0_m, position), downNed(0.0_m, 0.0_m, 1.0_m, position);
 	const VectorECEF<Wgs> n(northNed), e(eastNed), d(downNed);
-	const rotation::RotationMatrix nedToEcef(std::get<0>(n.vector()) / 1.0_m, std::get<0>(e.vector()) / 1.0_m, std::get<0>(d.vector()) / 1.0_m,
-	                                         std::get<1>(n.vector()) / 1.0_m, std::get<1>(e.vector()) / 1.0_m, std::get<1>(d.vector()) / 1.0_m,
-	                                         std::get<2>(n.vector()) / 1.0_m, std::get<2>(e.vector()) / 1.0_m, std::get<2>(d.vector()) / 1.0_m);
+	const rotation::RotationMatrix nedToEcef(std::get<0>(n.vector()) / m, std::get<0>(e.vector()) / m, std::get<0>(d.vector()) / m,
+	                                         std::get<1>(n.vector()) / m, std::get<1>(e.vector()) / m, std::get<1>(d.vector()) / m,
+	                                         std::get<2>(n.vector()) / m, std::get<2>(e.vector()) / m, std::get<2>(d.vector()) / m);
 	return rotation::toQuaternion(nedToEcef) * rotation::toQuaternion(rotation::EulerAngles{yaw, pitch, roll});
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//	FUNCTION: maneuver [static]
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief		The commanded attitude at a phase along the S-track: yaw sweeps sinusoidally, roll follows the
+///				yaw rate (a coordinated turn), and pitch oscillates gently. This is the maneuver the example flies.
+/// @param[in]	phase		the maneuver phase (two full turns span the track).
+/// @param[in]	angularRate	the phase's angular frequency, so the roll cue tracks the yaw's rate of change.
+/// @return		the commanded yaw/pitch/roll at that phase.
+//----------------------------------------------------------------------------------------------------------------------
+static FlightAttitude maneuver(radians<> phase, radians_per_second<> angularRate)
+{
+	const degrees<> yawAmplitude{40.0};
+	const auto      yaw = degrees<>(270.0) + yawAmplitude * sin(phase);
+	// Coordinated-turn roll cue: proportional to the yaw's rate of change (its analytic derivative), clamped.
+	const degrees_per_second<> yawRate = yawAmplitude * cos(phase) * angularRate.value() / s;
+	const auto                 roll    = degrees<>(std::clamp((12.0 * s * yawRate).value(), -45.0, 45.0));
+	const auto                 pitch   = degrees<>(-4.0) + degrees<>(6.0) * sin(phase + radians<>(1.0));
+	return {yaw, pitch, roll};
+}
+
+/// Map an F-35 body-axis point (nose +x, right +y, down +z, meters) to a screen pixel about the nadir: the nose
+/// maps to screen (-cos yaw, +sin yaw), starboard to (sin yaw, cos yaw). A bank rotates the body y-z plane about
+/// the forward axis, so the lateral extent is `y*cos(roll) - z*sin(roll)` -- the standing vstabs (z up) sweep into
+/// the plan view while turning and collapse onto the fuselage wings-level. A top-down map projection at
+/// `pixelsPerMeter` scale.
+static Pixel projectBody(const CartesianTuple& body, Pixel nadir, degrees<> yaw, degrees<> roll, double pixelsPerMeter)
+{
+	const double forward = (body.x() / m) * pixelsPerMeter;
+	const double lateral = ((body.y() / m) * cos(roll).value() - (body.z() / m) * sin(roll).value()) * pixelsPerMeter;
+	const double row = nadir.row + forward * -cos(yaw).value() + lateral * sin(yaw).value();
+	const double col = nadir.column + forward * sin(yaw).value() + lateral * cos(yaw).value();
+	return Pixel{(int) std::lround(row), (int) std::lround(col)};
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//	FUNCTION: drawAircraftGlyph [static]
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief		Stroke the simplified F-35 planform glyph at the nadir pixel and return the pod pixel the sensor ray
+///				marches from.
+/// @details	Draws the library's canonical F-35 planform parts -- the fuselage/wing/tail outline and the two
+///				vertical stabilizers (`f35::outline()`, `f35::finLeft()`, `f35::finRight()`, the single shape source
+///				shared with the compile-time build and the perspective renderer; the canopy and intakes are omitted
+///				for a clean map symbol) -- as a top-down glyph: each body-axis vertex is projected about the nadir
+///				through the yaw heading with the bank foreshortening the lateral extent, then each closed loop is
+///				stroked two pixels thick. The pod rides its body-frame wing station, so it tracks heading and bank
+///				with the airframe.
+/// @param[in,out]	frame		the image to draw the glyph onto.
+/// @param[in]		nadir		the aircraft's projected ground pixel.
+/// @param[in]		yaw			the aircraft heading.
+/// @param[in]		roll		the aircraft bank.
+/// @param[in]		podStation	the pod's body-axis mount offset (the wing station it rides).
+/// @return		the pod pixel (the wing-mounted sensor's screen position).
+//----------------------------------------------------------------------------------------------------------------------
+static Pixel drawAircraftGlyph(Image& frame, Pixel nadir, degrees<> yaw, degrees<> roll, const CartesianTuple& podStation)
+{
+	const double pixelsPerMeter = 1.6;    // sizes the 15.7 m airframe to a legible map glyph
+	const Color  white{255, 255, 255};
+
+	const auto strokeLoop = [&](const CartesianVector& part) {
+		const auto pixels = part | std::views::transform([&](const CartesianTuple& v) { return projectBody(v, nadir, yaw, roll, pixelsPerMeter); })
+		                  | std::ranges::to<std::vector>();
+		// Each edge joins pixel i to the next, the last wrapping back to the first, closing the loop.
+		for (const std::size_t i : std::views::iota(std::size_t{0}, pixels.size()))
+		{
+			const Pixel a = pixels[i], b = pixels[(i + 1) % pixels.size()];
+			frame.line(a, b, white);
+			frame.line({a.row + 1, a.column}, {b.row + 1, b.column}, white);
+		}
+	};
+
+	strokeLoop(f35::outline());
+	strokeLoop(f35::finLeft());
+	strokeLoop(f35::finRight());
+
+	const Pixel podPixel = projectBody(podStation, nadir, yaw, roll, pixelsPerMeter);
+	frame.disc(podPixel, 2, Color{40, 160, 255});    // cyan pod
+	return podPixel;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -91,68 +181,64 @@ static rotation::Quaternion nedToEcefAttitude(const Lla& position, degrees<> yaw
 /// @brief		Fly an aircraft entity across the Nevada tile on a maneuvering S-track carrying a rigidly-attached
 ///				wing sensor pod (a child entity), march the pod's ray to the terrain each step, and draw the path,
 ///				rays, and hit track on the hillshade so the geometry can be verified by eye.
+/// @param[in]	argc	argument count.
+/// @param[in]	argv	[tilePath] [outPath] [frameDir] -- the DTED tile, the still-image output, and an optional
+///						directory for per-step video frames.
+/// @return		0 on success.
 //----------------------------------------------------------------------------------------------------------------------
 int main(int argc, char** argv)
 {
-	const std::string tilePath = (argc > 1) ? argv[1] : "test/resources/w115_n37.dt2";
-	const std::string outPath  = (argc > 2) ? argv[2] : "sensorTerrainHit.ppm";
-	const std::string frameDir = (argc > 3) ? argv[3] : "";
+	const std::string           tilePath = (argc > 1) ? argv[1] : "test/resources/w115_n37.dt2";
+	const std::string           outPath  = (argc > 2) ? argv[2] : "sensorTerrainHit.ppm";
+	const std::filesystem::path frameDir = (argc > 3) ? argv[3] : "";
 
 	DTEDTile tile(tilePath);
 	tile.load();
 
 	HillshadeCanvas    canvas(&tile, 9.0_arcsec);
 	const TileMetadata meta = tile.metadata();
-	const double       swLat = meta.southwestLatitude().value(), neLat = meta.northeastLatitude().value();
-	const double       swLon = meta.southwestLongitude().value(), neLon = meta.northeastLongitude().value();
+	const degrees<>    swLat = meta.southwestLatitude(), neLat = meta.northeastLatitude();
+	const degrees<>    swLon = meta.southwestLongitude(), neLon = meta.northeastLongitude();
 
 	// The hard-mounted wing pod: half-way out the right wing (2.5 m), boresight 55 deg below the forward axis
 	// and canted 30 deg right of the nose. As a CHILD entity's mount, the offset places the pod and the mount
 	// rotation aims its forward (+x) axis along that body-axis boresight, so `pod.ray()` looks down-and-right.
-	const degrees<>      depression{55.0}, cant{30.0};
-	const double         cosDep = units::cos(depression).to<double>();
-	const CartesianTuple boresightBody(units::length::meters<>(cosDep * units::cos(cant).to<double>()),
-	                                   units::length::meters<>(cosDep * units::sin(cant).to<double>()),
-	                                   units::length::meters<>(units::sin(depression).to<double>()));
-	const rotation::Quaternion mountAim = rotation::Quaternion::fromTwoVectors({1.0, 0.0, 0.0},
-	                                                                           {std::get<0>(boresightBody).value(), std::get<1>(boresightBody).value(), std::get<2>(boresightBody).value()});
+	const degrees<>            depression{55.0}, cant{30.0};
+	const CartesianTuple       boresightBody(m * cos(depression) * cos(cant), m * cos(depression) * sin(cant), m * sin(depression));
+	const rotation::Quaternion mountAim = rotation::Quaternion::fromTwoVectors({1.0, 0.0, 0.0}, boresightBody.normalized());
 	const Entity<Wgs>::Mount   podMount{CartesianTuple(0.0_m, 2.5_m, 0.0_m), Pose(CartesianTuple(0.0_m, 0.0_m, 0.0_m), mountAim)};
 
 	// Flight: entering from the east heading west, maneuvering across the tile.
-	Lla                          startLla(37.35_deg, -114.15_deg, 6000.0_m);
-	const meters_per_second<>    speed{220.0};
-	const seconds<>              dt{0.5};
-	const int                    steps = 260;
+	const Lla               startLla(37.35_deg, -114.15_deg, 6000.0_m);
+	const meters_per_second<> speed{220.0};
+	const seconds<>         dt{0.5};
+	const int               steps = 260;
 
-	std::printf("=== Sensor -> terrain flythrough (colour%s) ===\n", frameDir.empty() ? "" : ", video frames");
+	std::cout << std::format("=== Sensor -> terrain flythrough (colour{}) ===\n", frameDir.empty() ? "" : ", video frames");
 
-	Image     path  = canvas.blank();    // persistent flight path + hit trail
-	Lla       acLla = startLla;
-	int       hits = 0, misses = 0, frameNo = 0;
-	Pixel     prevNad{-1, -1};
+	Image path  = canvas.blank();    // persistent flight path + hit trail
+	Lla   acLla = startLla;
+	int   hits = 0, misses = 0, frameNo = 0;
+	Pixel prevNad{-1, -1};
 
-	for (int i = 0; i < steps; ++i)
+	// The maneuver spans two full turns of the phase across the track; the angular frequency drives the roll cue.
+	const radians<>             perStep     = radians<>(2.0 * (2.0 * std::numbers::pi) / steps);
+	const radians_per_second<> angularRate = perStep / dt;
+
+	for (const int i : std::views::iota(0, steps))
 	{
-		// Maneuver control law: yaw/roll/pitch as smooth functions of time (the commanded angles).
-		const double period = (steps * dt.value()) / 2.0;
-		const double w      = 2.0 * std::numbers::pi / period;
-		const double phase  = w * (i * dt.value());
-		const double yawAmp = 40.0;
-		const auto   yaw    = degrees<>(270.0 + yawAmp * std::sin(phase));
-		const double yawRate= yawAmp * w * std::cos(phase);
-		const auto   roll   = degrees<>(std::clamp(12.0 * yawRate, -45.0, 45.0));
-		const auto   pitch  = degrees<>(-4.0 + 6.0 * std::sin(phase + 1.0));
+		const FlightAttitude att = maneuver(perStep * static_cast<double>(i), angularRate);
 
 		// Advance the aircraft along its heading over the ellipsoid with the direct-geodesic solver.
-		acLla = geodesicDirect(acLla, yaw, meters<>(speed.value() * dt.value())).destination();
+		acLla = geodesicDirect(acLla, att.yaw, speed * dt).destination();
 		acLla.setAltitude(6000.0_m);
-		const double lat = acLla.latitude().to<degrees<>>().value(), lon = acLla.longitude().to<degrees<>>().value();
+		const degrees<> lat = acLla.latitude().to<degrees<>>(), lon = acLla.longitude().to<degrees<>>();
 		if (lat < swLat || lat > neLat || lon < swLon || lon > neLon)
 			break;
 
 		// The aircraft entity at this pose, with the pod attached as a rigid child. The pod's ray resolves to
 		// world through the parent chain -- no hand-rolled body->wing->ECEF composition.
-		Entity<Wgs>  aircraft(PositionECEF<Wgs>(acLla), Pose(PositionECEF<Wgs>(acLla).point(), nedToEcefAttitude(acLla, yaw, pitch, roll)));
+		Entity<Wgs>  aircraft(PositionECEF<Wgs>(acLla), Pose(PositionECEF<Wgs>(acLla).point(), nedToEcefAttitude(acLla, att.yaw, att.pitch, att.roll)));
 		Entity<Wgs>& pod = aircraft.attach(podMount);
 		const auto   hit = terrainIntersection(pod.ray());
 
@@ -174,35 +260,11 @@ int main(int argc, char** argv)
 		// Per-frame overlay: the aircraft glyph (heading + bank) and the live sensor ray, on a copy of the path.
 		if (!frameDir.empty())
 		{
-			Image        frame = path;
-			auto         thick = [&](double r0, double c0, double r1, double c1, Color col) {
-                frame.line(Pixel{(int) std::lround(r0), (int) std::lround(c0)}, Pixel{(int) std::lround(r1), (int) std::lround(c1)}, col);
-                frame.line(Pixel{(int) std::lround(r0) + 1, (int) std::lround(c0)}, Pixel{(int) std::lround(r1) + 1, (int) std::lround(c1)}, col);
-			};
-			// Screen-space heading (row grows south, col grows east): nose (-cos yaw, +sin yaw), starboard (sin, cos).
-			const double yr = units::angle::radians<>(yaw).value();
-			const double hRow = -std::cos(yr), hCol = std::sin(yr), wRow = std::sin(yr), wCol = std::cos(yr);
-			const double noseLen = 13.0, tailLen = 7.0, wingSpan = 13.0, tailSpan = 5.0;
-			const double cphi = std::cos(units::angle::radians<>(roll).value());    // bank foreshortens the projected span
-			const Color  white{255, 255, 255};
-			// Fuselage (tail -> nose).
-			thick(nad.row - hRow * tailLen, nad.column - hCol * tailLen, nad.row + hRow * noseLen, nad.column + hCol * noseLen, white);
-			// Wing: rigidly perpendicular to the fuselage, projected half-span foreshortens as span*cos(roll).
-			const double wingRow = nad.row + hRow * 2.0, wingCol = nad.column + hCol * 2.0, halfSpan = wingSpan * cphi;
-			thick(wingRow, wingCol, wingRow + halfSpan * wRow, wingCol + halfSpan * wCol, white);
-			thick(wingRow, wingCol, wingRow - halfSpan * wRow, wingCol - halfSpan * wCol, white);
-			// Tailplane cross-bar.
-			const double tailRow = nad.row - hRow * tailLen, tailCol = nad.column - hCol * tailLen;
-			thick(tailRow, tailCol, tailRow + wRow * tailSpan, tailCol + wCol * tailSpan, white);
-			thick(tailRow, tailCol, tailRow - wRow * tailSpan, tailCol - wCol * tailSpan, white);
-			// Pod at the wing midpoint (rides heading + bank with the wing); the live ray is drawn from it.
-			const Pixel podPixel{(int) std::lround(wingRow + 0.5 * halfSpan * wRow), (int) std::lround(wingCol + 0.5 * halfSpan * wCol)};
+			Image       frame    = path;
+			const Pixel podPixel = drawAircraftGlyph(frame, nad, att.yaw, att.roll, podMount.offset);
 			if (hit.has_value())
 				frame.line(podPixel, hitPixel, Color{255, 240, 0});    // live sensor ray, yellow
-			frame.disc(podPixel, 2, Color{40, 160, 255});              // cyan pod
-			char name[512];
-			std::snprintf(name, sizeof(name), "%s/frame_%04d.ppm", frameDir.c_str(), frameNo++);
-			canvas.writePpm(frame, name);
+			canvas.writePpm(frame, (frameDir / std::format("frame_{:04}.ppm", frameNo++)).string());
 		}
 	}
 
@@ -211,8 +273,8 @@ int main(int argc, char** argv)
 	path.disc(canvas.project(startLla), 1, Color{0, 0, 0});
 	canvas.writePpm(path, outPath);
 
-	std::printf("Terrain hits: %d  misses: %d\n", hits, misses);
-	std::printf("Colours: cyan = flight path, yellow = live sensor ray, red = terrain-hit trail, white = aircraft.\n");
-	std::printf("Still: %s%s\n", outPath.c_str(), frameDir.empty() ? "" : "   (frames in the given dir)");
+	std::cout << std::format("Terrain hits: {}  misses: {}\n", hits, misses);
+	std::cout << "Colours: cyan = flight path, yellow = live sensor ray, red = terrain-hit trail, white = aircraft.\n";
+	std::cout << std::format("Still: {}{}\n", outPath, frameDir.empty() ? "" : "   (frames in the given dir)");
 	return 0;
 }

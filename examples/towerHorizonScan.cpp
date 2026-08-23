@@ -40,12 +40,17 @@
 //
 //--------------------------------------------------------------------------------------------------
 
-#include <cstdio>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <iostream>
+#include <ranges>
 #include <string>
 #include <vector>
 
 #include "coordinates.h"
 #include "dtedTile.h"
+#include "lineOfSight.h"
 
 using namespace coordinates;
 using namespace coordinates::topography;
@@ -55,20 +60,63 @@ using namespace units::literals;
 using Wgs = WGS84_G1674;
 using Lla = PositionGeodetic<Wgs>;
 
+// One resolved azimuth: the ray endpoint pixel and, when a ridge occludes the beam, the red terrain-hit pixel.
+struct Beam
+{
+	Pixel ray;        ///< where the yellow ray ends (the terrain hit if blocked, else the tile edge)
+	Pixel hit;        ///< the terrain-hit pixel (valid only when blocked)
+	bool  blocked;    ///< true when a ridge terminates the beam short of the tile edge
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+//	FUNCTION: writePpm [static]
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief		Write an image to a binary P6 PPM file (the frame-output plumbing, kept out of the demo loop).
+/// @param[in]	path	the file to write.
+/// @param[in]	image	the image to serialize.
+//----------------------------------------------------------------------------------------------------------------------
+static void writePpm(const std::filesystem::path& path, const Image& image)
+{
+	std::ofstream file(path, std::ios::binary);
+	file << std::format("P6\n{} {}\n255\n", image.columns(), image.rows());
+	file.write(reinterpret_cast<const char*>(image.rgb().data()), static_cast<std::streamsize>(image.rgb().size()));
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//	FUNCTION: drawFrame [static]
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief		Overlay one frame's moving yellow beam (and its red terminus) plus the antenna marker on the footprint.
+/// @details	The footprint base already carries the full red horizon mask, so only the yellow ray differs per frame
+///				-- the per-frame overlay plumbing, kept out of the demo loop.
+/// @param[in]	footprint		the base image (the finished red footprint + antenna) every frame draws over.
+/// @param[in]	antennaPixel	the tower antenna's pixel on the canvas.
+/// @param[in]	beam			the resolved azimuth this frame paints.
+/// @return		the frame image with the swept beam overlaid.
+//----------------------------------------------------------------------------------------------------------------------
+static Image drawFrame(const Image& footprint, Pixel antennaPixel, const Beam& beam)
+{
+	Image frame = footprint;
+	frame.line(antennaPixel, beam.ray, Color{255, 240, 0});    // the swept beam, yellow
+	if (beam.blocked)
+		frame.disc(beam.hit, 1, Color{255, 40, 40});           // terrain-hit terminus, red, over the ray
+	frame.disc(antennaPixel, 5, Color{255, 255, 255});         // antenna, white (over any ray pixels)
+	frame.disc(antennaPixel, 2, Color{0, 0, 0});
+	return frame;
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 //	FUNCTION: main
 //----------------------------------------------------------------------------------------------------------------------
-/// @brief		Stand a short tower on a hilltop, sweep a 0-deg-elevation beam through a full 360 deg turn, march
-///				each beam to the terrain, and render the moving yellow ray plus the accumulating red terrain-hit
-///				(RF horizon) footprint on the tile's colorized hillshade.
+/// @brief		Sweep a level 0-deg beam through a full 360 deg turn, march each beam to the terrain, and render the
+///				moving yellow ray over the accumulating red terrain-hit (RF horizon) footprint on the hillshade.
 //----------------------------------------------------------------------------------------------------------------------
-int main(int argc, char** argv)
+int main(const int argc, char** argv)
 {
-	const std::string tilePath = (argc > 1) ? argv[1] : "test/resources/w115_n37.dt2";
-	const std::string outPath  = (argc > 2) ? argv[2] : "towerHorizonScan.ppm";
-	const std::string frameDir = (argc > 3) ? argv[3] : "";
+	const std::filesystem::path tilePath = (argc > 1) ? argv[1] : "test/resources/w115_n37.dt2";
+	const std::filesystem::path outPath  = (argc > 2) ? argv[2] : "towerHorizonScan.ppm";
+	const std::filesystem::path frameDir = (argc > 3) ? argv[3] : "";
 
-	DTEDTile tile(tilePath);
+	DTEDTile tile(tilePath.string());
 	tile.load();
 
 	HillshadeCanvas canvas(&tile, 9.0_arcsec);
@@ -81,66 +129,47 @@ int main(int argc, char** argv)
 	const Lla                     antenna(siteLat, siteLon, floorElev + towerHeight);
 	const Pixel                   antennaPixel = canvas.project(siteLat, siteLon);
 
-	std::printf("=== Tower RF horizon scan ===\n");
-	std::printf("Tower: %.4f, %.4f  floor %.0f m + %.0f ft antenna\n", siteLat.value(), siteLon.value(), floorElev.value(), towerHeight.value());
-	std::printf("Beam: 0 deg elevation (level), azimuth sweeping a full 360 deg turn, 0 roll.\n");
+	std::cout << "=== Tower RF horizon scan ===\n"
+	          << std::format("Tower: {:.4f}, {:.4f}  floor {:.0f} m + {:.0f} ft antenna\n", siteLat.value(), siteLon.value(), floorElev.value(), towerHeight.value())
+	          << "Beam: 0 deg elevation (level), azimuth sweeping a full 360 deg turn, 0 roll.\n";
 
-	const int steps = 360;    // one full turn -- the last frame's ray meets the first frame's, so the video loops seamlessly
+	// One full turn -- the last frame's ray meets the first frame's, so the video loops seamlessly.
+	const auto azimuths = std::views::iota(0, 360);
 
 	// Resolve every azimuth once: the ray endpoint pixel (the terrain hit if blocked, else a far point the canvas
 	// clips to the tile edge) and, when blocked, the red hit pixel. Painting the WHOLE footprint before any frame
 	// makes the footprint identical on every frame, so only the yellow ray moves -- a seamless loop.
-	struct Beam { Pixel ray; Pixel hit; bool blocked; };
-	std::vector<Beam> beams(static_cast<std::size_t>(steps));
-	int               hits = 0, misses = 0;
-	for (int i = 0; i < steps; ++i)
+	const auto beams = azimuths | std::views::transform([&](int azimuth)
 	{
-		const auto beam = ray(antenna, units::angle::degrees<>(static_cast<double>(i)), 0.0_deg);    // level, azimuth i
+		const auto beam = ray(antenna, units::angle::degrees<>(azimuth), 0.0_deg);    // level, azimuth `azimuth`
 		const auto hit  = terrainIntersection(beam);
 
-		Beam b{antennaPixel, antennaPixel, hit.has_value()};
-		if (b.blocked)
+		if (hit.has_value())
 		{
-			b.hit = canvas.project(hit->hit);    // the terrain-hit point projects directly
-			b.ray = b.hit;                       // the ray terminates at the terrain hit
-			++hits;
+			const Pixel terrain = canvas.project(hit->hit);    // the terrain-hit point projects directly
+			return Beam{terrain, terrain, true};               // the ray terminates at the terrain hit
 		}
-		else
-		{
-			// Open horizon: draw the beam far along its direction; the canvas clips the line to the tile edge.
-			b.ray = canvas.project(Lla(beam.pointAt(300000.0_m)));
-			++misses;
-		}
-		beams[static_cast<std::size_t>(i)] = b;
-	}
+		// Open horizon: draw the beam far along its direction; the canvas clips the line to the tile edge.
+		return Beam{canvas.project(Lla(beam.pointAt(300000.0_m))), antennaPixel, false};
+	}) | std::ranges::to<std::vector>();
 
 	// The base every frame draws over: the finished red footprint + the white antenna marker.
 	Image footprint = canvas.blank();
-	for (const Beam& b : beams)
-		if (b.blocked)
-			footprint.plot(b.hit, Color{255, 40, 40});
+	for (const Beam& beam : beams)
+		if (beam.blocked)
+			footprint.plot(beam.hit, Color{255, 40, 40});
 	footprint.disc(antennaPixel, 5, Color{255, 255, 255});
 	footprint.disc(antennaPixel, 2, Color{0, 0, 0});
 
 	if (!frameDir.empty())
-		for (int i = 0; i < steps; ++i)
-		{
-			const Beam& b     = beams[static_cast<std::size_t>(i)];
-			Image       frame = footprint;
-			frame.line(antennaPixel, b.ray, Color{255, 240, 0});    // the swept beam, yellow
-			if (b.blocked)
-				frame.disc(b.hit, 1, Color{255, 40, 40});           // terrain-hit terminus, red, over the ray
-			frame.disc(antennaPixel, 5, Color{255, 255, 255});      // antenna, white (over any ray pixels)
-			frame.disc(antennaPixel, 2, Color{0, 0, 0});
-			char name[512];
-			std::snprintf(name, sizeof(name), "%s/frame_%04d.ppm", frameDir.c_str(), i);
-			canvas.writePpm(frame, name);
-		}
+		for (const int frame : std::views::iota(0, static_cast<int>(beams.size())))
+			writePpm(frameDir / std::format("frame_{:04}.ppm", frame), drawFrame(footprint, antennaPixel, beams[static_cast<std::size_t>(frame)]));
 
-	canvas.writePpm(footprint, outPath);
+	writePpm(outPath, footprint);
 
-	std::printf("Beam hits (blocked by terrain): %d   open (ran off-tile): %d\n", hits, misses);
-	std::printf("White = antenna, yellow = swept beam, red = accumulated terrain line-of-sight footprint.\n");
-	std::printf("Still: %s%s\n", outPath.c_str(), frameDir.empty() ? "" : "   (frames in the given dir)");
+	const auto hits = std::ranges::count_if(beams, [](const Beam& beam) { return beam.blocked; });
+	std::cout << std::format("Beam hits (blocked by terrain): {}   open (ran off-tile): {}\n", hits, std::ssize(beams) - hits)
+	          << "White = antenna, yellow = swept beam, red = accumulated terrain line-of-sight footprint.\n"
+	          << std::format("Still: {}{}\n", outPath.string(), frameDir.empty() ? "" : "   (frames in the given dir)");
 	return 0;
 }
