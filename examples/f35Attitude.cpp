@@ -104,8 +104,16 @@ static rotation::EulerAngles airshowAttitude(turns<> phase)
 static void drawAirshow(View& view, turns<> phase, bool articulated)
 {
 	const Pose attitude({0.0_m, 0.0_m, 0.0_m}, airshowAttitude(phase));
-	f35::draw(view, attitude);
-	(void) articulated;    // the articulated control surfaces are rebuilt onto the simple airplane next
+	if (!articulated)
+	{
+		f35::simple(view, attitude);
+		return;
+	}
+
+	// Drive the leading-edge flaps from the maneuver's roll: the wings deflect differentially (one leading edge
+	// down, the other up) proportional to the roll command, so the surfaces lead the roll like an airshow demo.
+	const radians<> roll = airshowAttitude(phase).roll();
+	f35::articulated(view, attitude, {.leadingEdgeRight = 0.4 * roll, .leadingEdgeLeft = -0.4 * roll});
 }
 
 //----------------------------------------------------------------------------------------------------------------------

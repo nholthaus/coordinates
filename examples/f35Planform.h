@@ -107,6 +107,68 @@ namespace f35
 		        {-6.644_m, +1.639_m, -0.705_m}, {-6.700_m, +1.420_m, -0.000_m}};
 	}
 
+	//	----------------------------------------------------------------------------
+	//	CONTROL SURFACES (derived from the outline -- never a duplicated edge table)
+	//	----------------------------------------------------------------------------
+
+	/// A wing flap described purely by reference to the SIMPLE outline: the wing edge it lies on is the outline
+	/// segment `outline()[edgeStart] -> outline()[edgeEnd]`; the flap spans the fraction `[spanStart, spanEnd]` of
+	/// that segment and has chord `chord` inboard of it. Its geometry is DERIVED from the outline (single source of
+	/// truth), so the flap can never drift off the wing and the outline edge is never copied.
+	struct Flap
+	{
+		std::size_t edgeStart;    ///< index into `outline()` of the wing-edge segment's first vertex
+		std::size_t edgeEnd;      ///< index into `outline()` of the wing-edge segment's second vertex
+		double      spanStart;    ///< where the flap begins along the edge, as a fraction [0,1]
+		double      spanEnd;      ///< where the flap ends along the edge, as a fraction [0,1]
+		meters<>    chord;        ///< the flap chord, offset inboard (normal to the edge, into the wing)
+	};
+
+	/// The inboard unit normal of a flap's wing edge -- points from the leading edge into the wing interior, i.e.
+	/// toward the fuselage centerline (the normal whose lateral component opposes the edge's own side).
+	inline constexpr CartesianTuple flapInboardNormal(const Flap& flap)
+	{
+		const auto&          o    = outline();
+		const auto           d    = (o[flap.edgeEnd] - o[flap.edgeStart]).normalized();
+		const CartesianTuple n(d.y() * 1.0_m, -d.x() * 1.0_m, 0.0_m);    // in-plane normal, unit length
+		// Inboard is toward the centerline: choose the sign so the normal points opposite the edge's y-side.
+		const auto side = o[flap.edgeStart].y() + o[flap.edgeEnd].y();    // >0 on the right wing, <0 on the left
+		const bool pointsInboard = (n.y() * side) < 0.0_m * 1.0_m;
+		return pointsInboard ? n : CartesianTuple(-n.x(), -n.y(), 0.0_m);
+	}
+
+	/// The flap's two hinge-line endpoints -- the inboard edge about which it rotates. On the ARTICULATED airplane
+	/// the body outline runs along this line where the flap is (the outer edge belongs to the flap).
+	inline constexpr std::array<CartesianTuple, 2> flapHinge(const Flap& flap)
+	{
+		const auto&          o = outline();
+		const CartesianTuple a = o[flap.edgeStart] + (o[flap.edgeEnd] - o[flap.edgeStart]) * flap.spanStart;
+		const CartesianTuple b = o[flap.edgeStart] + (o[flap.edgeEnd] - o[flap.edgeStart]) * flap.spanEnd;
+		const CartesianTuple n = flapInboardNormal(flap);
+		return {a + n * (flap.chord / 1.0_m), b + n * (flap.chord / 1.0_m)};
+	}
+
+	/// The flap panel as a closed quad: the outer wing edge (shared with the outline) plus the hinge line back.
+	inline constexpr CartesianVector flapPanel(const Flap& flap)
+	{
+		const auto&          o = outline();
+		const CartesianTuple a = o[flap.edgeStart] + (o[flap.edgeEnd] - o[flap.edgeStart]) * flap.spanStart;
+		const CartesianTuple b = o[flap.edgeStart] + (o[flap.edgeEnd] - o[flap.edgeStart]) * flap.spanEnd;
+		const auto           hinge = flapHinge(flap);
+		return {a, b, hinge[1], hinge[0]};
+	}
+
+	/// The leading-edge flaps, one per wing, defined by reference to the outline's wing-LE segments (right wing
+	/// LE is outline[21]->[22], left wing LE is outline[6]->[7]). Chord and span measured from the reference.
+	inline const std::array<Flap, 2>& leadingEdgeFlaps()
+	{
+		static const std::array<Flap, 2> flaps{{
+		        {21, 22, 0.10, 0.92, 0.40_m},    // right wing
+		        {6, 7, 0.10, 0.92, 0.40_m},      // left wing
+		}};
+		return flaps;
+	}
+
 	/// Every planform part, in draw order -- the single list both the runtime attach and the compile-time build
 	/// iterate, so a part is added in exactly one place. The simple airplane: outline, canopy, and z-aware vstabs.
 	inline const std::array<CartesianVector, 4>& parts()
@@ -128,6 +190,78 @@ namespace f35
 	{
 		for (const CartesianVector& part : parts())
 			topography::drawPolyline(view, attitude, part, color);
+	}
+
+	/// The ARTICULATED body outline: the simple outline with each flap CUT OUT. Where a flap lies on a wing edge,
+	/// the body detours inboard along the flap's hinge line (a notch), because the outer edge belongs to the flap
+	/// panel, which is drawn separately and rotates about that hinge. The notch is DERIVED from the same outline
+	/// segment and `Flap` the panel uses, so the two always share the hinge exactly.
+	inline CartesianVector articulatedOutline()
+	{
+		const auto&     o = outline();
+		CartesianVector body;
+		for (std::size_t i = 0; i < o.size(); ++i)
+		{
+			body.push_back(o[i]);
+			const std::size_t next = (i + 1) % o.size();
+			// If a flap sits on the segment o[i]->o[next] (in that orientation), carve its notch: run out to the
+			// flap's inset start, in to the hinge, along the hinge, back out to the inset end, then on to o[next].
+			for (const Flap& flap : leadingEdgeFlaps())
+			{
+				if (flap.edgeStart != i || flap.edgeEnd != next)
+					continue;
+				const CartesianTuple a     = o[i] + (o[next] - o[i]) * flap.spanStart;
+				const CartesianTuple b     = o[i] + (o[next] - o[i]) * flap.spanEnd;
+				const auto           hinge = flapHinge(flap);
+				body.push_back(a);
+				body.push_back(hinge[0]);
+				body.push_back(hinge[1]);
+				body.push_back(b);
+			}
+		}
+		return body;
+	}
+
+	/// Draw the SIMPLE airplane at the given attitude: outline (flaps flush), canopy, and z-aware vstabs.
+	inline void simple(topography::View& view, const Pose& attitude, topography::Color color = {})
+	{
+		draw(view, attitude, color);
+	}
+
+	/// A flap panel deflected about its hinge by `angle` -- rotate every panel vertex about the hinge axis through
+	/// the hinge point. The axis runs hinge[1]->hinge[0] so a positive angle drops the free edge DOWN (+z is down).
+	inline CartesianVector deflectFlap(const Flap& flap, radians<> angle)
+	{
+		const auto                 hinge = flapHinge(flap);
+		const auto                 axis  = (hinge[0] - hinge[1]).normalized();    // dimensionless direction
+		const rotation::Quaternion q =
+		        rotation::toQuaternion(rotation::AxisAngle(axis.x().value(), axis.y().value(), axis.z().value(), angle));
+		CartesianVector deflected;
+		for (const CartesianTuple& v : flapPanel(flap))
+			deflected.push_back(q.rotate(v - hinge[0]) + hinge[0]);
+		return deflected;
+	}
+
+	/// The commanded deflection of each control-surface family (right-hand about each hinge axis, free edge down).
+	struct Deflections
+	{
+		radians<> leadingEdgeRight{0.0};    ///< right wing leading-edge flap
+		radians<> leadingEdgeLeft{0.0};     ///< left wing leading-edge flap
+	};
+
+	/// Draw the ARTICULATED airplane: the flap-cut body outline, canopy, vstabs, and each leading-edge flap
+	/// deflected about its hinge by the commanded angle. The flaps are posed through the airframe attitude like
+	/// every other loop, so they foreshorten and tilt with the maneuver.
+	inline void articulated(topography::View& view, const Pose& attitude, const Deflections& deflections, topography::Color color = {})
+	{
+		topography::drawPolyline(view, attitude, articulatedOutline(), color);
+		topography::drawPolyline(view, attitude, canopy(), color);
+		topography::drawPolyline(view, attitude, finLeft(), color);
+		topography::drawPolyline(view, attitude, finRight(), color);
+
+		const auto& flaps = leadingEdgeFlaps();    // [0] = right wing, [1] = left wing
+		topography::drawPolyline(view, attitude, deflectFlap(flaps[0], deflections.leadingEdgeRight), color);
+		topography::drawPolyline(view, attitude, deflectFlap(flaps[1], deflections.leadingEdgeLeft), color);
 	}
 
 	//----------------------------------------------------------------------------------------------------------------------
