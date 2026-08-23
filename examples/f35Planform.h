@@ -32,10 +32,10 @@
 // and a `consteval` builder that assembles the airframe as an `Entity` tree AT COMPILE TIME. Because `Entity`,
 // `Coordinate`, `Pose`, and `CartesianTuple` are literal types, the whole airframe -- one root entity with every
 // outline and detail-loop vertex attached as a child -- is constructed, posed, and resolved inside a constant
-// evaluation. `buildF35` returns the finished
-// tree; `f35ChildCount` proves the build is a compile-time constant. The render program includes this header for
-// its vertex data, so the shape has a single source of truth shared by the compile-time build and the runtime
-// animation.
+// evaluation. `buildF35` bakes the world-resolved vertices into a `std::array` whose size is `vertexCount()`, a
+// compile-time constant, so the whole Entity/Coordinate/Pose/CartesianTuple composition is proven constexpr-clean.
+// The render program includes this header for its vertex data, so the shape has a single source of truth shared by
+// the compile-time build and the runtime animation.
 //
 //--------------------------------------------------------------------------------------------------
 
@@ -112,16 +112,28 @@ namespace f35
 	//	spanwise quarter-chord axis: together for pitch, differential for roll.
 	//	----------------------------------------------------------------------------
 
-	/// The right all-moving horizontal tail (stabilator) as a closed quad, DERIVED from the outline's taileron
-	/// vertices (root-LE, tip-LE, tip-TE, root-TE = outline indices 25, 26, 27, 28), so it shares those points with
-	/// the body and never drifts. The whole surface pivots for pitch/roll.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: taileronRight
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		The right all-moving horizontal tail (stabilator) as a closed quad, DERIVED from the outline.
+	/// @return		the stabilator corners in order root-LE, tip-LE, tip-TE, root-TE.
+	/// @details	Reads outline indices 25, 26, 27, 28, so the surface shares those vertices with the body and never
+	///				drifts from it. The whole surface pivots for pitch/roll.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline CartesianVector taileronRight()
 	{
 		const auto& o = outline();
 		return {o[25], o[26], o[27], o[28]};    // root-LE, tip-LE, tip-TE, root-TE
 	}
 
-	/// The left all-moving horizontal tail (the y-mirror; outline indices 3, 2, 1, 0 = root-LE, tip-LE, tip-TE, root-TE).
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: taileronLeft
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		The left all-moving horizontal tail, the y-mirror of the right stabilator, DERIVED from the outline.
+	/// @return		the stabilator corners in order root-LE, tip-LE, tip-TE, root-TE.
+	/// @details	Reads outline indices 3, 2, 1, 0 (the mirror of the right taileron), so the surface shares those
+	///				vertices with the body and never drifts from it.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline CartesianVector taileronLeft()
 	{
 		const auto& o = outline();
@@ -131,8 +143,16 @@ namespace f35
 	/// The fraction of the stabilator chord at which the spanwise pivot shaft sits (the aerodynamic center).
 	inline constexpr double taileronPivotChordFraction() { return 0.25; }
 
-	/// The stabilator's spanwise pivot axis: the quarter-chord points at the root and tip. The surface rotates
-	/// about the line through them (leading edge up/down). `t` is `taileronRight()`/`taileronLeft()`.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: taileronPivot
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		The stabilator's spanwise pivot axis: the quarter-chord points at the root and tip.
+	/// @param[in]	t	the stabilator quad from `taileronRight()`/`taileronLeft()` (root-LE, tip-LE, tip-TE, root-TE).
+	/// @return		the two pivot points {root, tip} on the quarter-chord line.
+	/// @details	Interpolates each of the root and tip chords by `taileronPivotChordFraction()` to place the
+	///				pivot at the aerodynamic center. The surface rotates about the line through the two points
+	///				(leading edge up/down).
+	//----------------------------------------------------------------------------------------------------------------------
 	inline std::array<CartesianTuple, 2> taileronPivot(const CartesianVector& t)
 	{
 		const double         f       = taileronPivotChordFraction();
@@ -142,8 +162,16 @@ namespace f35
 		return {rootPivot, tipPivot};
 	}
 
-	/// A stabilator deflected by `angle` about its spanwise quarter-chord pivot -- rotate the whole quad about the
-	/// pivot axis through the root pivot point. Positive angle pitches the leading edge up (trailing edge down).
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: deflectTaileron
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		A stabilator deflected by `angle` about its spanwise quarter-chord pivot.
+	/// @param[in]	t		the stabilator quad from `taileronRight()`/`taileronLeft()`.
+	/// @param[in]	angle	the deflection; positive pitches the leading edge up (trailing edge down).
+	/// @return		the deflected quad.
+	/// @details	Rotates every vertex of the quad about the pivot axis (`taileronPivot`) through the root pivot
+	///				point, so the whole surface pivots as one rigid plate.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline CartesianVector deflectTaileron(const CartesianVector& t, radians<> angle)
 	{
 		const auto                 pivot = taileronPivot(t);
@@ -156,10 +184,16 @@ namespace f35
 		return deflected;
 	}
 
-	/// A fin's rudder panel: a 4-point quad on the aft strip of the fin, DERIVED from the fin's trailing-edge
-	/// corners (tip = index 2, root = index 4) pulled forward toward the leading edge by the rudder chord, so the
-	/// panel shares the fin's trailing edge and hinges on a straight line parallel to it. `fin` is `finLeft()` or
-	/// `finRight()`.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: rudderPanel
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		A fin's rudder panel: a 4-point quad on the aft strip of the fin, DERIVED from the fin.
+	/// @param[in]	fin	the fin quad from `finLeft()`/`finRight()` (root-LE, tip-LE, tip-TE, root-TE).
+	/// @return		the rudder quad: trailing edge (tip->root) then the hinge line back (root->tip).
+	/// @details	Pulls the fin's trailing-edge corners forward toward the leading edge by `rudderChordFraction()`
+	///				to form the hinge line, so the panel shares the fin's trailing edge and hinges on a straight line
+	///				parallel to it.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline CartesianVector rudderPanel(const CartesianVector& fin)
 	{
 		const CartesianTuple leadingRoot = fin[0], leadingTip = fin[1];    // fin leading edge (root, tip)
@@ -170,9 +204,16 @@ namespace f35
 		return {trailTip, trailRoot, hingeRoot, hingeTip};    // TE (tip->root) then hinge back (root->tip)
 	}
 
-	/// The FIXED part of a fin with its rudder CUT OUT: the fin outline up to the rudder hinge line (leading edge,
-	/// tip, then the hinge instead of the trailing edge), so the aft strip belongs to the deflecting rudder panel.
-	/// Shares the hinge points with `rudderPanel`, so the fixed fin and the rudder always meet exactly.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: rudderCutFin
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		The FIXED part of a fin with its rudder CUT OUT.
+	/// @param[in]	fin	the fin quad from `finLeft()`/`finRight()`.
+	/// @return		the fixed-fin loop: leading edge (root, tip) then back down the hinge line (tip, root).
+	/// @details	Traces the fin outline up to the rudder hinge line so the aft strip belongs to the deflecting
+	///				rudder panel. Shares the hinge points with `rudderPanel`, so the fixed fin and the rudder always
+	///				meet exactly.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline CartesianVector rudderCutFin(const CartesianVector& fin)
 	{
 		const CartesianVector rudder = rudderPanel(fin);    // {trailTip, trailRoot, hingeRoot, hingeTip}
@@ -180,8 +221,16 @@ namespace f35
 		return {fin[0], fin[1], rudder[3], rudder[2]};
 	}
 
-	/// A fin's rudder deflected by `angle` about its hinge -- the near-vertical forward edge of the rudder panel
-	/// (hingeRoot->hingeTip). Positive angle yaws the trailing edge to one side. `fin` is `finLeft()`/`finRight()`.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: deflectRudder
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		A fin's rudder deflected by `angle` about its hinge.
+	/// @param[in]	fin		the fin quad from `finLeft()`/`finRight()`.
+	/// @param[in]	angle	the deflection; positive yaws the trailing edge to one side.
+	/// @return		the deflected rudder quad.
+	/// @details	Rotates every rudder-panel vertex about the hinge axis -- the near-vertical forward edge of the
+	///				panel (hingeRoot->hingeTip) -- through the hinge-root point.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline CartesianVector deflectRudder(const CartesianVector& fin, radians<> angle)
 	{
 		const CartesianVector      panel     = rudderPanel(fin);
@@ -199,10 +248,15 @@ namespace f35
 	//	CONTROL SURFACES (derived from the outline -- never a duplicated edge table)
 	//	----------------------------------------------------------------------------
 
-	/// A wing flap described purely by reference to the SIMPLE outline: the wing edge it lies on is the outline
-	/// segment `outline()[edgeStart] -> outline()[edgeEnd]`; the flap spans the fraction `[spanStart, spanEnd]` of
-	/// that segment and has chord `chord` inboard of it. Its geometry is DERIVED from the outline (single source of
-	/// truth), so the flap can never drift off the wing and the outline edge is never copied.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	STRUCT: Flap
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		A wing flap described purely by reference to the SIMPLE outline.
+	/// @details	The wing edge the flap lies on is the outline segment `outline()[edgeStart] -> outline()[edgeEnd]`;
+	///				the flap spans the fraction `[spanStart, spanEnd]` of that segment and has chord `chord` inboard of
+	///				it. Its geometry is DERIVED from the outline (single source of truth), so the flap can never drift
+	///				off the wing and the outline edge is never copied.
+	//----------------------------------------------------------------------------------------------------------------------
 	struct Flap
 	{
 		std::size_t edgeStart;    ///< index into `outline()` of the wing-edge segment's first vertex
@@ -212,8 +266,15 @@ namespace f35
 		meters<>    chord;        ///< the flap chord, offset inboard (normal to the edge, into the wing)
 	};
 
-	/// The inboard unit normal of a flap's wing edge -- points from the leading edge into the wing interior, i.e.
-	/// toward the fuselage centerline (the normal whose lateral component opposes the edge's own side).
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: flapInboardNormal
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		The inboard unit normal of a flap's wing edge.
+	/// @param[in]	flap	the flap whose wing edge the normal is taken from.
+	/// @return		the unit normal pointing from the leading edge into the wing interior.
+	/// @details	Takes the in-plane normal of the edge, then picks the sign so the normal points toward the
+	///				fuselage centerline -- its lateral component opposes the edge's own y-side (right or left wing).
+	//----------------------------------------------------------------------------------------------------------------------
 	inline constexpr CartesianTuple flapInboardNormal(const Flap& flap)
 	{
 		const auto&          o    = outline();
@@ -225,8 +286,16 @@ namespace f35
 		return pointsInboard ? n : CartesianTuple(-n.x(), -n.y(), 0.0_m);
 	}
 
-	/// The flap's two hinge-line endpoints -- the inboard edge about which it rotates. On the ARTICULATED airplane
-	/// the body outline runs along this line where the flap is (the outer edge belongs to the flap).
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: flapHinge
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		The flap's two hinge-line endpoints -- the inboard edge about which it rotates.
+	/// @param[in]	flap	the flap whose hinge line is computed.
+	/// @return		the two hinge endpoints, at the flap's span start and span end.
+	/// @details	Interpolates the wing edge to the flap's span fractions, then offsets each point inboard by the
+	///				flap chord along `flapInboardNormal`. On the ARTICULATED airplane the body outline runs along this
+	///				line where the flap is, because the outer edge belongs to the flap panel.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline constexpr std::array<CartesianTuple, 2> flapHinge(const Flap& flap)
 	{
 		const auto&          o = outline();
@@ -236,7 +305,15 @@ namespace f35
 		return {a + n * (flap.chord / 1.0_m), b + n * (flap.chord / 1.0_m)};
 	}
 
-	/// The flap panel as a closed quad: the outer wing edge (shared with the outline) plus the hinge line back.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: flapPanel
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		The flap panel as a closed quad.
+	/// @param[in]	flap	the flap whose panel is built.
+	/// @return		the quad: the outer wing edge (span start, span end) then the hinge line back.
+	/// @details	The outer edge is shared with the outline and the inboard edge is `flapHinge`, so the panel and
+	///				the body meet exactly along the hinge.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline constexpr CartesianVector flapPanel(const Flap& flap)
 	{
 		const auto&          o = outline();
@@ -474,25 +551,47 @@ namespace f35
 		return tables;
 	}
 
-	/// The total number of planform vertices across every part -- a compile-time constant that sizes the baked
-	/// vertex array (so the capacity is DERIVED from the data, never a hand-picked number).
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: vertexCount
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		The total number of planform vertices across every part built into the airframe.
+	/// @return		the summed vertex count of the outline, canopy, and the two fins.
+	/// @details	A compile-time constant that sizes the baked vertex array, so the capacity is DERIVED from the
+	///				data rather than a hand-picked number. Kept in step with the parts `buildF35` attaches.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline constexpr std::size_t vertexCount()
 	{
 		return outline().size() + canopy().size() + finLeft().size() + finRight().size();
 	}
 
-	/// Draw the whole F-35 at the given attitude onto a view -- every planform part posed and stroked (black by
-	/// default) as a closed loop by the library's `drawPolyline`. The view carries its own camera and image.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: draw
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		Draw the whole F-35 at the given attitude onto a view.
+	/// @param[in]	view		the view (camera + image) to draw onto.
+	/// @param[in]	attitude	the airframe pose the parts are posed through.
+	/// @param[in]	color		the stroke color (black by default).
+	/// @details	Poses and strokes every planform part (`parts()`) as a closed loop through the library's
+	///				`drawPolyline`, so the shape defined once in body axes foreshortens and rotates with the pose.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline void draw(topography::View& view, const Pose& attitude, topography::Color color = {})
 	{
 		for (const CartesianVector& part : parts())
 			topography::drawPolyline(view, attitude, part, color);
 	}
 
-	/// The ARTICULATED body outline: the simple outline with each flap CUT OUT. Where a flap lies on a wing edge,
-	/// the body detours inboard along the flap's hinge line (a notch), because the outer edge belongs to the flap
-	/// panel, which is drawn separately and rotates about that hinge. The notch is DERIVED from the same outline
-	/// segment and `Flap` the panel uses, so the two always share the hinge exactly.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: articulatedOutline
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		The ARTICULATED body outline: the simple outline with each flap and taileron CUT OUT.
+	/// @return		the body loop with a notch carved where each flap sits and the taileron trapezoids skipped.
+	/// @details	Where a flap lies on a wing edge, the body detours inboard along the flap's hinge line (a notch),
+	///				because the outer edge belongs to the flap panel drawn separately about that hinge; the notch is
+	///				DERIVED from the same outline segment and `Flap` the panel uses, so the two always share the hinge
+	///				exactly. The all-moving tailerons are cut out entirely: the body skips each taileron's outer
+	///				trapezoid vertices and runs straight along its root chord, because the whole surface belongs to the
+	///				deflecting stabilator.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline CartesianVector articulatedOutline()
 	{
 		const auto& o = outline();
@@ -533,18 +632,33 @@ namespace f35
 		return body;
 	}
 
-	/// Draw the SIMPLE airplane at the given attitude: outline (flaps flush), canopy, and z-aware vstabs.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: simple
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		Draw the SIMPLE airplane at the given attitude: outline (flaps flush), canopy, and z-aware vstabs.
+	/// @param[in]	view		the view (camera + image) to draw onto.
+	/// @param[in]	attitude	the airframe pose the parts are posed through.
+	/// @param[in]	color		the stroke color (black by default).
+	/// @details	Delegates to `draw`, which strokes every planform part; the control surfaces sit flush in the
+	///				outline, so no deflection is applied.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline void simple(topography::View& view, const Pose& attitude, topography::Color color = {})
 	{
 		draw(view, attitude, color);
 	}
 
-	/// Draw the DETAILED airplane: the simple airplane plus every interior detail line -- the intakes, fuselage
-	/// seams, weapons-bay and boom panels, engine-face hatching, wing dashes, and canopy framing. The detail is
-	/// fixed structure that sits clear of the control-surface edges, so it draws only here, not on the simple jet.
-	/// Draw every interior detail line at the given attitude -- the intakes, fuselage seams, weapons-bay and boom
-	/// panels, engine-face hatching, wing dashes, and canopy framing. Shared by the detailed and articulated jets
-	/// (the detail is fixed structure clear of the control-surface edges), so it is authored in exactly one place.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: drawInteriorDetail
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		Draw every interior detail line at the given attitude -- the intakes, fuselage seams, weapons-bay
+	///				and boom panels, engine-face hatching, wing dashes, and canopy framing.
+	/// @param[in]	view		the view (camera + image) to draw onto.
+	/// @param[in]	attitude	the airframe pose the detail lines are posed through.
+	/// @param[in]	color		the stroke color (black by default).
+	/// @details	Strokes the closed detail loops, then the open seams as consecutive two-point segments so a
+	///				polyline is not wrapped end-to-start. The detail is fixed structure clear of the control-surface
+	///				edges, so it is shared by the detailed and articulated jets and authored in exactly one place.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline void drawInteriorDetail(topography::View& view, const Pose& attitude, topography::Color color = {})
 	{
 		const CartesianVector closed[] = {intakeUpper(), intakeLower(), intakeUpperOuter(), intakeLowerOuter(),
@@ -566,14 +680,32 @@ namespace f35
 			drawOpen(seam);
 	}
 
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: detailed
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		Draw the DETAILED airplane: the simple airplane plus every interior detail line.
+	/// @param[in]	view		the view (camera + image) to draw onto.
+	/// @param[in]	attitude	the airframe pose the parts are posed through.
+	/// @param[in]	color		the stroke color (black by default).
+	/// @details	Draws the simple airplane, then overlays `drawInteriorDetail` -- the intakes, fuselage seams,
+	///				weapons-bay and boom panels, engine-face hatching, wing dashes, and canopy framing.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline void detailed(topography::View& view, const Pose& attitude, topography::Color color = {})
 	{
 		simple(view, attitude, color);
 		drawInteriorDetail(view, attitude, color);
 	}
 
-	/// A flap panel deflected about its hinge by `angle` -- rotate every panel vertex about the hinge axis through
-	/// the hinge point. The axis runs hinge[1]->hinge[0] so a positive angle drops the free edge DOWN (+z is down).
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: deflectFlap
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		A flap panel deflected about its hinge by `angle`.
+	/// @param[in]	flap	the flap whose panel is deflected.
+	/// @param[in]	angle	the deflection; positive drops the free edge DOWN (+z is down).
+	/// @return		the deflected panel quad.
+	/// @details	Rotates every panel vertex about the hinge axis through the hinge point; the axis runs
+	///				hinge[1]->hinge[0] so the deflection sense matches +z down.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline CartesianVector deflectFlap(const Flap& flap, radians<> angle)
 	{
 		const auto                 hinge = flapHinge(flap);
@@ -586,7 +718,14 @@ namespace f35
 		return deflected;
 	}
 
-	/// The commanded deflection of each control-surface family (right-hand about each hinge axis, free edge down).
+	//----------------------------------------------------------------------------------------------------------------------
+	//	STRUCT: Deflections
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		The commanded deflection of each control-surface family.
+	/// @details	Each angle is right-handed about its own hinge axis, with the sense of the deflect* helper it
+	///				drives (free edge down for flaps, leading edge up for tailerons, trailing edge to a side for
+	///				rudders). Every member defaults to zero, so an omitted surface sits flush.
+	//----------------------------------------------------------------------------------------------------------------------
 	struct Deflections
 	{
 		radians<> leadingEdgeRight{0.0};     ///< right wing leading-edge flap
@@ -599,9 +738,19 @@ namespace f35
 		radians<> taileronLeft{0.0};         ///< left all-moving horizontal tail
 	};
 
-	/// Draw the ARTICULATED airplane: the flap-cut body outline, canopy, vstabs, and each control surface deflected
-	/// about its hinge by the commanded angle. The surfaces are posed through the airframe attitude like every other
-	/// loop, so they foreshorten and tilt with the maneuver.
+	//----------------------------------------------------------------------------------------------------------------------
+	//	FUNCTION: articulated
+	//----------------------------------------------------------------------------------------------------------------------
+	/// @brief		Draw the ARTICULATED airplane: the flap-cut body, canopy, vstabs, control surfaces, and detail.
+	/// @param[in]	view		the view (camera + image) to draw onto.
+	/// @param[in]	attitude	the airframe pose every loop is posed through.
+	/// @param[in]	deflections	the commanded deflection of each control-surface family.
+	/// @param[in]	color		the stroke color (black by default).
+	/// @details	Draws the flap-cut body outline, the canopy, and each rudder-cut fin, then each control surface
+	///				deflected about its hinge by the commanded angle (flaps, flaperons, rudders, tailerons), and
+	///				finally the interior detail. Every surface is posed through the airframe attitude like every other
+	///				loop, so it foreshortens and tilts with the maneuver.
+	//----------------------------------------------------------------------------------------------------------------------
 	inline void articulated(topography::View& view, const Pose& attitude, const Deflections& deflections, topography::Color color = {})
 	{
 		topography::drawPolyline(view, attitude, articulatedOutline(), color);
@@ -627,9 +776,9 @@ namespace f35
 	//	FUNCTION: buildF35 [consteval]
 	//----------------------------------------------------------------------------------------------------------------------
 	/// @brief		Build the F-35 airframe at compile time and bake its world-resolved vertices into a fixed array.
-	/// @details	Constructs the airframe as an `Entity` at the given position and pose, attaches every planform
-	///				part (outline, canopy, chines, intakes, vents, flaps, strakes, nozzles) as child entities, then
-	///				reads each child's resolved WORLD
+	/// @details	Constructs the airframe as an `Entity` at the given position and pose, attaches each planform
+	///				part (outline, canopy, and the two vertical stabilizers) as child entities, then reads each
+	///				child's resolved WORLD
 	///				position and flattens the whole airframe into a `std::array<CartesianTuple, vertexCount()>`. The
 	///				`Entity` tree (heap-backed) is transient -- built and consumed inside this one constant
 	///				evaluation, so nothing escapes -- while the returned array PERSISTS as a `constexpr` constant.

@@ -31,10 +31,10 @@
 // child entity mounted at its body-axis offset (nose +x, right +y, down +z, meters; traced from a top-view
 // reference and scaled to the real 15.70 m length / 10.75 m span). The two vertical stabilizers are swept 3D
 // fins that rise from the twin engine booms: each fin's root chord lies flat on its boom (z = 0) and its tip
-// chord is raked aft, canted 26 deg outboard, and lifted 2.5 m up (-z), so the fins stand up out of the
-// planform plane. The shape is defined ONCE in body axes; drawing it at any attitude is just reading each
-// child's resolved position -- the entity tree IS the rigid body, so the planform foreshortens and rotates
-// correctly with yaw/pitch/roll for free, no per-vertex trig, and rolling the airframe tilts the standing fins.
+// chord is raked aft, canted outboard, and lifted up (-z), so the fins stand up out of the planform plane. The
+// shape is defined ONCE in body axes; drawing it at any attitude is just reading each child's resolved position
+// -- the entity tree IS the rigid body, so the planform foreshortens and rotates correctly with yaw/pitch/roll
+// for free, no per-vertex trig, and rolling the airframe tilts the standing fins.
 //
 // This program renders a seamless-looping animation: the airframe flies a smooth attitude maneuver (a rolling
 // wobble with coupled pitch and yaw), viewed through a fixed perspective camera at the canonical high
@@ -42,6 +42,14 @@
 // frame's attitude equals the first frame's and the sequence loops with no seam. Each frame simply re-poses the
 // one airframe entity and re-reads every child vertex's resolved world position -- the composition does all the
 // foreshortening and fin tilt. Frames are written as numbered P6 PPMs for an external encoder to assemble.
+//
+// The jet renders at one of three fidelities, selectable on the command line:
+//   * simple (default)    -- the outline, canopy, and z-aware vertical stabilizers: the clean silhouette.
+//   * detailed (--detailed)    -- the simple jet plus every interior panel line: the DSI intakes, fuselage
+//     seams, weapons-bay and boom panels, engine-face hatching, wing dashes, and canopy framing.
+//   * articulated (--articulated) -- the flap-cut jet: the leading-edge flaps, trailing-edge flaperons,
+//     all-moving tailerons, and rudders are cut out of the body and deflect about their hinges to fly the
+//     maneuver, driven from the same attitude source, so the whole aircraft moves coherently.
 //
 //--------------------------------------------------------------------------------------------------
 
@@ -89,17 +97,9 @@ static rotation::EulerAngles airshowAttitude(turns<> phase)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-//	FUNCTION: drawAirshow [static]
+//	ENUM: Fidelity
 //----------------------------------------------------------------------------------------------------------------------
-/// @brief		Draw the F-35 at a loop phase, posed through the maneuver attitude.
-/// @details	The airframe attitude is the single source of truth for the frame; `f35::draw` poses every planform
-///				part through it and strokes each closed loop, so the shape defined once in body axes foreshortens and
-///				rotates correctly for free -- the entity/pose composition does the work, no per-vertex trig. When
-///				`articulated` is set the control surfaces additionally deflect with the maneuver; the simple airplane
-///				draws them flush.
-/// @param[in]	view		the view (camera + image) to draw onto.
-/// @param[in]	phase		the loop phase as a fraction of one full turn.
-/// @param[in]	articulated	draw the deflecting-control-surface jet rather than the flush simple airplane.
+/// @brief		Which rendering of the F-35 a frame draws.
 //----------------------------------------------------------------------------------------------------------------------
 enum class Fidelity
 {
@@ -108,6 +108,21 @@ enum class Fidelity
 	Articulated    ///< the flap-cut jet with control surfaces deflecting to fly the maneuver
 };
 
+//----------------------------------------------------------------------------------------------------------------------
+//	FUNCTION: drawAirshow [static]
+//----------------------------------------------------------------------------------------------------------------------
+/// @brief		Draw the F-35 at a loop phase, posed through the maneuver attitude, at the given fidelity.
+/// @param[in]	view		the view (camera + image) to draw onto.
+/// @param[in]	phase		the loop phase as a fraction of one full turn.
+/// @param[in]	fidelity	which jet to draw: the flush simple silhouette, the detailed jet, or the articulated
+///							jet whose control surfaces deflect.
+/// @details	The airframe attitude is the single source of truth for the frame; the planform parts are posed
+///				through it and each closed loop is stroked, so the shape defined once in body axes foreshortens and
+///				rotates correctly for free -- the entity/pose composition does the work, no per-vertex trig. For the
+///				articulated jet the control-surface deflections are ALSO derived from that one attitude: flaperons
+///				and tailerons roll and pitch the aircraft, the tailerons additionally carry the pitch command,
+///				rudders coordinate the yaw, and the leading-edge flaps droop symmetrically with angle of attack.
+//----------------------------------------------------------------------------------------------------------------------
 static void drawAirshow(View& view, turns<> phase, Fidelity fidelity)
 {
 	const Pose attitude({0.0_m, 0.0_m, 0.0_m}, airshowAttitude(phase));
