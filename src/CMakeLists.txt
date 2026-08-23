@@ -2,8 +2,13 @@ add_library(coordinates)
 
 add_library(coordinates::coordinates ALIAS coordinates)
 
-target_compile_features(coordinates PUBLIC cxx_std_26)
+# Request C++26 via the standard PROPERTY rather than the `cxx_std_26` compile-feature: not every CMake/compiler
+# combination knows that feature yet (MSVC's feature table lags), so the property is the portable way to ask.
+# The feature floor stays at cxx_std_23 (universally known) to advertise the minimum to consumers.
+target_compile_features(coordinates PUBLIC cxx_std_23)
 set_target_properties(coordinates PROPERTIES
+        CXX_STANDARD 26
+        CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
         POSITION_INDEPENDENT_CODE ON
         LINKER_LANGUAGE CXX    # the library may have no .cpp sources when GEOID/DTED are off

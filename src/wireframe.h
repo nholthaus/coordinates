@@ -70,12 +70,17 @@ inline namespace coordinates
 			const auto pixels = polyline | std::views::transform([&](const CartesianTuple& p) { return camera.project(pose.transformPoint(p)); })
 			                  | std::ranges::to<std::vector>();
 
-			for (const auto& [a, b] : std::views::zip(pixels, std::views::concat(pixels | std::views::drop(1), pixels | std::views::take(1))))
+			// Each edge joins pixel i to the next, the last wrapping back to the first, closing the loop.
+			for (const std::size_t i : std::views::iota(std::size_t{0}, pixels.size()))
+			{
+				const Pixel a = pixels[i];
+				const Pixel b = pixels[(i + 1) % pixels.size()];
 				if (Camera::sees(a) && Camera::sees(b))
 				{
 					image.line(a, b, color);
 					image.line({a.row + 1, a.column}, {b.row + 1, b.column}, color);
 				}
+			}
 		}
 
 		/// Draw a body-frame polyline onto a `View` -- the view supplies both its camera and its image, so a
