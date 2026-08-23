@@ -114,6 +114,35 @@ namespace f35
 		        {-0.638_m, 1.355_m, 0.0_m}, {-0.398_m, 1.315_m, 0.0_m}, {0.000_m, 1.315_m, 0.0_m}};
 	}
 
+	/// A hand-reduced outline: the vertices that DEFINE the planform silhouette, keeping each wing and stabilator
+	/// as a proper clipped trapezoid (both tip corners, leading and trailing roots) rather than a single spike, so
+	/// the swept-wing shape survives. Drops only the fine exhaust-notch and fillet detail. Reads as an F-35 at a
+	/// small map-glyph scale with far fewer vertices than the full 47-point outline.
+	inline const CartesianVector& silhouette()
+	{
+		static const CartesianVector shape{
+		    {-2.195_m, -5.376_m, 0.0_m},   // left wingtip, leading
+		    {-3.738_m, -5.376_m, 0.0_m},   // left wingtip, trailing
+		    {-4.616_m, -1.906_m, 0.0_m},   // left wing trailing root
+		    {-6.308_m, -3.663_m, 0.0_m},   // left stabilator tip, leading
+		    {-7.186_m, -3.663_m, 0.0_m},   // left stabilator tip, trailing
+		    {-7.850_m, -0.985_m, 0.0_m},   // left aft boom
+		    {-7.850_m, 0.985_m, 0.0_m},    // right aft boom
+		    {-7.186_m, 3.641_m, 0.0_m},    // right stabilator tip, trailing
+		    {-6.329_m, 3.663_m, 0.0_m},    // right stabilator tip, leading
+		    {-4.616_m, 1.906_m, 0.0_m},    // right wing trailing root
+		    {-2.195_m, 5.376_m, 0.0_m},    // right wingtip, trailing
+		    {0.011_m, 2.142_m, 0.0_m},     // right wing leading edge (chine)
+		    {0.739_m, 1.778_m, 0.0_m},     // right wing leading root
+		    {6.758_m, 0.471_m, 0.0_m},     // right forebody
+		    {7.850_m, 0.000_m, 0.0_m},     // nose tip
+		    {6.779_m, -0.471_m, 0.0_m},    // left forebody
+		    {0.739_m, -1.778_m, 0.0_m},    // left wing leading root
+		    {0.011_m, -2.142_m, 0.0_m},    // left wing leading edge (chine)
+		};
+		return shape;
+	}
+
 	/// Every planform part, in draw order -- the single list both the runtime attach and the compile-time build
 	/// iterate, so a part is added in exactly one place.
 	inline const std::array<CartesianVector, 6>& parts()
