@@ -20,7 +20,7 @@ protected:
 	typedef WGS84_G1674 Datum;
 
 	// Canonical origin: equator, prime meridian
-	PositionGeodetic<Datum, degrees, meters, double> origin{degrees<double>{0}, degrees<double>{0}, meters<double>{0}};
+	PositionGeodetic<Datum, degrees, meters> origin{degrees<double>{0}, degrees<double>{0}, meters<double>{0}};
 
 	static constexpr double eps = 1e-9;
 };
@@ -181,7 +181,7 @@ TEST_F(VectorTest, ECEFToENUInverse)
 
 TEST_F(VectorTest, PositionENUPlusVectorENU)
 {
-	PositionENU<Datum, meters, double> p{meters<double>{10}, meters<double>{20}, meters<double>{30}, origin};
+	PositionENU<Datum, meters> p{meters<double>{10}, meters<double>{20}, meters<double>{30}, origin};
 
 	VecENU v{meters<double>{-5}, meters<double>{4}, meters<double>{-10}, origin};
 
@@ -195,15 +195,15 @@ TEST_F(VectorTest, PositionENUPlusVectorENU)
 TEST_F(VectorTest, PositionECEFPlusVectorENUImplicit)
 {
 	// Same math, but via implicit ENU→ECEF
-	PositionENU<Datum, meters, double>  p_enu{meters<double>{10}, meters<double>{20}, meters<double>{30}, origin};
-	PositionECEF<Datum, meters, double> p_ecef = p_enu;
+	PositionENU<Datum, meters>  p_enu{meters<double>{10}, meters<double>{20}, meters<double>{30}, origin};
+	PositionECEF<Datum, meters> p_ecef = p_enu;
 
 	VecENU v_enu{meters<double>{-5}, meters<double>{4}, meters<double>{-10}, origin};
 
 	auto q = p_ecef + v_enu;
 
 	// Convert back to ENU for validation
-	PositionENU<Datum, meters, double> q_enu = q;
+	PositionENU<Datum, meters> q_enu = q;
 
 	EXPECT_NEAR(q_enu.east().value(), 5.0, eps);
 	EXPECT_NEAR(q_enu.north().value(), 24.0, eps);
@@ -216,8 +216,8 @@ TEST_F(VectorTest, PositionECEFPlusVectorENUImplicit)
 
 TEST_F(VectorTest, PositionDifferenceENU)
 {
-	PositionENU<Datum, meters, double> p1{meters<double>{10}, meters<double>{20}, meters<double>{30}, origin};
-	PositionENU<Datum, meters, double> p2{meters<double>{-5}, meters<double>{40}, meters<double>{-10}, origin};
+	PositionENU<Datum, meters> p1{meters<double>{10}, meters<double>{20}, meters<double>{30}, origin};
+	PositionENU<Datum, meters> p2{meters<double>{-5}, meters<double>{40}, meters<double>{-10}, origin};
 
 	auto d = p2 - p1;
 
@@ -228,11 +228,11 @@ TEST_F(VectorTest, PositionDifferenceENU)
 
 TEST_F(VectorTest, PositionDifferenceECEFImplicit)
 {
-	PositionENU<Datum, meters, double> p1{meters<double>{10}, meters<double>{20}, meters<double>{30}, origin};
-	PositionENU<Datum, meters, double> p2{meters<double>{-5}, meters<double>{40}, meters<double>{-10}, origin};
+	PositionENU<Datum, meters> p1{meters<double>{10}, meters<double>{20}, meters<double>{30}, origin};
+	PositionENU<Datum, meters> p2{meters<double>{-5}, meters<double>{40}, meters<double>{-10}, origin};
 
-	PositionECEF<Datum, meters, double> e1 = p1;
-	PositionECEF<Datum, meters, double> e2 = p2;
+	PositionECEF<Datum, meters> e1 = p1;
+	PositionECEF<Datum, meters> e2 = p2;
 
 	auto d = e2 - e1;
 
@@ -276,4 +276,4 @@ TEST_F(VectorTest, AERToENUNonTrivial)
 
 static_assert(std::is_constructible_v<VectorENU<WGS84_G1674, meters, double>, VectorECEF<WGS84_G1674, meters, double>>);
 
-static_assert(std::is_constructible_v<PositionENU<WGS84_G1674, meters, double>, PositionECEF<WGS84_G1674, meters, double>>);
+static_assert(std::is_constructible_v<PositionENU<WGS84_G1674, meters>, PositionECEF<WGS84_G1674, meters>>);

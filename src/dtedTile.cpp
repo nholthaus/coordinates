@@ -216,8 +216,8 @@ meters<> DTEDTile::elevation(const degrees<>& latitude, const degrees<>& longitu
 	double lonY = (longitude - m_metadata.southwestLongitude()) / m_metadata.longitudeResolution();
 
 	// find the lat/lon index (integer)
-	unsigned int latIndex = floor(latX);
-	unsigned int lonIndex = floor(lonY);
+	unsigned int latIndex = static_cast<unsigned int>(floor(latX));
+	unsigned int lonIndex = static_cast<unsigned int>(floor(lonY));
 
 	// interpolation x,y
 	double xVal = (latX - latIndex);
@@ -227,13 +227,13 @@ meters<> DTEDTile::elevation(const degrees<>& latitude, const degrees<>& longitu
 	interpolationMatrix<double> elevationSurface;
 	constexpr size_t interpolationDimension = elevationSurface.size();
 
-	for (int i = 0; i < interpolationDimension; ++i)
+	for (int i = 0; i < static_cast<int>(interpolationDimension); ++i)
 	{
 		int row = latIndex + (i - 1);
 		row = ((row < 0) ? 0 : row);																// if the row is less than 0, copy the nearest neighbor (i.e. repeat 0)
 		row = ((row >= static_cast<int>(m_metadata.numLatitudeLines())) ? static_cast<int>(m_metadata.numLatitudeLines()) - 1 : row);					// if the row is on the right edge, copy the right pixel
 
-		for (int j = 0; j < interpolationDimension; ++j)
+		for (int j = 0; j < static_cast<int>(interpolationDimension); ++j)
 		{
 			int column = lonIndex + (j - 1);
 			column = ((column < 0) ? 0 : column);													// if the index is negative, repeat the left-edge pixel

@@ -60,7 +60,7 @@ inline namespace coordinates
     template <typename ReferenceEllipsoid>
     struct Geoid
     {
-        typedef ReferenceEllipsoid reference_ellipsoid;
+        using reference_ellipsoid = ReferenceEllipsoid;
     };
 
     namespace geoids
@@ -108,7 +108,7 @@ inline namespace coordinates
             * @param[in]	longitude longitude to find the undulation at, either in -180W to 180E, or 0E to 360E
             * @returns		0 meters for all lat/lon combinations.
             */
-            static constexpr meters<> undulation(degrees<> latitude, degrees<> longitude)
+            static constexpr meters<> undulation([[maybe_unused]] degrees<> latitude, [[maybe_unused]] degrees<> longitude)
             {
                 return 0_m;
             }
@@ -145,7 +145,7 @@ inline namespace coordinates
             * @param[in]	longitude longitude to find the undulation at, either in -180W to 180E, or 0E to 360E
             * @returns		geoid undulation at (latitude, longitude) relative to the WGS84 ellipsoid.
             */
-            static constexpr meters<> undulation(degrees<> latitude, degrees<> longitude)
+            static meters<> undulation(degrees<> latitude, degrees<> longitude)
             {
                 // convert from -180  180 to 0 360 if need be.
                 longitude = longitude < 0.0_deg ? longitude + 360.0_deg : longitude;
@@ -185,10 +185,10 @@ inline namespace coordinates
 
                 // create surface of points to interpolate with
                 interpolationMatrix<double> surface;
-                constexpr int interpolationDimension = surface.size();
+                constexpr int interpolationDimension = static_cast<int>(surface.size());
 
-                constexpr int nrows  = EGM96LUT.size();
-                constexpr int ncols  = EGM96LUT[0].size();
+                constexpr int nrows  = static_cast<int>(EGM96LUT.size());
+                constexpr int ncols  = static_cast<int>(EGM96LUT[0].size());
                 constexpr int period = ncols - 1; // assume last column duplicates first
 
                 for (int i = 0; i < interpolationDimension; ++i)
@@ -237,7 +237,7 @@ inline namespace coordinates
              * @param[in]	longitude longitude to find the undulation at, either in -130W to -60W, or 230E to 300E
              * @returns		geoid undulation at (latitude, longitude) relative to the GRS80 ellipsoid.
              */
-            static constexpr meters<> undulation(degrees<> latitude, degrees<> longitude)
+            static meters<> undulation(degrees<> latitude, degrees<> longitude)
             {
                 // convert from -180  180 to 0 360 if need be.
                 longitude = longitude < 0.0_deg ? longitude + 360.0_deg : longitude;
@@ -281,8 +281,8 @@ inline namespace coordinates
                 interpolationMatrix<long double> elevationSurface;
                 constexpr std::size_t interpolationDimension = elevationSurface.size();
 
-                constexpr int numLatitudeLines  = USGG2012LUT.size();
-                constexpr int numLongitudeLines = USGG2012LUT[0].size();
+                constexpr int numLatitudeLines  = static_cast<int>(USGG2012LUT.size());
+                constexpr int numLongitudeLines = static_cast<int>(USGG2012LUT[0].size());
 
                 for (int i = 0; i < static_cast<int>(interpolationDimension); ++i)
                 {
@@ -334,7 +334,7 @@ inline namespace coordinates
              * @param[in]	longitude longitude to find the undulation at, either in -130W to -60W, or 230E to 300E
              * @returns		geoid undulation at (latitude, longitude) relative to the NAVD88 Datum.
              */
-            static constexpr meters<> undulation(degrees<> latitude, degrees<> longitude)
+            static meters<> undulation(degrees<> latitude, degrees<> longitude)
             {
                 // convert from -180  180 to 0 360 if need be.
                 longitude = longitude < 0.0_deg ? longitude + 360.0_deg : longitude;
@@ -381,11 +381,11 @@ inline namespace coordinates
                 constexpr auto numLatitudeLines  = static_cast<int>(GEOID12ALUT.size());
                 constexpr auto numLongitudeLines = static_cast<int>(GEOID12ALUT[0].size());
 
-                for (int i = 0; i < interpolationDimension; ++i)
+                for (int i = 0; i < static_cast<int>(interpolationDimension); ++i)
                 {
                     const int row = clamp_index(latIndex + (i - 1), 0, numLatitudeLines - 1);
 
-                    for (int j = 0; j < interpolationDimension; ++j)
+                    for (int j = 0; j < static_cast<int>(interpolationDimension); ++j)
                     {
                         const int col = clamp_index(lonIndex + (j - 1), 0, numLongitudeLines - 1);
                         elevationSurface[i][j] = GEOID12ALUT[row][col] / divisor;
@@ -409,16 +409,17 @@ inline namespace coordinates
         template <class T, typename = void>
         struct geoid_traits
         {
-            typedef void reference_ellipsoid;
+            using reference_ellipsoid = void;
         };
 
         /**
          * @brief		Traits class defining the properties of a geoid.
          */
         template <class T>
-        struct geoid_traits<T, std::void_t<typename T::reference_ellipsoid>>
+            requires requires { typename T::reference_ellipsoid; }
+        struct geoid_traits<T, void>
         {
-            typedef T::reference_ellipsoid reference_ellipsoid;
+            using reference_ellipsoid = T::reference_ellipsoid;
             ///< Ellipsoid that the geoid model is referenced to.
         };
     }

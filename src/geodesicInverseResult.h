@@ -36,6 +36,9 @@
 
 #include <units.h>
 
+#include "angles.h"
+#include "ranges.h"
+
 inline namespace coordinates
 {
 	//	----------------------------------------------------------------------------
@@ -87,27 +90,27 @@ inline namespace coordinates
 		 * @brief		Returns the surface distance.
 		 * @return		Surface distance between the two points.
 		 */
-		constexpr meters<> distance() const
+		constexpr ranges::Geodesic distance() const
 		{
-			return m_distance;
+			return ranges::Geodesic(m_distance);
 		}
 
 		/**
 		 * @brief		Returns the forward azimuth at point 1.
 		 * @return		Initial bearing at the first point, normalized to [0, 360).
 		 */
-		constexpr degrees<> initialBearing() const
+		constexpr angles::Azimuth initialBearing() const
 		{
-			return m_initialBearing;
+			return angles::Azimuth(m_initialBearing);
 		}
 
 		/**
 		 * @brief		Returns the forward azimuth at point 2.
 		 * @return		Final bearing at the second point, normalized to [0, 360).
 		 */
-		constexpr degrees<> finalBearing() const
+		constexpr angles::Azimuth finalBearing() const
 		{
-			return m_finalBearing;
+			return angles::Azimuth(m_finalBearing);
 		}
 
 	private:

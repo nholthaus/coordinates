@@ -2,9 +2,11 @@
 
 ## Description
 
-Coordinates is a modern C++23 library for representing, transforming, and reasoning about physical position on and around the Earth. It is designed for technically demanding domains such as aerospace simulation, radar and RF analysis, navigation, autonomy, and scientific modeling—domains where *implicit assumptions* about coordinate frames, datums, or units routinely lead to subtle and costly errors.
+Coordinates is a generic, mostly-compile-time, type-driven C++23 library for representing, transforming, and reasoning about physical position on and around the Earth. It is designed for technically demanding domains such as aerospace simulation, radar and RF analysis, navigation, autonomy, and scientific modeling—domains where *implicit assumptions* about coordinate frames, datums, or units routinely lead to subtle and costly errors.
 
 The library provides **strongly typed point representations**, **explicit reference frames**, and **well-defined geodetic models**. Conversions between representations are expressed directly in the type system, allowing many classes of errors to be detected at compile time rather than at runtime. Where implicit conversions are permitted, they are intentionally constrained to cases that are physically unambiguous.
+
+Reference frames form a graph, and a single generic `convert<From, To>` transforms between any two by routing through their **least common ancestor**—there is no N² matrix of hand-written pairwise conversions. The algorithm is chosen from the frame *types*, so adding a new frame (including the body frames described below) requires no changes to the conversion dispatcher.
 
 Coordinates builds on the `units` library to enforce dimensional correctness and integrates geodesy concepts—ellipsoids, horizontal and vertical datums, geoids, and terrain—as first-class abstractions rather than hidden global assumptions.
 
@@ -41,8 +43,10 @@ With raw doubles, this would compile and silently produce meaningless results.
 
 - **Language standard:** C++23
 - **CMake:** 3.28 or newer
-- **Required dependency:** `units` ≥ 3.3.0
+- **Required dependency:** `units` 3.6.1
 - **Optional runtime data:** DTED elevation tiles
+
+If `units` is not found on the system, CMake will fetch and build `units` 3.6.1 automatically (this is on by default via `COORDINATES_FETCH_DEPS`).
 
 ### Example: Dependency Resolution
 
@@ -176,9 +180,10 @@ Different point types may use different representations, but they can still refe
 #### Example: Same Location in Multiple Frames
 
 ```cpp
-PositionGeodetic geo = ...;
+PositionGeodetic geo  = ...;
 PositionECEF     ecef = geo;
 PositionENU      enu  = geo;
+```
 
 ---
 
@@ -243,7 +248,7 @@ given representation are exposed.
 ## Common Operations Across Point Types
 
 The following operations are implemented consistently across the primary point types
-(`PositionGeodetic`, `PositionECEF`, `PositionENU`, `PositionNED`, `PositionAER`, `PositionXYZ`).
+(`PositionGeodetic`, `PositionECEF`, `PositionENU`, `PositionNED`, `PositionAER`).
 
 ### Null State
 
@@ -298,7 +303,17 @@ and epoch information.
 - `longitude()` / `setLongitude(...)`
 - `altitude()` / `setAltitude(...)`
 
-All values are strongly typed using `units`.
+Accessors return **strongly-typed geodesy kinds**, not bare `units` quantities: `latitude()` is an
+`angles::Latitude`, `longitude()` an `angles::Longitude`, `altitude()` the height kind the datum measures
+(`heights::Ellipsoidal` or `heights::Orthometric`). Likewise `PositionAER::azimuth()`/`elevation()` are
+`angles::Azimuth`/`angles::Elevation` and geodesic bearings are `angles::Azimuth`; `range()`,
+`distance()`, and `magnitude()` are a `ranges::Euclidean` (a straight-line distance -- a slant range is
+this same quantity), while `distanceTo()` is a `ranges::Geodesic` (a surface distance). Each is a
+`units::kind` tag over a plain unit, so quantities that share a dimension but not a meaning — a latitude and
+an azimuth (both `degrees<>`), or a surface distance and a straight-line distance (both `meters<>`) — can
+never be silently interchanged; mixing two different kinds is a compile error. A plain unit still constructs
+into a kind implicitly (so `LLA p(34_deg, -118_deg, 100_m)` is unchanged), and `.to<PlainUnit>()` unwraps
+when you need the raw value.
 
 ---
 
@@ -433,17 +448,29 @@ It must be explicitly created with observer context.
 
 ---
 
-## PositionXYZ
+## Body-relative positions
 
-Represents a generic Cartesian triple with no implied Earth or local-frame semantics.
+A position expressed relative to a moving, rotating body — a sensor at a fixed offset on an aircraft, in
+the vehicle's own axes — is not a distinct coordinate type. It is modelled by the frame graph and the
+rigid-transform types:
 
-### Component Accessors
+- **`BodyFrame<Parent, Transform>`** — a Cartesian frame rigidly attached to a parent at a **compile-time**
+  offset and orientation (a static mounting). A body-local point converts through the frame graph to NED,
+  ECEF, and so on. Body frames nest to arbitrary depth (camera on a wingtip on an aircraft in local NED).
+- **`Pose`** — a **runtime** 6-DOF rigid transform (a translation plus a `Quaternion`) for a body whose
+  position and attitude vary each frame (a moving vehicle, a slewing sensor). `Pose::at(position, attitude)`
+  places it; `transformPoint` maps a body-local offset into the parent frame (returning the same position
+  type — e.g. an `ECEF` sensor location); `rotateDirection` carries a body-axis boresight into the parent
+  frame as the body slews; `Pose::from<Mount>()` lifts a fixed `BodyTransform` mount so it composes onto a
+  live vehicle pose (`sensorPose = vehiclePose * Pose::from<Mount>()`).
 
-- `x()` / `setX(...)`
-- `y()` / `setY(...)`
-- `z()` / `setZ(...)`
-
-Intended for abstract or intermediate computations.
+```cpp
+// A wing-mounted sensor on a moving aircraft.
+ECEF cg = ...;                                   // aircraft centre of gravity, updated live
+Pose plane = Pose::at(cg, EulerAngles(yaw, pitch, roll));
+using Mount = Offset<0.5_m, 3.2_m, -0.1_m>;      // fixed sensor offset in body axes
+ECEF sensor = (plane * Pose::from<Mount>()).transformPoint(ECEF(0_m, 0_m, 0_m));
+```
 
 ---
 
@@ -501,6 +528,19 @@ PositionECEF     ecef = geo;
 This conversion is unambiguous: both representations describe the same absolute physical location
 in different coordinate systems.
 
+A conversion (one point re-expressed) is distinct from a **measurement** (a relationship between two
+points). Measurements read as directional members returning their distinctly-typed kind, so a surface
+distance cannot be confused with a straight-line distance (a slant range is a straight-line distance --
+`ranges::Euclidean` -- not a distinct kind):
+
+```cpp
+LLA a = ..., b = ...;
+ranges::Geodesic  surface = a.geodesicDistanceTo(b);   // arc along the ellipsoid surface
+ranges::Euclidean slant   = a.slantRangeTo(b);         // straight line, observer->target
+ranges::Euclidean euclid  = a.euclideanDistanceTo(b);  // straight line, 3-D (same kind as slant)
+angles::Azimuth   bearing = a.bearingTo(b);            // forward azimuth
+```
+
 ---
 
 ### Example: Chained Implicit Conversions
@@ -509,7 +549,7 @@ in different coordinate systems.
 PositionGeodetic geo = ...;
 
 PositionECEF ecef = geo;
-PositionXYZ  xyz  = ecef;
+PositionNED  ned  = ecef;
 ```
 
 Each step preserves physical meaning. The intermediate representation is explicit in the type
@@ -621,10 +661,143 @@ Coordinates allows explicit conversion between datums when sufficient informatio
 
 ### Example: Converting Height Using a Geoid
 
+Height comes in two flavours that must never be silently mixed: **ellipsoidal** (HAE, what GPS reports)
+and **orthometric** (MSL, what a map reports). They differ by the geoid undulation, which depends on
+position, so the conversion needs a point, not a bare number. `PositionGeodetic` carries the point, and
+its `altitude()` is tagged with the height kind the datum measures — an ellipsoid-referenced datum yields
+an `heights::Ellipsoidal`, a geoid-referenced datum an `heights::Orthometric` — so the reference surface
+is part of the type. `toEllipsoidHeight()` and `toOrthometricHeight()` convert between them.
+
 ```cpp
-PositionGeodetic ellipsoidal = ...;
-meters<> altitudeMSL = ellipsoidal.toOrthometricHeight();
+// A point on a geoid-referenced datum stores an orthometric (MSL) height.
+PositionGeodetic<datums::NAD83_NAVD88> point(41.87917_deg, -87.62917_deg, 0.0_m);
+
+auto msl = point.altitude();            // heights::Orthometric (deduced from the datum)
+auto hae = point.toEllipsoidHeight();   // heights::Ellipsoidal (undulation added)
+
+// The two heights are distinct types: `msl + hae` is a compile error. Unwrap to operate in plain units:
+meters<> altitudeMSL = point.toOrthometricHeight().to<meters<>>();
 ```
+
+---
+
+# Rotations
+
+Orientation is a first-class concept in Coordinates, provided by a small, reusable rotation-math library
+(`lib/quaternion.h`, `lib/rotation.h`) that depends only on `units`. It offers **four fully
+interconvertible** representations of the same 3D rotation, each suited to a different task:
+
+- **`Quaternion`** — the canonical internal representation (Hamilton convention, active rotation).
+  Cheap to compose, free of gimbal lock, and ready for interpolation.
+- **`EulerAngles`** — human-readable yaw/pitch/roll, using the intrinsic **Z-Y-X (Tait-Bryan)** convention:
+  yaw about Z, then pitch about the new Y, then roll about the new X (the aerospace body-axis convention).
+- **`RotationMatrix`** — a 3×3 direction-cosine matrix, applied directly to Cartesian vectors.
+- **`AxisAngle`** — a unit axis and an angle about it.
+
+Every representation converts to and from every other through the quaternion via the free functions
+`toQuaternion`, `toEulerAngles`, `toRotationMatrix`, and `toAxisAngle`. All operations are
+`constexpr`-capable: a rotation known at compile time is computed at compile time, and the same code runs at
+run time otherwise.
+
+### Example
+
+```cpp
+#include <quaternion.h>
+#include <rotation.h>
+
+using namespace coordinates;
+using namespace units::literals;
+
+// Build a rotation from yaw/pitch/roll (intrinsic Z-Y-X).
+const EulerAngles euler(90.0_deg, 0.0_deg, 0.0_deg);   // yaw 90 deg
+const Quaternion  yaw90 = toQuaternion(euler);
+
+// Rotate a vector: body +X (forward) maps to parent +Y under a +90 deg yaw.
+const std::tuple<meters<>, meters<>, meters<>> forward(1.0_m, 0.0_m, 0.0_m);
+const auto rotated = yaw90.rotate(forward);            // ~ (0, 1, 0) meters
+
+// Compose two rotations: `a * b` applies `b` first, then `a`.
+const Quaternion roll45     = toQuaternion(EulerAngles(0.0_deg, 0.0_deg, 45.0_deg));
+const Quaternion yawThenRoll = roll45 * yaw90;
+
+// Inverse / identity are always available.
+const Quaternion undo     = yaw90.conjugate();         // inverse for a unit quaternion
+const Quaternion identity = Quaternion::identity();
+```
+
+Additional operations include `normalized`, `inverse`, `dot`, `fromTwoVectors` (shortest-arc rotation between
+two directions), and `slerp` (spherical linear interpolation).
+
+---
+
+---
+
+# Body Frames and Pose
+
+Because reference frames form a graph joined by a generic `convert<From, To>`, a *rigid body* is naturally
+modeled as a frame attached to a parent frame. Coordinates provides two complementary models, both backed by
+the rotation library:
+
+- **`BodyFrame<Parent, Transform>`** — a **compile-time** rigid mounting. The offset and orientation are
+  carried in the frame *type* through a `BodyTransform` policy, so the mounting is fixed and free of runtime
+  cost. Convenience aliases `Offset<X, Y, Z>` (pure translation) and `Attitude<Yaw, Pitch, Roll>` (pure
+  rotation) cover the common cases. Body frames **nest to arbitrary depth** and slot into the frame graph
+  with no changes to the conversion dispatcher.
+- **`Pose`** — a **runtime** 6-DOF rigid transform (a translation plus a `Quaternion`) for a body whose
+  position and attitude vary over time, such as a moving vehicle or a slewing sensor.
+
+### Nested body frames — a camera on a wingtip
+
+```cpp
+#include <bodyFrame.h>
+
+using namespace coordinates;
+using namespace coordinates::coordinateFrames;
+using namespace units::literals;
+
+using WgsDatum  = datums::WGS84_G1674;
+using LocalNED  = NEDFrame<WgsDatum>;
+
+// Aircraft body: yawed 90 deg relative to local NED, no offset.
+using PlaneBody = BodyFrame<LocalNED,  Attitude<90.0_deg, 0.0_deg, 0.0_deg>>;
+// Wingtip: offset from the body origin, no rotation.
+using Wingtip   = BodyFrame<PlaneBody, Offset<0.5_m, 3.2_m, -0.1_m>>;
+// Camera: mounted on the wingtip, bore pointing aft (yaw 180 deg).
+using CameraAft = BodyFrame<Wingtip,   Attitude<180.0_deg, 0.0_deg, 0.0_deg>>;
+
+// A point 10 m in front of the camera, expressed all the way down to local NED.
+const CartesianTuple pCam(10.0_m, 0.0_m, 0.0_m);
+const CartesianTuple pNed = convert<CameraAft, LocalNED>(pCam, FrameData{}, FrameData{});
+```
+
+The `convert` call composes each leg's rotate-and-translate (camera → wingtip → plane body → NED) purely from
+the frame types.
+
+### Runtime pose composition
+
+```cpp
+#include <pose.h>
+
+using namespace coordinates;
+using namespace units::literals;
+
+// A pose maps a point from its local frame into its parent frame (rotate, then translate).
+const Pose parentFromMid(CartesianTuple(10.0_m, 0.0_m, 0.0_m),
+                         EulerAngles(90.0_deg, 0.0_deg, 0.0_deg));
+const Pose midFromLocal (CartesianTuple(0.0_m, 5.0_m, 0.0_m),
+                         EulerAngles(0.0_deg, 45.0_deg, 0.0_deg));
+
+// Compose: `a * b` applies the inner (right-hand) transform first.
+const Pose parentFromLocal = parentFromMid * midFromLocal;
+
+const CartesianTuple local(1.0_m, 2.0_m, 3.0_m);
+const CartesianTuple inParent = parentFromLocal.transformPoint(local);
+
+// The inverse maps parent-to-local; `Pose::identity()` is the neutral element.
+const Pose localFromParent = parentFromLocal.inverse();
+```
+
+---
 
 ---
 
@@ -685,7 +858,7 @@ a squared-distance variant is typically provided.
 #### Example: Squared Distance Comparison
 
 ```cpp
-if (distanceSquared(a, b) < 100_m2
+if (distanceSquared(a, b) < 100_m2)
 {
     // within 100 meters
 }
@@ -769,6 +942,9 @@ representations before calling the function.
 
 ## Line-of-Sight Helpers
 
+> **Status: not yet working.** Line-of-sight (LOS) is a work in progress. It is gated behind an off-by-default
+> build option and is not part of the supported API yet. The description below is the intended design.
+
 Higher-level algorithms, such as line-of-sight (LOS), build on the same conversion and distance
 infrastructure.
 
@@ -777,8 +953,6 @@ These algorithms typically:
 - Construct observer-relative rays
 - Account for Earth curvature
 - Optionally incorporate terrain data
-
-LOS-related helpers are documented separately in the Line-of-Sight section.
 
 ---
 

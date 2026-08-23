@@ -32,8 +32,12 @@
 #include <vector>
 
 #include "algorithm.h"
+#include "coordinates_fwd.h"
+#include "dted.h"
+#include "positionAER.h"
 #include "positionECEF.h"
 #include "positionGeodetic.h"
+#include "ray.h"
 #include "topography.h"
 
 inline namespace coordinates
@@ -68,22 +72,13 @@ inline namespace coordinates
 	};
 
 	/**
-	 * @brief Result of a terrain ray intersection.
-	 */
-	template<typename T>
-	struct TerrainIntersection
-	{
-		LLA dummy;    // never used (work around older tooling)
-	};
-
-	/**
 	 * @brief Stateful LOS engine supporting ellipsoid and terrain (DTED/topography) LOS and viewsheds.
 	 *
 	 * @tparam Datum Datum type for geodesy (e.g., datums::WGS84_G1674)
 	 * @tparam TopographyModel Topography provider (defaults to topography::DTED)
 	 * @tparam T Numeric type (defaults to double)
 	 */
-	template<class Datum, class TopographyModel = DTED, typename T = double>
+	template<class Datum, class TopographyModel = topography::DTED, typename T = double>
 	class LineOfSight
 	{
 	public:
@@ -154,15 +149,17 @@ inline namespace coordinates
 		[[nodiscard]] const PositionGeodetic<Datum>& observer() const noexcept { return m_observerGeodetic; }
 
 		/**
-		 * @brief Observer AGL (derived) at the observer location.
+		 * @brief Observer height above ground level (derived) at the observer location.
+		 * @details The observer altitude is interpreted as MSL (orthometric) -- the same reference the topography
+		 *          model returns -- so height above ground is simply the observer's MSL altitude minus the ground
+		 *          MSL height. No geoid conversion: both are already orthometric.
 		 */
 		[[nodiscard]] meters<T> observerAGL() const
 		{
-			const auto ground = TopographyModel::orthometricHeight(m_observerGeodetic.latitude(), m_observerGeodetic.longitude());
-			const auto lat    = degrees<T>{m_observerGeodetic.latitude().value()};
-			const auto lon    = degrees<T>{m_observerGeodetic.longitude().value()};
-			const auto h      = m_observerGeodetic.altitude().to<meters<T>>();
-			return toOrthometricMSL_(lat, lon, h) - ground;
+			const auto lat    = m_observerGeodetic.latitude().template to<units::angle::degrees<T>>();
+			const auto lon    = m_observerGeodetic.longitude().template to<units::angle::degrees<T>>();
+			const auto ground = groundMeters(TopographyModel::orthometricHeight(lat, lon));
+			return observerMSL_() - ground;
 		}
 
 		//----------------------------------
@@ -177,9 +174,13 @@ inline namespace coordinates
 		 * @return True if unobstructed by the ellipsoid; false if blocked.
 		 */
 		template<class Point>
-		    requires(traits::is_point<Point> && traits::is_convertible_point<LLA, Point>)
+		    requires(traits::is_point<Point> && traits::is_convertible_point<PositionGeodetic<Datum>, Point>)
 		[[nodiscard]] bool lineOfSightEllipsoid(const Point& target) const
-		{ return coordinates::isLineOfSight<Datum>(m_observerGeodetic, target); }
+		{
+			const PositionECEF<Datum> e0(m_observerGeodetic);
+			const PositionECEF<Datum> e1(target);
+			return coordinates::isLineOfSight(e0, e1);
+		}
 
 		//----------------------------------
 		//  FLAVOR 2: TERRAIN LOS (RAY/INTERSECTION)
@@ -209,7 +210,7 @@ inline namespace coordinates
 			{
 				const PositionECEF<Datum> e0(m_observerGeodetic);
 				const PositionECEF<Datum> e1(tgt);
-				if (!coordinates::isLineOfSight<Datum>(e0, e1))
+				if (!coordinates::isLineOfSight(e0, e1))
 					return false;
 			}
 
@@ -218,18 +219,16 @@ inline namespace coordinates
 				return true;
 
 			const auto targetAER = PositionAER<Datum>(tgt, m_observerGeodetic);
-			const auto azi       = targetAER.azimuth();
-			const auto el        = targetAER.elevation();
+			const auto azi       = targetAER.azimuth().template to<degrees<T>>();
+			const auto el        = targetAER.elevation().template to<degrees<T>>();
 
 			auto hit = terrainIntersection(azi, el);
 			if (!hit.has_value())
 				return true;
 
-			// If the first terrain hit is beyond the target, then terrain does not block the LOS.
-			// if (hit->surfaceRange >= r)
-			// 	return true;
-			// If the first terrain intersection is strictly before the target, it's blocked.
-			const T eps = static_cast<T>(0.25);    // 25 cm
+			// A terrain hit at or beyond the target does not block it; a hit strictly before it does. The 25 cm
+			// tolerance absorbs march/refine quantization so a target sitting on the ground reads as visible.
+			const T eps = static_cast<T>(0.25);
 			return (hit->range.value() >= r.value() - eps);
 		}
 
@@ -279,9 +278,31 @@ inline namespace coordinates
 			auto hit = terrainIntersectionAngles_(azimuth, elevation);
 			if (!hit.has_value())
 				return std::nullopt;
-			if (hit->surfaceRange > maxRange)
+			if (hit->range > maxRange)
 				return std::nullopt;
 			return hit;
+		}
+
+		/**
+		 * @brief Intersect a geometric ray with the terrain, returning the first hit.
+		 *
+		 * A ray carries BOTH its origin and its direction, so it is a complete query: the march starts at the
+		 * ray's OWN origin (not this engine's observer) and proceeds along its direction. The origin's geodetic
+		 * position becomes the marcher's observer for this call, so the result is always consistent with the ray
+		 * regardless of how this engine was constructed. Build the ray from a sensor `Pose` (`Ray::fromPose`) or
+		 * an az/el look-angle at a site (`Ray::fromAzimuthElevation`).
+		 *
+		 * @tparam RayFrame the ray's frame (an ECEF frame).
+		 * @param[in] ray the geometric ray to march, origin and direction both honored.
+		 * @return Hit record if found; std::nullopt otherwise.
+		 */
+		template<class RayFrame>
+		[[nodiscard]] std::optional<TerrainHit> terrainIntersection(const Ray<RayFrame>& ray) const
+		{
+			const PositionECEF<Datum> originEcef(ray.origin());
+			const LineOfSight         atOrigin(PositionGeodetic<Datum>(originEcef), m_opt);
+			const auto [azimuth, elevation] = atOrigin.directionToAzEl_(ray.direction().vector());
+			return atOrigin.terrainIntersectionAngles_(azimuth, elevation);
 		}    //----------------------------------
 		//  VIEWSHED OVERLAY IMAGE
 		//----------------------------------
@@ -325,17 +346,17 @@ inline namespace coordinates
 
 			const std::size_t threads = (m_opt.threadCount == 0) ? std::max<std::size_t>(1, std::thread::hardware_concurrency()) : m_opt.threadCount;
 
-			auto rowTask = [this, tile, resolution, width, height, latNE, lonSW, &shade, &rgb](std::size_t row)
+			auto rowTask = [this, resolution, width, latNE, lonSW, &shade, &rgb](std::size_t row)
 			{
 				const degrees<> lat = latNE - resolution * static_cast<int>(row);
 				for (std::size_t col = 0; col < width; ++col)
 				{
 					const degrees<> lon = lonSW + resolution * static_cast<int>(col);
-					const auto      gnd = TopographyModel::orthometricHeight(lat, lon);
+					const auto      gnd = groundMeters(TopographyModel::orthometricHeight(lat, lon));
 
 					// Target is the ground pixel (MSL).
-					const LLA  tgt(lat, lon, gnd);
-					const bool visible = lineOfSightTerrain(tgt);
+					const PositionGeodetic<Datum> tgt(lat, lon, gnd);
+					const bool                    visible = lineOfSightTerrain(tgt);
 
 					const std::uint8_t gray = shade[row][col];
 
@@ -396,12 +417,12 @@ inline namespace coordinates
 
 			// Mark the observer location for visual sanity: solid blue crosshair.
 			{
-				const auto obsLat = m_observerGeodetic.latitude();
-				const auto obsLon = m_observerGeodetic.longitude();
+				const auto obsLat = m_observerGeodetic.latitude().template to<degrees<>>();
+				const auto obsLon = m_observerGeodetic.longitude().template to<degrees<>>();
 
 				// Compute nearest pixel index in the rendered grid.
-				const auto dRow = static_cast<long long>(std::llround(((latNE - obsLat) / resolution).to<double>()));
-				const auto dCol = static_cast<long long>(std::llround(((obsLon - lonSW) / resolution).to<double>()));
+				const auto dRow = static_cast<long long>(std::llround(((latNE - obsLat) / resolution).template to<double>()));
+				const auto dCol = static_cast<long long>(std::llround(((obsLon - lonSW) / resolution).template to<double>()));
 
 				const auto clampLL = [](long long v, long long lo, long long hi) -> long long
 				{
@@ -443,55 +464,57 @@ inline namespace coordinates
 		PositionGeodetic<Datum> m_observerGeodetic;
 		LineOfSightOptions      m_opt;
 
+		/**
+		 * @brief Normalize a topography model's ground height to plain meters.
+		 *
+		 * A conforming `TopographyModel::orthometricHeight` may return either a height KIND (e.g.
+		 * `heights::Orthometric`, which the production DTED model returns) or a plain length quantity (as a
+		 * lightweight test/synthetic model may). A kind unwraps via `to<meters>`; a plain quantity is already a
+		 * length. This yields `meters<T>` from either so the marcher stays model-agnostic.
+		 *
+		 * @param[in] groundHeight the ground height as returned by the topography model.
+		 * @return the ground height as plain meters.
+		 */
+		template<class Height>
+		[[nodiscard]] static meters<T> groundMeters(const Height& groundHeight)
+		{
+			if constexpr (units::traits::is_kind_v<Height>)
+				return groundHeight.template to<units::length::meters<>>();
+			else
+				return units::length::meters<T>(groundHeight);
+		}
+
+		/**
+		 * @brief The terrain height (MSL) at a lat/lon, or nullopt when it lies outside the topography's coverage.
+		 * @details A bounded topography model (a single tile) signals out-of-coverage by throwing; the marcher
+		 *          treats that as "no terrain to hit here" and stops rather than propagating the exception, so a
+		 *          ray marched past the edge of coverage simply reads as clear.
+		 * @param[in] lat the sample latitude.
+		 * @param[in] lon the sample longitude.
+		 * @return the ground height in meters, or nullopt if the sample is outside the model's coverage.
+		 */
+		[[nodiscard]] std::optional<meters<T>> groundAt(const degrees<T> lat, const degrees<T> lon) const
+		{
+			try
+			{
+				return groundMeters(TopographyModel::orthometricHeight(lat, lon));
+			}
+			catch (const std::exception&)
+			{
+				return std::nullopt;
+			}
+		}
+
 		//----------------------------------
 		//  INTERNAL HELPERS
 		//----------------------------------
 
-		/**
-		 * @brief Convert a height in the current Datum's vertical datum to ellipsoidal height.
-		 *
-		 * @param[in] lat Latitude
-		 * @param[in] lon Longitude
-		 * @param[in] h   Height in Datum's vertical datum
-		 * @return Ellipsoidal height (meters)
-		 */
-		[[nodiscard]] meters<T> toEllipsoidHeight_(const degrees<T> lat, const degrees<T> lon, const meters<T> h) const
-		{
-			using vdatum = typename traits::datum_traits<Datum>::vertical_datum;
-			return coordinates::convertToEllipsoidHeight<vdatum>(lat, lon, h);
-		}
-
-		/**
-		 * @brief Convert an ellipsoidal height to orthometric height (MSL) using the TopographyModel reference geoid.
-		 *
-		 * @param[in] lat     Latitude
-		 * @param[in] lon     Longitude
-		 * @param[in] hEllip  Ellipsoidal height
-		 * @return Orthometric height (MSL, meters)
-		 */
-		[[nodiscard]] meters<T> ellipsoidToOrthometric_(const degrees<T> lat, const degrees<T> lon, const meters<T> hEllip) const
-		{
-			using ref_geoid = typename traits::topography_traits<TopographyModel>::reference_geoid;
-			return coordinates::convertFromEllipsoidHeight<ref_geoid>(lat, lon, hEllip);
-		}
-
-		/**
-		 * @brief Convert a height in the current Datum's vertical datum to orthometric height (MSL) for comparison with terrain.
-		 *
-		 * @param[in] lat Latitude
-		 * @param[in] lon Longitude
-		 * @param[in] h   Height in Datum's vertical datum
-		 * @return Orthometric height (MSL, meters)
-		 */
-		[[nodiscard]] meters<T> toOrthometricMSL_(const degrees<T> lat, const degrees<T> lon, const meters<T> h) const
-		{ return ellipsoidToOrthometric_(lat, lon, toEllipsoidHeight_(lat, lon, h)); }
-
-		[[nodiscard]] meters<T> observerMSL_() const { return m_observerGeodetic.altitude(); }
+		[[nodiscard]] meters<T> observerMSL_() const { return m_observerGeodetic.altitude().template to<meters<T>>(); }
 
 		[[nodiscard]] meters<T> rangeTo_(const PositionGeodetic<Datum>& tgt) const
 		{
 			const auto inv = coordinates::geodesicInverse(m_observerGeodetic, tgt);
-			return inv.distance();
+			return inv.distance().template to<units::length::meters<T>>();
 		}
 
 		[[nodiscard]] std::tuple<meters<T>, meters<T>, meters<T>> directionENUTo_(const PositionGeodetic<Datum>& tgt) const
@@ -512,8 +535,8 @@ inline namespace coordinates
 			const auto dy = yt - yo;
 			const auto dz = zt - zo;
 
-			const radians<T> lat = m_observerGeodetic.latitude();
-			const radians<T> lon = m_observerGeodetic.longitude();
+			const radians<T> lat = m_observerGeodetic.latitude().template to<radians<T>>();
+			const radians<T> lon = m_observerGeodetic.longitude().template to<radians<T>>();
 
 			const auto sLat = sin(lat);
 			const auto cLat = cos(lat);
@@ -526,6 +549,36 @@ inline namespace coordinates
 			const auto up    = (cLat * cLon) * dx + (cLat * sLon) * dy + (sLat) *dz;
 
 			return {east, north, up};
+		}
+
+		/**
+		 * @brief Resolve an ECEF direction into the observer's local azimuth and elevation.
+		 *
+		 * Rotates the direction into the observer's ENU frame and takes azimuth = atan2(east, north)
+		 * (0=North, 90=East) and elevation = atan2(up, hypot(east, north)) (0=level, +90=up).
+		 *
+		 * @param[in] directionECEF the direction in ECEF meters (magnitude irrelevant).
+		 * @return the (azimuth, elevation) look-angle at the observer.
+		 */
+		[[nodiscard]] std::pair<degrees<T>, degrees<T>> directionToAzEl_(const CartesianTuple& directionECEF) const
+		{
+			const T dx = std::get<0>(directionECEF).value();
+			const T dy = std::get<1>(directionECEF).value();
+			const T dz = std::get<2>(directionECEF).value();
+
+			const radians<T> lat = m_observerGeodetic.latitude().template to<radians<T>>();
+			const radians<T> lon = m_observerGeodetic.longitude().template to<radians<T>>();
+
+			const T sLat = sin(lat).value(), cLat = cos(lat).value();
+			const T sLon = sin(lon).value(), cLon = cos(lon).value();
+
+			const T east  = (-sLon) * dx + (cLon) *dy;
+			const T north = (-sLat * cLon) * dx + (-sLat * sLon) * dy + (cLat) *dz;
+			const T up    = (cLat * cLon) * dx + (cLat * sLon) * dy + (sLat) *dz;
+
+			const degrees<T> azimuth   = radians<T>(std::atan2(east, north));
+			const degrees<T> elevation = radians<T>(std::atan2(up, std::hypot(east, north)));
+			return {azimuth, elevation};
 		}
 
 		/**
@@ -558,8 +611,8 @@ inline namespace coordinates
 			eTip -= eObs;
 
 			// If intersectRay wants a tuple<meters, meters, meters>
-			const auto dir = eTip.point(); // (dx, dy, dz) in meters
-			const Intersection<Datum> isect = eObs.intersectRay(dir);
+			const auto dir   = eTip.point(); // (dx, dy, dz) in meters
+			const auto isect = eObs.intersectRay(dir);
 
 			if (!isect.hitEllipsoid())
 				return std::nullopt;
@@ -568,7 +621,7 @@ inline namespace coordinates
 			const PositionECEF<Datum>     eHit(isect.ellipsoidECEF());
 			const PositionGeodetic<Datum> gHit(eHit);
 			const auto                    inv = coordinates::geodesicInverse(m_observerGeodetic, gHit);
-			return inv.distance();
+			return inv.distance().template to<units::length::meters<T>>();
 		}
 
 		/**
@@ -583,12 +636,11 @@ inline namespace coordinates
 		 */
 		[[nodiscard]] std::optional<TerrainHit> terrainIntersectionAngles_(const degrees<T> azimuth, const degrees<T> elevation) const
 		{
-			// Ellipsoid-capped max surface range for this ray.
-			const auto sCap = ellipsoidCapRange_(azimuth, elevation);
-			if (!sCap.has_value())
-				return std::nullopt;
-
-			const auto maxMeters = min(*sCap, m_opt.maxRange);
+			// The ellipsoid intersection only SHORTENS the search (a ray cannot hit terrain past where it dives
+			// below the ellipsoid); a level or upward beam never re-meets the ellipsoid, so the cap is simply the
+			// configured max range in that case -- it must never gate the terrain march off.
+			const auto sCap      = ellipsoidCapRange_(azimuth, elevation);
+			const auto maxMeters = sCap.has_value() ? min(*sCap, m_opt.maxRange) : m_opt.maxRange;
 			if (maxMeters <= 0.0_m)
 				return std::nullopt;
 
@@ -604,14 +656,25 @@ inline namespace coordinates
 			auto s0 = 0.0_m;
 
 			// March outward with increasing step until we bracket (ray-ground) crossing.
+			// Earth-curvature drop: over surface range s the terrain falls s^2 / 2R below the observer's local
+			// tangent line, so a level ray clears distant terrain that a flat-Earth comparison would call a hit.
+			// Subtract the drop from the ground height (equivalently, let the ray rise relative to MSL with range).
+			const meters<T> earthRadius = meters<T>(traits::datum_traits<Datum>::reference_ellipsoid::a().value());
+
 			for (auto s1 = step; s1 <= maxMeters;)
 			{
 				const auto direct = coordinates::geodesicDirect(m_observerGeodetic, azimuth, s1);
 				const auto p      = direct.destination();
 
-				const auto ground = TopographyModel::orthometricHeight(p.latitude(), p.longitude());
+				const auto pLat      = p.latitude().template to<degrees<T>>();
+				const auto pLon      = p.longitude().template to<degrees<T>>();
+				const auto groundOpt = groundAt(pLat, pLon);
+				if (!groundOpt.has_value())
+					break;    // marched beyond terrain coverage: no terrain to intersect farther out
+				const auto ground = *groundOpt;
+				const auto drop   = m_opt.useEarthCurvature ? (s1 * s1) / (2.0 * earthRadius) : meters<T>(0);
 				const auto rayH   = obsMSL + s1 * slope;
-				const T    f1     = (rayH - ground).value();
+				const T    f1     = (rayH - (ground - drop)).value();
 
 				if (f1 <= 0)
 				{
@@ -642,7 +705,9 @@ inline namespace coordinates
 				const auto      direct = coordinates::geodesicDirect(m_observerGeodetic, azi, sMid);
 				const auto      p      = direct.destination();
 
-				const auto ground = TopographyModel::orthometricHeight(p.latitude(), p.longitude());
+				const auto pLat   = p.latitude().template to<degrees<T>>();
+				const auto pLon   = p.longitude().template to<degrees<T>>();
+				const auto ground = groundMeters(TopographyModel::orthometricHeight(pLat, pLon));
 				const auto rayH   = obsMSL + units::length::meters<T>{sMid.value() * slope};
 				const T    fMid   = (rayH - ground).value();
 
@@ -654,7 +719,9 @@ inline namespace coordinates
 
 			const auto direct = coordinates::geodesicDirect(m_observerGeodetic, azi, sHi);
 			const auto p      = direct.destination();
-			const auto ground = TopographyModel::orthometricHeight(p.latitude(), p.longitude());
+			const auto pLat   = p.latitude().template to<degrees<T>>();
+			const auto pLon   = p.longitude().template to<degrees<T>>();
+			const auto ground = groundMeters(TopographyModel::orthometricHeight(pLat, pLon));
 			const auto rayH   = obsMSL + units::length::meters<T>{sHi.value() * slope};
 
 			TerrainHit hit;
@@ -682,4 +749,28 @@ inline namespace coordinates
 				throw std::runtime_error("LineOfSight::writePPM_: failed while writing file");
 		}
 	};
+
+	//	----------------------------------------------------------------------------
+	//	FUNCTION: terrainIntersection [free]
+	//  ----------------------------------------------------------------------------
+	///	@brief		The first terrain intersection of a ray -- the whole query in one argument.
+	///	@details	A ray already carries its origin and direction, so a terrain hit needs nothing else: this
+	///				marches the ray against the topography model from the ray's own origin. The topography model
+	///				(and thus the reference geoid) is a template parameter defaulting to `DTED`; the tile is
+	///				resolved by that model. Prefer this to constructing a `LineOfSight` by hand when all you have
+	///				is a ray -- it minimizes the call to its single essential argument.
+	///	@tparam		Datum	the full datum the march runs in; defaults to `datums::WGS84_G1674_AGL`, the datum
+	///						that pairs the WGS84 horizontal datum with the DTED (EGM96) topography.
+	///	@param[in]	ray	the geometric ray to march.
+	///	@return		the first terrain hit, or `std::nullopt` if the ray clears the terrain.
+	//  ----------------------------------------------------------------------------
+	template<class Datum = datums::WGS84_G1674, class TopographyModel = topography::DTED, class RayFrame>
+	[[nodiscard]] auto terrainIntersection(const Ray<RayFrame>& ray)
+	{
+		// The observer/target geometry lives in a plain datum so the ray origin's MSL altitude is preserved (a
+		// datum that folds in the topography would re-reference the height through the geoid). The topography
+		// model (the terrain + its reference geoid) is supplied separately, defaulting to DTED.
+		const LineOfSight<Datum, TopographyModel> los(PositionGeodetic<Datum>(PositionECEF<Datum>(ray.origin())));
+		return los.terrainIntersection(ray);
+	}
 }    // namespace coordinates

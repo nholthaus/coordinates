@@ -34,6 +34,7 @@
 //	INCLUDES
 //------------------------
 
+#include "coordinates_fwd.h"
 #include "frameOfReference.h"
 #include "point.h"
 
@@ -53,7 +54,11 @@ inline namespace coordinates
 	///				provided via the as<PointType>() template, which uses the library's normal conversion
 	///				pipeline (coordinates::convert).
 	///
-	/// @tparam		Datum	3-dimensional datum of the intersection points.
+	///				An ellipsoid intersection is a purely horizontal-datum quantity: it needs the reference
+	///				ellipsoid, not a vertical/geoid component. `Datum` is therefore the horizontal datum of
+	///				the ECEF frame the intersection lives in — the datum recoverable from an ECEF point.
+	///
+	/// @tparam		Datum	horizontal datum of the ECEF intersection points.
 	//  ----------------------------------------------------------------------------
 	template<class Datum>
 	class Intersection
@@ -63,7 +68,7 @@ inline namespace coordinates
 		//		STATIC ERROR CHECKING
 		//////////////////////////////////////////////////////////////////////////
 
-		static_assert(traits::is_datum<Datum>, "`Datum` template parameter does not satisfy the datum concept.");
+		static_assert(traits::is_horizontal_datum<Datum>, "`Datum` template parameter does not satisfy the horizontal datum concept.");
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -76,7 +81,7 @@ inline namespace coordinates
 		using frame_data_type = FrameData;
 
 	private:
-		using ecef_point_type = Point<ecef_frame_type, tuple_type, frame_data_type>;
+		using ecef_point_type = Coordinate<ecef_frame_type, tuple_type, frame_data_type>;
 
 	public:
 		//////////////////////////////////////////////////////////////////////////

@@ -58,10 +58,10 @@ inline namespace coordinates
 		                             typename vertical_datum_traits<Vertical>::reference_ellipsoid>,
 		              "The `Horizontal` and `Vertical` Datum components must refer to the same ellipsoid.");
 
-		typedef Horizontal                                                       horizontal_datum;
-		typedef Vertical                                                         vertical_datum;
-		typedef horizontal_datum_traits<Horizontal>::reference_ellipsoid reference_ellipsoid;
-		typedef horizontal_datum_traits<Horizontal>::reference_frame     reference_frame;
+		using horizontal_datum    = Horizontal;
+		using vertical_datum      = Vertical;
+		using reference_ellipsoid = horizontal_datum_traits<Horizontal>::reference_ellipsoid;
+		using reference_frame     = horizontal_datum_traits<Horizontal>::reference_frame;
 	};
 
 	//----------------------------------
@@ -142,7 +142,7 @@ inline namespace coordinates
 		///	@details
 		/// @note		Only suitable for use within CONUS (24-58N, 130-60W)
 		//  ----------------------------------------------------------------------------
-		struct IGS08_MSL : Datum<horizontalDatums::NAD83, geoids::USGG2012>
+		struct IGS08_MSL : Datum<horizontalDatums::IGS08, geoids::USGG2012>
 		{
 		};
 
@@ -158,13 +158,53 @@ inline namespace coordinates
 		};
 
 		//	----------------------------------------------------------------------------
+		//	CLASS		GDA2020
+		//  ----------------------------------------------------------------------------
+		///	@brief		Geodetic Datum of Australia (2020).
+		///	@details	The plate-fixed modern Australian datum, tied to ITRF2014 with the plate-motion
+		///				(time-dependent) transform. See the horizontal datum for the validated parameters.
+		/// @note		Only suitable for use in and about Australia.
+		//  ----------------------------------------------------------------------------
+		struct GDA2020 : Datum<horizontalDatums::GDA2020>
+		{
+		};
+
+		//	----------------------------------------------------------------------------
 		//	CLASS		ETRS89
 		//  ----------------------------------------------------------------------------
-		///	@brief
-		///	@details
-		/// @note		Only suitable for use in and about Europe
+		///	@brief		European Terrestrial Reference System 1989 (legacy zero-transform realization).
+		///	@details	This realization ties ETRS89 to ITRF89 with a zero transform, which is only correct
+		///				at the 1989.0 reference epoch. It does NOT model the accumulated Eurasia plate motion,
+		///				so it is off by decimetres at modern epochs. Use `ETRF2000` or `ETRF2014` for accurate
+		///				modern European work.
+		/// @note		Only suitable for use in and about Europe, and only near epoch 1989.0.
 		//  ----------------------------------------------------------------------------
-		struct ETRS89 : Datum<horizontalDatums::ETRS89>
+		struct [[deprecated("ETRS89 is a zero-transform tie valid only at epoch 1989.0; use ETRF2000 or ETRF2014 for modern epochs")]] ETRS89
+		    : Datum<horizontalDatums::ETRS89>
+		{
+		};
+
+		//	----------------------------------------------------------------------------
+		//	CLASS		ETRF2000
+		//  ----------------------------------------------------------------------------
+		///	@brief		European Terrestrial Reference Frame 2000.
+		///	@details	The modern, plate-motion-aware European realization. Prefer this (or `ETRF2014`) over
+		///				the legacy `ETRS89` zero-transform tie.
+		/// @note		Only suitable for use in and about Europe.
+		//  ----------------------------------------------------------------------------
+		struct ETRF2000 : Datum<horizontalDatums::ETRF2000>
+		{
+		};
+
+		//	----------------------------------------------------------------------------
+		//	CLASS		ETRF2014
+		//  ----------------------------------------------------------------------------
+		///	@brief		European Terrestrial Reference Frame 2014.
+		///	@details	The latest European realization tied to ITRF2014. Constants from the primary EPSG
+		///				record (EPSG:8366); validated end-to-end against PROJ to sub-mm.
+		/// @note		Only suitable for use in and about Europe.
+		//  ----------------------------------------------------------------------------
+		struct ETRF2014 : Datum<horizontalDatums::ETRF2014>
 		{
 		};
 
@@ -176,6 +216,17 @@ inline namespace coordinates
 		/// @note		Suitable for world-wide use.
 		//  ----------------------------------------------------------------------------
 		struct ITRS2008 : Datum<horizontalDatums::ITRS2008>
+		{
+		};
+
+		//	----------------------------------------------------------------------------
+		//	CLASS		ITRS2014
+		//  ----------------------------------------------------------------------------
+		///	@brief
+		///	@details
+		/// @note		Suitable for world-wide use.
+		//  ----------------------------------------------------------------------------
+		struct ITRS2014 : Datum<horizontalDatums::ITRS2014>
 		{
 		};
 
@@ -232,7 +283,7 @@ inline namespace coordinates
 		    }
 		struct datum_traits<T, void>
 		{
-			typedef T::horizontal_datum horizontal_datum;          ///< Horizontal component of the datum
+			using horizontal_datum    = T::horizontal_datum;       ///< Horizontal component of the datum
 			using vertical_datum      = T::vertical_datum;         ///< Vertical component of the datum
 			using reference_ellipsoid = T::reference_ellipsoid;    ///< Ellipsoid component of the datum
 			using reference_frame     = T::reference_frame;        ///< Reference (ITRF) frame of the datum

@@ -167,17 +167,19 @@ namespace
 		// If the constructor and destructor are not enough for setting up
 		// and cleaning up each test, you can define the following methods:
 
+		// The tile manager is a process-wide singleton, so a prior test's loaded tiles and altered tile limit
+		// would leak into this one (numLoadedTiles / isLoaded / tileLimit expectations are order-dependent
+		// otherwise). Restore the manager to its default state before each test: shrink the cache to zero to
+		// evict every loaded tile, then set the limit back to its default (the whole-planet tile count). Each
+		// test then starts from a clean, zero-loaded manager at the default limit regardless of run order.
 		void SetUp() override
 		{
-			// Code here will be called immediately after the constructor (right
-			// before each test).
+			DTEDTileManager& manager = DTEDTileManager::instance();
+			manager.setTileLimit(0);
+			manager.setTileLimit(manager.maxNumTiles());
 		}
 
-		void TearDown() override
-		{
-			// Code here will be called immediately after each test (right
-			// before the destructor).
-		}
+		void TearDown() override {}
 	};
 
 	class DTEDTest : public ::testing::Test
@@ -211,6 +213,19 @@ namespace
 			// before the destructor).
 		}
 	};
+
+	// The OrthometricHeight concept accepts a producer whose orthometricHeight() returns a tagged height
+	// kind, not only a plain length. DTED now returns heights::Orthometric; if the concept had not been
+	// made kind-aware, DTED would fail has_orthometricHeight / is_topography and these would break.
+	static_assert(coordinates::traits::is_length_quantity<units::length::meters<double>>,
+	              "a plain length is a length quantity");
+	static_assert(coordinates::traits::is_length_quantity<coordinates::heights::Orthometric>,
+	              "a tagged orthometric height is a length quantity");
+	static_assert(!coordinates::traits::is_length_quantity<units::angle::degrees<double>>,
+	              "an angle is not a length quantity");
+	static_assert(std::is_same_v<decltype(coordinates::topography::DTED::orthometricHeight(0.0_deg, 0.0_deg)),
+	                             coordinates::heights::Orthometric>,
+	              "DTED::orthometricHeight must return a tagged orthometric height");
 
 	TEST_F(TopographyTest, has_orthometricHeight)
 	{
@@ -360,6 +375,38 @@ namespace
 		EXPECT_EQ(goldenData, generatedData);
 	}
 
+	// Hillshade over K2 / the Karakoram (e076_n35, real SRTM 1-arcsec data, 2.3-8.5 km of relief). The e141_s13
+	// tile is nearly flat, so its shading is dominated by slope magnitude and barely exercises the aspect (slope
+	// facing direction) term -- a hillshade aspect bug is invisible there. This tile has extreme relief, so the
+	// aspect term dominates and the test actually covers it.
+	TEST_F(TileTest, hillshadeK2)
+	{
+		DTEDTile tile(test_data_file("e076_n35.dt2"));
+
+		{
+			auto          data = hillshade(&tile, arcseconds(9.0));
+			std::ofstream image("./e076_n35_shade.pgm", std::ios::binary);
+			if (!image)
+				throw std::runtime_error("Failed to open ./e076_n35_shade.pgm for write");
+
+			const std::string header = "P5\n# Generated from coordTest.exe\n" + std::to_string(data[0].size()) + " " + std::to_string(data.size()) + "\n255\n";
+			image.write(header.data(), static_cast<std::streamsize>(header.size()));
+
+			for (const auto& row : data)
+			{
+				image.write(reinterpret_cast<const char*>(row.data()), static_cast<std::streamsize>(row.size()));
+			}
+		}
+
+		// compare to golden image
+		EXPECT_TRUE(fs::exists(fs::path("./e076_n35_shade.pgm")));
+		EXPECT_TRUE(fs::exists(test_data_file("e076_n35_shade.pgm")));
+
+		const auto generatedData = read_file_bytes(fs::path("./e076_n35_shade.pgm"));
+		const auto goldenData    = read_file_bytes(test_data_file("e076_n35_shade.pgm"));
+		EXPECT_EQ(goldenData, generatedData);
+	}
+
 	TEST_F(TileManagerTest, NumTiles)
 	{
 		const auto& TILE_MANAGER = DTEDTileManager::instance();
@@ -411,7 +458,7 @@ namespace
 		DTEDTile tile;
 
 		DTEDTileManager& TILE_MANAGER = DTEDTileManager::instance();
-		EXPECT_DOUBLE_EQ(TILE_MANAGER.maxNumTiles(), TILE_MANAGER.tileLimit());
+		EXPECT_EQ(TILE_MANAGER.maxNumTiles(), TILE_MANAGER.tileLimit());
 	}
 
 	TEST_F(TileManagerTest, setTileLimit)
@@ -419,7 +466,7 @@ namespace
 		DTEDTile tile;
 
 		DTEDTileManager& TILE_MANAGER = DTEDTileManager::instance();
-		EXPECT_DOUBLE_EQ(TILE_MANAGER.maxNumTiles(), TILE_MANAGER.tileLimit());
+		EXPECT_EQ(TILE_MANAGER.maxNumTiles(), TILE_MANAGER.tileLimit());
 		TILE_MANAGER.setTileLimit(100);
 		EXPECT_EQ(100, TILE_MANAGER.tileLimit());
 	}

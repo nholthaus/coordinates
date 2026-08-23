@@ -67,8 +67,6 @@ namespace
 
 		void SetUp() override
 		{
-			auto result = std::setprecision(15);
-
 			// Code here will be called immediately after the constructor (right
 			// before each test).
 			Boston.setPoint(42.3601_deg, -71.0589_deg, 0.0_m);
@@ -452,8 +450,6 @@ TEST_F(PositionENUTest, assignment)
 
 	TEST_F(PositionENUTest, distance)
 	{
-		auto result = std::setprecision(16);
-
 		LLA origin1(42.0_deg, -71.0_deg, 0.0_m);	// Boston-ish
 		LLA origin2(34.0_deg, -118.0_deg, 0.0_m);	// LA-ish
 
@@ -464,10 +460,10 @@ TEST_F(PositionENUTest, assignment)
 		ENU enul1(1.0_m, 1.0_m, 1.0_m, origin2);
 
 		// same origin
-		EXPECT_EQ(meters(sqrt(3.0)), enub0.distance(enub1));
-		EXPECT_EQ(meters(sqrt(3.0)), enub1.distance(enub0));
-		EXPECT_EQ(meters(sqrt(3.0)), enul0.distance(enul1));
-		EXPECT_EQ(meters(sqrt(3.0)), enul1.distance(enul0));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), enub0.distance(enub1));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), enub1.distance(enub0));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), enul0.distance(enul1));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), enul1.distance(enul0));
 
 		// different point types
 		EXPECT_UNITS_NEAR(meters(sqrt(3.0)), enub1.distance(origin1), 5.0e-10_m);
@@ -480,8 +476,6 @@ TEST_F(PositionENUTest, assignment)
 
 	TEST_F(PositionENUTest, dotProduct)
 	{
-		auto result = std::setprecision(16);
-
 		LLA origin1(42.0_deg, -71.0_deg, 0.0_m);	// Boston-ish
 		LLA origin2(34.0_deg, -118.0_deg, 0.0_m);	// LA-ish
 
@@ -694,7 +688,6 @@ TEST_F(PositionENUTest, assignment)
 
 	TEST_F(PositionENUTest, minusEqual)
 	{
-		ENU zero;
 		ENU enu1(12.0_m, 24.0_m, 36.0_m, Boston);
 		ENU enu2(36.0_m, 24.0_m, 12.0_m, Boston);
 		ENU enu3(1.0_m, 2.0_m, 3.0_m, Lexington);

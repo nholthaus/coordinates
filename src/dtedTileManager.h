@@ -69,10 +69,10 @@ inline namespace coordinates
 		class DTEDTileManager : public AbstractTileManager
 		{
 		public:
-			typedef std::list<std::pair<size_t, size_t>> list_type;
-			typedef list_type::iterator                  iterator_type;
-			typedef list_type::const_iterator            const_iterator_type;
-			typedef DTEDTile                             tile_type;
+			using list_type           = std::list<std::pair<size_t, size_t>>;
+			using iterator_type       = list_type::iterator;
+			using const_iterator_type = list_type::const_iterator;
+			using tile_type           = DTEDTile;
 
 			struct tileRecord
 			{

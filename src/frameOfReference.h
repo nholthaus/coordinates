@@ -41,9 +41,12 @@
 #include "coordinate_traits.h"
 #include "datum.h"
 #include "horizontalDatum.h"
+#include "vector3.h"
 
 inline namespace coordinates
 {
+	using namespace units;
+
 	//----------------------------------
 	//	BASE FRAME TYPE
 	//----------------------------------
@@ -59,16 +62,17 @@ inline namespace coordinates
 	template<class Datum, class Base, class Tuple>
 	struct frameOfReference
 	{
-		typedef Datum datum_type;
-		typedef Base  base_frame_type;
-		typedef Tuple tuple_type;    // tuple type that the frame can conver from
+		using datum_type      = Datum;
+		using base_frame_type = Base;
+		using tuple_type      = Tuple;    // tuple type that the frame can conver from
 	};
 
 	//----------------------------------
 	//	TYPEDEFS
 	//----------------------------------
 
-	using CartesianTuple   = std::tuple<meters<>, meters<>, meters<>>;
+	// `CartesianTuple` (a `Vector3<meters<>>`) and `CartesianVector` come from vector3.h. The spherical and
+	// orientation tuples remain plain `std::tuple` -- they are heterogeneous (angle, angle, length), not vectors.
 	using SphericalTuple   = std::tuple<degrees<>, degrees<>, meters<>>;
 	using OrientationTuple = std::tuple<degrees<>, degrees<>, degrees<>>;
 
@@ -87,37 +91,37 @@ inline namespace coordinates
 	 */
 	struct FrameData
 	{
-		FrameData()
+		constexpr FrameData()
 		    : origin(0.0_deg, 0.0_deg, 0.0_m)
 		    , orientation(0.0_deg, 0.0_deg, 0.0_deg)
 		    , date(0) {};
 
-		FrameData(SphericalTuple origin)
+		constexpr FrameData(SphericalTuple origin)
 		    : origin(std::move(origin))
 		    , orientation(0.0_deg, 0.0_deg, 0.0_deg)
 		    , date(0) {};
 
-		FrameData(OrientationTuple orientation)
+		constexpr FrameData(OrientationTuple orientation)
 		    : origin(0.0_deg, 0.0_deg, 0.0_m)
 		    , orientation(std::move(orientation))
 		    , date(0) {};
 
-		FrameData(years<> date)
+		constexpr FrameData(years<> date)
 		    : origin(0.0_deg, 0.0_deg, 0.0_m)
 		    , orientation(0.0_deg, 0.0_deg, 0.0_deg)
 		    , date(date) {};
 
-		FrameData(SphericalTuple origin, OrientationTuple orientation)
+		constexpr FrameData(SphericalTuple origin, OrientationTuple orientation)
 		    : origin(std::move(origin))
 		    , orientation(std::move(orientation))
 		    , date(0) {};
 
-		FrameData(SphericalTuple origin, years<> date)
+		constexpr FrameData(SphericalTuple origin, years<> date)
 		    : origin(std::move(origin))
 		    , orientation(0.0_deg, 0.0_deg, 0.0_deg)
 		    , date(date) {};
 
-		FrameData(const SphericalTuple& origin, const OrientationTuple& orientation, years<> date)
+		constexpr FrameData(const SphericalTuple& origin, const OrientationTuple& orientation, years<> date)
 		    : origin(origin)
 		    , orientation(orientation)
 		    , date(date) {};
@@ -126,7 +130,7 @@ inline namespace coordinates
 		template<typename Angle0, typename Angle1, typename Length>
 		    requires(units::traits::is_angle_unit_v<std::remove_cvref_t<Angle0>> && units::traits::is_angle_unit_v<std::remove_cvref_t<Angle1>> &&
 		             units::traits::is_length_unit_v<std::remove_cvref_t<Length>>)
-		FrameData(const std::tuple<Angle0, Angle1, Length>& originIn)
+		constexpr FrameData(const std::tuple<Angle0, Angle1, Length>& originIn)
 		    : origin(std::get<0>(originIn), std::get<1>(originIn), std::get<2>(originIn))
 		    , orientation(0.0_deg, 0.0_deg, 0.0_deg)
 		    , date(0){};
@@ -136,10 +140,10 @@ inline namespace coordinates
 		years<>          date;           ///< Date of observation.
 	};
 
-	inline bool operator==(const FrameData& lhs, const FrameData& rhs)
+	constexpr bool operator==(const FrameData& lhs, const FrameData& rhs)
 	{ return (lhs.origin == rhs.origin && lhs.orientation == rhs.orientation && lhs.date == rhs.date); }
 
-	inline bool operator!=(const FrameData& lhs, const FrameData& rhs)
+	constexpr bool operator!=(const FrameData& lhs, const FrameData& rhs)
 	{ return !(lhs == rhs); }
 
 	inline std::ostream& operator<<(std::ostream& os, const FrameData& f)
@@ -221,10 +225,10 @@ inline namespace coordinates
 			{
 				if (f.date != 0_yr)
 				{
-					return coordinates::inversePositionVectorTransform<HorizontalDatum>(p, f.date);
+					return inversePositionVectorTransform<HorizontalDatum>(p, f.date);
 				}
 				else
-					return coordinates::inversePositionVectorTransform<HorizontalDatum>(p);
+					return inversePositionVectorTransform<HorizontalDatum>(p);
 			}
 
 			/**
@@ -241,10 +245,10 @@ inline namespace coordinates
 			{
 				if (f.date != 0_yr)
 				{
-					return coordinates::positionVectorTransform<HorizontalDatum>(p, f.date);
+					return positionVectorTransform<HorizontalDatum>(p, f.date);
 				}
 
-				return coordinates::positionVectorTransform<HorizontalDatum>(p);
+				return positionVectorTransform<HorizontalDatum>(p);
 			}
 		};
 
@@ -320,9 +324,7 @@ inline namespace coordinates
 				auto h      = (p / (cos(phi))) - v;
 
 				auto      lat_deg(phi);
-				degrees<> lon_deg(lambda);
-
-				lon_deg = ((lon_deg > 180.0_deg) ? 180.0_deg - lon_deg : lon_deg);
+				degrees<> lon_deg(lambda);    // atan2 already yields (-180, 180]
 
 				return tuple_type(lat_deg, lon_deg, h);
 			}
@@ -346,7 +348,7 @@ inline namespace coordinates
 				auto lambda(std::get<1>(point));    // longitude
 				auto h(std::get<2>(point));         // height
 
-				h = coordinates::convertToEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h);
+				h = convertToEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h).template to<meters<>>();
 
 				return base_tuple_type(phi, lambda, h);
 			}
@@ -358,7 +360,7 @@ inline namespace coordinates
 				auto lambda(std::get<1>(point));    // longitude
 				auto h(std::get<2>(point));         // height
 
-				h = coordinates::convertFromEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h);
+				h = convertFromEllipsoidHeight<typename datum_traits<Datum>::vertical_datum>(phi, lambda, h).template to<meters<>>();
 
 				return tuple_type(phi, lambda, h);
 			}
@@ -375,7 +377,7 @@ inline namespace coordinates
 			using base_tuple_type = frameOfReference<HorizontalDatum, ECEFFrame<HorizontalDatum>, CartesianTuple>::base_frame_type::tuple_type;
 
 			template<class... Args>
-			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData& f, Args... args)
+			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData& f, Args...)
 			{
 				// Source: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ECEF_to_ENU
 				// NOTE: the origin is assumed to be in the same datum as the point.
@@ -400,7 +402,7 @@ inline namespace coordinates
 			}
 
 			template<class... Args>
-			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData& f, Args... args)
+			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData& f, Args...)
 			{
 				// Source: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ECEF_to_ENU
 				// NOTE: the origin is assumed to be in the same datum as the point.
@@ -436,7 +438,7 @@ inline namespace coordinates
 			using base_tuple_type = frameOfReference<HorizontalDatum, ENUFrame<HorizontalDatum>, CartesianTuple>::base_frame_type::tuple_type;
 
 			template<class... Args>
-			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData& f, Args... args)
+			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData&, Args...)
 			{
 				// Source: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ECEF_to_ENU
 				// NOTE: the origin is assumed to be in the same datum as the point.
@@ -449,7 +451,7 @@ inline namespace coordinates
 			}
 
 			template<class... Args>
-			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData& f, Args... args)
+			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData&, Args...)
 			{
 				// Source: https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ECEF_to_ENU
 				// NOTE: the origin is assumed to be in the same datum as the point.
@@ -483,7 +485,7 @@ inline namespace coordinates
 			 * @returns		equivalent ECEF coordinate
 			 */
 			template<class... Args>
-			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData& f, Args...)
+			static base_tuple_type convertToBaseFrame(const tuple_type& point, const FrameData&, Args...)
 			{
 				// source: http://gis.stackexchange.com/questions/58923/calculate-view-angle/
 
@@ -508,7 +510,7 @@ inline namespace coordinates
 			 * @returns		equivalent az/el/range from observer
 			 */
 			template<class... Args>
-			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData& f, Args...)
+			static tuple_type convertFromBaseFrame(const base_tuple_type& point, const FrameData&, Args...)
 			{
 				// source: http://mathworld.wolfram.com/SphericalCoordinates.html
 
@@ -550,7 +552,12 @@ inline namespace coordinates
 			};
 
 			template<class Frame>
-			struct frame_traits<Frame, std::void_t<typename Frame::base_frame_type, typename Frame::datum_type, typename Frame::tuple_type>>
+			    requires requires {
+				    typename Frame::base_frame_type;
+				    typename Frame::datum_type;
+				    typename Frame::tuple_type;
+			    }
+			struct frame_traits<Frame, void>
 			{
 				using base_frame_type = Frame::base_frame_type;
 				using datum_type      = Frame::datum_type;
@@ -588,9 +595,13 @@ inline namespace coordinates
 
 		/**
 		 * @brief		Trait which tests that a class has a `tuple_type` typedef which represents the type of data the frame converts from
+		 * @details		A frame's tuple type is either a heterogeneous `std::tuple` (spherical/orientation frames) or a
+		 *				`Vector3` (the Cartesian frames, whose points carry vector algebra); both are three-element and
+		 *				tuple-protocol-conforming, so either satisfies the frame concept.
 		 */
 		template<typename T, template<class> class Traits = frame_traits>
-		concept has_tuple_type = is_specialization_of<std::tuple, typename Traits<T>::tuple_type>::value;
+		concept has_tuple_type = is_specialization_of<std::tuple, typename Traits<T>::tuple_type>::value
+		                      || is_specialization_of<Vector3, typename Traits<T>::tuple_type>::value;
 
 		/**
 		 * @brief		Tests that a class has a `convertToBaseFrame` static function.
@@ -664,14 +675,14 @@ inline namespace coordinates
 		    requires(is_frame_of_reference<T>)
 		struct lowest_base_frame
 		{
-			typedef lowest_base_frame<typename frame_traits<T>::base_frame_type>::type type;
+			using type = typename lowest_base_frame<typename frame_traits<T>::base_frame_type>::type;
 		};
 
 		template<typename T>
 		    requires(is_frame_of_reference<T> && is_base_frame<T>)
 		struct lowest_base_frame<T>
 		{
-			typedef T type;
+			using type = T;
 		};
 
 		/**
@@ -698,6 +709,23 @@ inline namespace coordinates
 		template<typename T>
 		concept is_cartesian_frame = std::is_same_v<CartesianTuple, std::decay_t<typename frame_traits<T>::tuple_type>>;
 
+		/**
+		 * @brief		Whether a frame is a LOCAL (tangent) frame -- one anchored at an origin it carries in
+		 *				`FrameData.origin`, as opposed to a global frame (ECEF, geodetic) that has no origin.
+		 * @details		The local frames (ENU, NED, AER) read `f.origin` in their `convertToBaseFrame`; a point
+		 *				in one of them adopts an origin and converts through an ECEF intermediate, whereas a point
+		 *				in a global frame converts in one hop. `Coordinate`'s converting constructor branches on
+		 *				this trait. `false` by default; `true` for the tangent frames.
+		 */
+		template<typename Frame>
+		inline constexpr bool is_local_frame = false;
+		template<class HorizontalDatum>
+		inline constexpr bool is_local_frame<coordinateFrames::ENUFrame<HorizontalDatum>> = true;
+		template<class HorizontalDatum>
+		inline constexpr bool is_local_frame<coordinateFrames::NEDFrame<HorizontalDatum>> = true;
+		template<class HorizontalDatum>
+		inline constexpr bool is_local_frame<coordinateFrames::AERFrame<HorizontalDatum>> = true;
+
 		// Adapters for concept predicates used where a trait class template is required.
 		template<class T>
 		struct is_frame_of_reference_trait : std::bool_constant<is_frame_of_reference<T>>
@@ -716,36 +744,50 @@ inline namespace coordinates
 
 		namespace detail
 		{
+			/// The parent-accessor for a frame node: its `base_frame_type`. This is the graph edge the generic
+			/// `depth`/`least_common_ancestor` climb. A different node graph (e.g. a kind graph whose parent is
+			/// its base kind) supplies its own accessor with the same `::type` shape, and the SAME algorithm
+			/// below serves both.
 			template<typename U>
-			struct depth
+			struct frame_parent
 			{
-				static_assert(is_frame_of_reference<U>, "traits::detail::depth<U>: U must satisfy is_frame_of_reference.");
+				using type = typename frame_traits<U>::base_frame_type;
 			};
 
-			// base case: base_frame_type == U
-			template<typename U>
-			    requires(is_frame_of_reference<U> && std::same_as<typename frame_traits<U>::base_frame_type, U>)
-			struct depth<U>
+			/// Depth of a node above the graph root, generic over a `Parent` accessor. A node is the root when
+			/// its parent is itself; otherwise the depth is one more than its parent's. Written as two partial
+			/// specializations (root vs non-root) rather than one recursive initializer: MSVC cannot resolve a
+			/// `static constexpr value` that refers to `depth<parent>::value` of the still-incomplete class.
+			template<typename U, template<class> class Parent = frame_parent, bool IsRoot = std::same_as<typename Parent<U>::type, U>>
+			struct depth;
+
+			// root: the node is its own parent
+			template<typename U, template<class> class Parent>
+			struct depth<U, Parent, true>
 			{
 				static constexpr int value = 0;
 			};
 
-			// recursive case: climb base_frame_type
-			template<typename U>
-			    requires(is_frame_of_reference<U> && !std::same_as<typename frame_traits<U>::base_frame_type, U>)
-			struct depth<U>
+			// non-root: one hop above the parent's depth
+			template<typename U, template<class> class Parent>
+			struct depth<U, Parent, false>
 			{
-				using base_t = frame_traits<U>::base_frame_type;
-				static_assert(is_frame_of_reference<base_t>, "frame_traits<U>::base_frame_type must itself satisfy is_frame_of_reference.");
-				static constexpr int value = depth<base_t>::value + 1;
+				static constexpr int value = depth<typename Parent<U>::type, Parent>::value + 1;
 			};
 
 			/**
-			 * @brief		Computes the least common ancestor of two frame types.
-			 * @details		This is purely a type-level computation. The `Trait<T>::value` predicate
-			 *				determines which nodes in the inheritance tree are considered "valid" ancestors.
+			 * @brief		Least common ancestor of two nodes, generic over a parent graph.
+			 * @details		A purely type-level computation over ANY single-parent tree: the `Parent` accessor
+			 *				supplies each node's parent edge, so one algorithm serves both the frame graph
+			 *				(`Parent = frame_parent`) and a same-dimension kind graph. `Trait<T>::value` selects
+			 *				which nodes count as valid ancestors (e.g. any frame, or only Cartesian frames), so a
+			 *				meeting node that fails the predicate keeps climbing.
+			 * @tparam		U		first node.
+			 * @tparam		V		second node.
+			 * @tparam		Trait	predicate a node must satisfy to be an accepted ancestor.
+			 * @tparam		Parent	the parent-accessor defining the graph edges.
 			 */
-			template<typename U, typename V, template<class> class Trait>
+			template<typename U, typename V, template<class> class Trait, template<class> class Parent = frame_parent>
 			struct least_common_ancestor
 			{
 			private:
@@ -769,7 +811,7 @@ inline namespace coordinates
 				    requires(!Trait<A>::value)
 				struct impl<A, A>
 				{
-					using A_base = frame_traits<A>::base_frame_type;
+					using A_base = Parent<A>::type;
 					using type   = impl<A_base, A_base>::type;
 				};
 
@@ -777,18 +819,18 @@ inline namespace coordinates
 				// Case 2: depths differ, climb the deeper one
 				//-------------------------------------------------------------------------
 				template<typename A, typename B>
-				    requires(depth<A>::value < depth<B>::value)
+				    requires(depth<A, Parent>::value < depth<B, Parent>::value)
 				struct impl<A, B>
 				{
-					using B_base = frame_traits<B>::base_frame_type;
+					using B_base = Parent<B>::type;
 					using type   = impl<A, B_base>::type;
 				};
 
 				template<typename A, typename B>
-				    requires(depth<B>::value < depth<A>::value)
+				    requires(depth<B, Parent>::value < depth<A, Parent>::value)
 				struct impl<A, B>
 				{
-					using A_base = frame_traits<A>::base_frame_type;
+					using A_base = Parent<A>::type;
 					using type   = impl<A_base, B>::type;
 				};
 
@@ -796,11 +838,11 @@ inline namespace coordinates
 				// Case 3: same depth, not equal: climb both
 				//-------------------------------------------------------------------------
 				template<typename A, typename B>
-				    requires(!std::is_same_v<A, B> && (depth<A>::value == depth<B>::value))
+				    requires(!std::is_same_v<A, B> && (depth<A, Parent>::value == depth<B, Parent>::value))
 				struct impl<A, B>
 				{
-					using A_base = frame_traits<A>::base_frame_type;
-					using B_base = frame_traits<B>::base_frame_type;
+					using A_base = Parent<A>::type;
+					using B_base = Parent<B>::type;
 					using type   = impl<A_base, B_base>::type;
 				};
 
@@ -840,7 +882,7 @@ inline namespace coordinates
 		 */
 		template<class FrameFrom, class FrameTo, class FrameData>
 		    requires is_same_frame<FrameFrom, FrameTo>
-		frame_traits<FrameTo>::tuple_type convertToBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
+		frame_traits<FrameTo>::tuple_type convertToBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData&)
 		{
 			return typename frame_traits<FrameTo>::tuple_type(std::get<0>(p), std::get<1>(p), std::get<2>(p));
 			// this should handle unit conversions if necessary
@@ -854,7 +896,7 @@ inline namespace coordinates
 		    requires(!is_same_frame<FrameFrom, FrameTo>) && has_convertToBaseFrame_with<FrameFrom, FrameData>
 		frame_traits<FrameTo>::tuple_type convertToBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
 		{
-			typedef typename frame_traits<FrameFrom>::base_frame_type NextFrameFrom;
+			using NextFrameFrom = typename frame_traits<FrameFrom>::base_frame_type;
 			return convertToBase<NextFrameFrom, FrameTo>(FrameFrom::convertToBaseFrame(p, f), f);
 		};
 
@@ -864,7 +906,7 @@ inline namespace coordinates
 		 */
 		template<class FrameFrom, class FrameTo, class FrameData>
 		    requires is_same_frame<FrameFrom, FrameTo>
-		frame_traits<FrameTo>::tuple_type convertFromBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
+		frame_traits<FrameTo>::tuple_type convertFromBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData&)
 		{
 			return typename frame_traits<FrameTo>::tuple_type(std::get<0>(p), std::get<1>(p), std::get<2>(p));
 			// this should handle unit conversions if necessary
@@ -878,7 +920,7 @@ inline namespace coordinates
 		    requires(!is_same_frame<FrameFrom, FrameTo>) && has_convertFromBaseFrame_with<FrameTo, FrameData>
 		frame_traits<FrameTo>::tuple_type convertFromBase(const typename frame_traits<FrameFrom>::tuple_type& p, const FrameData& f)
 		{
-			typedef typename frame_traits<FrameTo>::base_frame_type NextFrameTo;
+			using NextFrameTo = typename frame_traits<FrameTo>::base_frame_type;
 			return FrameTo::convertFromBaseFrame(convertFromBase<FrameFrom, NextFrameTo>(p, f), f);
 		};
 	}    // namespace dispatchers

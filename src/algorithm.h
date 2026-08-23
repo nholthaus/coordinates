@@ -63,27 +63,6 @@ inline namespace coordinates
 
 	using namespace units::literals;
 
-	template<int N, typename T>
-	    requires(std::is_arithmetic_v<T>)
-	constexpr T cpow(T x)
-	{
-		static_assert(N >= 0, "pow<N>(x): N must be non-negative");
-
-		if constexpr (N == 0)
-		{
-			return T{1};
-		}
-		else
-		{
-			T result = x;
-			for (int i = 1; i < N; ++i)
-			{
-				result = result * x;
-			}
-			return result;
-		}
-	}
-
 	/**
 	 * @brief		Tests whether a point is null
 	 * @details		A point is null if all of its values are (0,0,0)
@@ -254,10 +233,6 @@ inline namespace coordinates
 			distance_unit y1 = std::get<1>(r);
 			distance_unit z1 = std::get<2>(r);
 
-			auto x2 = pow<2>(x1 - x0);
-			auto y2 = pow<2>(y1 - y0);
-			auto z2 = pow<2>(z1 - z0);
-
 			// 3-D distance formula
 			return sqrt(pow<2>(x1 - x0) + pow<2>(y1 - y0) + pow<2>(z1 - z0));
 		}
@@ -280,6 +255,48 @@ inline namespace coordinates
 			// 3-D distance formula
 			return sqrt(pow<2>(x1 - x0) + pow<2>(y1 - y0) + pow<2>(z1 - z0));
 		}
+	}
+
+	/**
+	 * @brief		Calculates the squared straight-line distance between two points.
+	 * @details		The squared straight-line (slant) distance from lhs to rhs, skipping the square root of
+	 *				`distance`. For relative comparisons (nearest-neighbour, range gating) the square root is
+	 *				wasted work; comparing squared distances against a squared threshold gives the same ordering
+	 *				at lower cost. The result is an area (`distance_unit` squared, e.g. `m^2`).
+	 * @tparam		PointLhs		point type to measure from.
+	 * @tparam		PointRhs		point type to measure to.
+	 * @tparam		distance_unit	length unit the points are reduced to before squaring; defaults to meters.
+	 * @param[in]	lhs	Point to calculate the distance from.
+	 * @param[in]	rhs	Point to calculate the distance to.
+	 * @return		squared distance between the two points, as an area.
+	 */
+	template<class PointLhs, class PointRhs, class distance_unit = meters<>>
+	auto distanceSquared(const PointLhs& lhs, const PointRhs& rhs) -> decltype(pow<2>(distance_unit{}))
+	{
+		static_assert(is_point<PointLhs>, "Template parameter `PointLhs` does not satisfy the `point` concept.");
+		static_assert(is_point<PointRhs>, "Template parameter `PointRhs` does not satisfy the `point` concept.");
+		static_assert(is_convertible_point<PointLhs, PointRhs>, "No known conversion between types `PointLhs` and `PointRhs`.");
+
+		// Reduce both points to their nearest common Cartesian frame, then sum the squared axis differences.
+		// A matching frame origin permits the nearest cartesian ancestor; otherwise both route through ECEF.
+		const auto squaredSeparation = [](const auto& l, const auto& r) -> decltype(pow<2>(distance_unit{}))
+		{
+			const distance_unit x0 = std::get<0>(l), y0 = std::get<1>(l), z0 = std::get<2>(l);
+			const distance_unit x1 = std::get<0>(r), y1 = std::get<1>(r), z1 = std::get<2>(r);
+			return pow<2>(x1 - x0) + pow<2>(y1 - y0) + pow<2>(z1 - z0);
+		};
+
+		if (lhs.frameData() == rhs.frameData())
+		{
+			using LCA =
+			        least_common_cartesian_ancestor<typename point_traits<PointLhs>::reference_frame, typename point_traits<PointRhs>::reference_frame>::type;
+			return squaredSeparation(convert<typename point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData()),
+			                         convert<typename point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData()));
+		}
+
+		using LCA = lowest_base_frame<typename point_traits<PointLhs>::reference_frame>::type;
+		return squaredSeparation(convert<typename point_traits<PointLhs>::reference_frame, LCA>(lhs.point(), lhs.frameData(), lhs.frameData()),
+		                         convert<typename point_traits<PointRhs>::reference_frame, LCA>(rhs.point(), rhs.frameData(), rhs.frameData()));
 	}
 
 	/**
@@ -470,8 +487,11 @@ inline namespace coordinates
 	 * @param[in]	b	Second geodetic point.
 	 * @return		GeodesicInverseResult containing distance, initial bearing, and final bearing.
 	 */
-	template<class Datum, class EllipsoidType = horizontal_datum_traits<typename datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
-	GeodesicInverseResult geodesicInverse(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
+	template<class GeodeticPoint,
+	         class Datum         = typename traits::frame_traits<typename traits::point_traits<GeodeticPoint>::reference_frame>::datum_type,
+	         class EllipsoidType = horizontal_datum_traits<typename datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
+	    requires(traits::is_point<GeodeticPoint>)
+	GeodesicInverseResult geodesicInverse(const GeodeticPoint& a, const GeodeticPoint& b)
 	{
 		static_assert(traits::is_datum<Datum>, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(traits::is_ellipsoid<EllipsoidType>, "`EllipsoidType` template parameter does not satisfy the ellipsoid concept.");
@@ -480,10 +500,11 @@ inline namespace coordinates
 		using units::angle::radians;
 		using units::length::meters;
 
-		// Convert inputs to radians (typed), then immediately extract scalars for trig.
-		const auto phi1_q = radians<>(a.latitude());
-		const auto phi2_q = radians<>(b.latitude());
-		const auto L_q    = radians<>(wrap180(b.longitude() - a.longitude()));
+		// Convert inputs to radians (typed), then immediately extract scalars for trig. The tagged
+		// latitude/longitude accessors are unwrapped to plain angles here at the math boundary.
+		const auto phi1_q = radians<>(a.latitude().template to<units::angle::degrees<>>());
+		const auto phi2_q = radians<>(b.latitude().template to<units::angle::degrees<>>());
+		const auto L_q    = radians<>(wrap180(b.longitude().template to<units::angle::degrees<>>() - a.longitude().template to<units::angle::degrees<>>()));
 
 		const double phi1 = phi1_q.template to<double>();
 		const double phi2 = phi2_q.template to<double>();
@@ -625,8 +646,11 @@ inline namespace coordinates
 	 * @param[in]	distance		Surface distance to travel along the geodesic.
 	 * @return		GeodesicDirectResult containing destination point and final bearing.
 	 */
-	template<class Datum, class EllipsoidType = horizontal_datum_traits<typename datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
-	GeodesicDirectResult<PositionGeodetic<Datum>> geodesicDirect(const PositionGeodetic<Datum>& start, degrees<> initialBearing, meters<> distance)
+	template<class GeodeticPoint,
+	         class Datum         = typename traits::frame_traits<typename traits::point_traits<GeodeticPoint>::reference_frame>::datum_type,
+	         class EllipsoidType = horizontal_datum_traits<typename datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
+	    requires(traits::is_point<GeodeticPoint>)
+	GeodesicDirectResult<GeodeticPoint> geodesicDirect(const GeodeticPoint& start, degrees<> initialBearing, meters<> distance)
 	{
 		static_assert(traits::is_datum<Datum>, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(traits::is_ellipsoid<EllipsoidType>, "`EllipsoidType` template parameter does not satisfy the ellipsoid concept.");
@@ -639,8 +663,8 @@ inline namespace coordinates
 		const fp_t a_m = static_cast<fp_t>(EllipsoidType::a().template to<long double>());
 		const fp_t b_m = static_cast<fp_t>(EllipsoidType::b().template to<long double>());
 
-		const fp_t phi1   = units::angle::radians<>(start.latitude()).to<long double>();
-		const fp_t L1     = units::angle::radians<>(start.longitude()).to<long double>();
+		const fp_t phi1   = units::angle::radians<>(start.latitude().template to<units::angle::degrees<>>()).to<long double>();
+		const fp_t L1     = units::angle::radians<>(start.longitude().template to<units::angle::degrees<>>()).to<long double>();
 		const fp_t alpha1 = units::angle::radians<>(wrap360(initialBearing)).to<long double>();
 
 		const fp_t sinAlpha1 = std::sin(alpha1);
@@ -701,14 +725,14 @@ inline namespace coordinates
 
 		const fp_t alpha2 = std::atan2(sinAlpha, -tmp);
 
-		PositionGeodetic<Datum> dst(units::angle::degrees<>(units::angle::radians<>(static_cast<double>(phi2))),
-		                            units::angle::degrees<>(wrap180(units::angle::degrees<>(units::angle::radians<>(static_cast<double>(lon2))))),
-		                            start.altitude(),
-		                            start.frameData().date);
+		GeodeticPoint dst(units::angle::degrees<>(units::angle::radians<>(static_cast<double>(phi2))),
+		                  units::angle::degrees<>(wrap180(units::angle::degrees<>(units::angle::radians<>(static_cast<double>(lon2))))),
+		                  start.altitude().template to<units::length::meters<>>());
+		dst.setFrameData(start.frameData());
 
 		const auto azi2_deg = wrap360(units::angle::degrees<>(static_cast<double>(alpha2 * static_cast<fp_t>(180.0) / std::numbers::pi_v<fp_t>)));
 
-		return GeodesicDirectResult<PositionGeodetic<Datum>>(dst, azi2_deg);
+		return GeodesicDirectResult<GeodeticPoint>(dst, azi2_deg);
 	}
 
 	/**
@@ -718,9 +742,10 @@ inline namespace coordinates
 	 * @param[in]	b	Second point.
 	 * @return		Surface distance between points (Great Circle).
 	 */
-	template<class Datum>
-	meters<> geodesicDistance(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
-	{ return geodesicInverse<Datum>(a, b).distance(); }
+	template<class GeodeticPoint>
+	    requires(traits::is_point<GeodeticPoint>)
+	meters<> geodesicDistance(const GeodeticPoint& a, const GeodeticPoint& b)
+	{ return geodesicInverse(a, b).distance().template to<meters<>>(); }
 
 	/**
 	 * @brief		Convenience wrapper returning the initial bearing.
@@ -729,9 +754,10 @@ inline namespace coordinates
 	 * @param[in]	b	Second point.
 	 * @return		Initial bearing at point a.
 	 */
-	template<class Datum>
-	degrees<> initialBearing(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
-	{ return geodesicInverse<Datum>(a, b).initialBearing(); }
+	template<class GeodeticPoint>
+	    requires(traits::is_point<GeodeticPoint>)
+	degrees<> initialBearing(const GeodeticPoint& a, const GeodeticPoint& b)
+	{ return geodesicInverse(a, b).initialBearing().template to<degrees<>>(); }
 
 	/**
 	 * @brief		Convenience wrapper returning the final bearing.
@@ -740,9 +766,10 @@ inline namespace coordinates
 	 * @param[in]	b	Second point.
 	 * @return		Final bearing at point b.
 	 */
-	template<class Datum>
-	degrees<> finalBearing(const PositionGeodetic<Datum>& a, const PositionGeodetic<Datum>& b)
-	{ return geodesicInverse<Datum>(a, b).finalBearing(); }
+	template<class GeodeticPoint>
+	    requires(traits::is_point<GeodeticPoint>)
+	degrees<> finalBearing(const GeodeticPoint& a, const GeodeticPoint& b)
+	{ return geodesicInverse(a, b).finalBearing().template to<degrees<>>(); }
 
 	//------------------------
 	//	ELLIPSOID INTERSECTION
@@ -757,10 +784,12 @@ inline namespace coordinates
 	 * @param[in]	dirECEF		Ray direction vector in ECEF.
 	 * @return		Intersection result (hit flag + intersection point).
 	 */
-	template<class Datum, class EllipsoidType = horizontal_datum_traits<typename datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
-	Intersection<Datum> intersectEllipsoid(const PositionECEF<Datum>& originECEF, const CartesianTuple& dirECEF)
+	template<class EcefPoint,
+	         class HorizontalDatum = typename traits::frame_traits<typename traits::point_traits<EcefPoint>::reference_frame>::datum_type,
+	         class EllipsoidType   = typename horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid>
+	    requires(traits::is_point<EcefPoint>)
+	Intersection<HorizontalDatum> intersectEllipsoid(const EcefPoint& originECEF, const CartesianTuple& dirECEF)
 	{
-		static_assert(traits::is_datum<Datum>, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(traits::is_ellipsoid<EllipsoidType>, "`EllipsoidType` template parameter does not satisfy the ellipsoid concept.");
 
 		const auto ox = std::get<0>(originECEF.point());
@@ -782,7 +811,7 @@ inline namespace coordinates
 		const auto disc = B * B - 4.0 * A * C;
 		if (disc < 0.0 || A == 0.0)
 		{
-			return Intersection<Datum>();
+			return Intersection<HorizontalDatum>();
 		}
 
 		const auto sqrtDisc = sqrt(disc);
@@ -798,28 +827,32 @@ inline namespace coordinates
 
 		if (!std::isfinite(t))
 		{
-			return Intersection<Datum>();
+			return Intersection<HorizontalDatum>();
 		}
 
 		const auto px = units::length::meters<>(ox + t * dx);
 		const auto py = units::length::meters<>(oy + t * dy);
 		const auto pz = units::length::meters<>(oz + t * dz);
 
-		return Intersection<Datum>(units::length::meters(t), CartesianTuple(px, py, pz), originECEF.frameData().date);
+		return Intersection<HorizontalDatum>(units::length::meters(t), CartesianTuple(px, py, pz), originECEF.frameData().date);
 	}
 
 	/**
 	 * @brief		Tests whether two points have clear line-of-sight over the ellipsoid.
 	 * @details		This is an ellipsoid-only test. Terrain/topography is not considered.
-	 * @tparam		Datum	Datum of the points.
+	 * @tparam		EcefPoint		the ECEF point type of both endpoints.
+	 * @tparam		HorizontalDatum	the horizontal datum recovered from the point's frame.
+	 * @tparam		EllipsoidType	the reference ellipsoid of that horizontal datum.
 	 * @param[in]	observer	Observer point.
 	 * @param[in]	target		Target point.
 	 * @return		true if the line segment between observer and target does not intersect the ellipsoid interior.
 	 */
-	template<class Datum, class EllipsoidType = traits::horizontal_datum_traits<typename traits::datum_traits<Datum>::horizontal_datum>::reference_ellipsoid>
-	bool isLineOfSight(const PositionECEF<Datum>& observer, const PositionECEF<Datum>& target)
+	template<class EcefPoint,
+	         class HorizontalDatum = typename traits::frame_traits<typename traits::point_traits<EcefPoint>::reference_frame>::datum_type,
+	         class EllipsoidType   = typename traits::horizontal_datum_traits<HorizontalDatum>::reference_ellipsoid>
+	    requires(traits::is_point<EcefPoint>)
+	bool isLineOfSight(const EcefPoint& observer, const EcefPoint& target)
 	{
-		static_assert(traits::is_datum<Datum>, "`Datum` template parameter does not satisfy the datum concept.");
 		static_assert(traits::is_ellipsoid<EllipsoidType>, "`EllipsoidType` template parameter does not satisfy the ellipsoid concept.");
 
 		const auto ox = std::get<0>(observer.point()).template to<double>();
@@ -894,7 +927,7 @@ inline namespace coordinates
 		 *				`tile->metadata().latitudeResolution()`.
 		 * @returns		2D vector of bytes, representing a monochrome image.
 		 */
-		static std::vector<std::vector<int8_t>> image(const AbstractTile* tile, degrees<> resolution)
+		inline std::vector<std::vector<int8_t>> image(const AbstractTile* tile, degrees<> resolution)
 		{
 			if (tile == nullptr)
 			{
@@ -997,7 +1030,7 @@ inline namespace coordinates
 		 * @param[in]	latitude latitude to calculate factor for
 		 * @returns		z-factor
 		 */
-		static meters<> z_factor(const degrees<> latitude)
+		inline meters<> z_factor(const degrees<> latitude)
 		{
 			// See: http://webhelp.esri.com/arcgisdesktop/9.3/index.cfm?TopicName=Applying%20a%20z-factor
 			if (const int val = static_cast<int>(abs(latitude.to<double>())); val >= 0 && val < 10)
@@ -1020,7 +1053,48 @@ inline namespace coordinates
 				return 0.00005156_m;
 		}
 
-		static std::vector<std::vector<uint8_t>>
+		/// Per-cell hillshade computation: the ESRI slope/aspect/shade math for one sample point, over its 3x3
+		/// elevation window. A `constexpr`-marked free function of its inputs — no captures, no threading — so it is
+		/// compile-time-provable where its operations are constant-evaluable and runs normally otherwise (the trig
+		/// is `units`' runtime trig). Extracting it out of the threaded row lambda keeps that lambda a plain runtime
+		/// callable: it merely calls this function, so it is never promoted to an immediate (`consteval`) function by
+		/// a `consteval` `units` construct in the math, which would make it uninvocable through the thread pool.
+		/// za..zi are the 3x3 elevation window (zd/zf flank the center; the center elevation is unused, matching the
+		/// ESRI kernel), `cellSize` the ground sample distance, `zenith_r`/`azimuth_r` the sun geometry.
+		inline uint8_t hillshadeCell(meters<> za, meters<> zb, meters<> zc,
+		                             meters<> zd, meters<> zf,
+		                             meters<> zg, meters<> zh, meters<> zi,
+		                             meters<> cellSize, radians<> zenith_r, radians<> azimuth_r)
+		{
+			const dimensionless<> dz_dx((zc + 2 * zf + zi - (za + 2 * zd + zg)) / (8 * cellSize));
+			const dimensionless<> dz_dy((zg + 2 * zh + zi - (za + 2 * zb + zc)) / (8 * cellSize));
+
+			const dimensionless<> slope = atan(sqrt(std::pow(dz_dx, 2.0) + std::pow(dz_dy, 2.0)));
+			dimensionless<>       aspect = 0.0;
+			if (dz_dx != 0)
+			{
+				aspect = atan2(dz_dy.value(), -1.0 * dz_dx.value());
+				if (aspect < 0)
+					aspect = aspect + pi * 2;
+			}
+			else if (dz_dy > 0)
+			{
+				aspect = pi / 2;
+			}
+			else if (dz_dy < 0)
+			{
+				aspect = 2 * pi - pi / 2;
+			}
+			else
+			{
+				aspect = 0.0;
+			}
+
+			return static_cast<uint8_t>(abs(255.0 * ((cos(zenith_r.value()) * cos(slope.value())) +
+			                                         (sin(zenith_r.value()) * sin(slope.value()) * cos(azimuth_r.value() - aspect.value())))));
+		}
+
+		inline std::vector<std::vector<uint8_t>>
 		hillshade(const AbstractTile* tile, degrees<> resolution = 0.0_deg, const degrees<> sunAltitude = 45.0_deg, const degrees<> sunAzimuth = 315.0_deg)
 		{
 			// see: http://edndoc.esri.com/arcobjects/9.2/net/shared/geoprocessing/spatial_analyst_tools/how_hillshade_works.htm
@@ -1065,45 +1139,18 @@ inline namespace coordinates
 				{
 					degrees lon = tile->metadata().southwestLongitude() + resolution * col;
 
-					meters a = tile->elevation(lat + resolution, lon - resolution);
-					meters b = tile->elevation(lat + resolution, lon);
-					meters c = tile->elevation(lat + resolution, lon + resolution);
-					meters d = tile->elevation(lat, lon - resolution);
-					meters f = tile->elevation(lat, lon + resolution);
-					meters g = tile->elevation(lat - resolution, lon - resolution);
-					meters h = tile->elevation(lat - resolution, lon);
-					meters i = tile->elevation(lat - resolution, lon + resolution);
+					// 3x3 elevation kernel around the sample point (z-prefixed to avoid shadowing
+					// single-letter globals). Layout: za zb zc / zd (center) zf / zg zh zi.
+					meters za = tile->elevation(lat + resolution, lon - resolution);
+					meters zb = tile->elevation(lat + resolution, lon);
+					meters zc = tile->elevation(lat + resolution, lon + resolution);
+					meters zd = tile->elevation(lat, lon - resolution);
+					meters zf = tile->elevation(lat, lon + resolution);
+					meters zg = tile->elevation(lat - resolution, lon - resolution);
+					meters zh = tile->elevation(lat - resolution, lon);
+					meters zi = tile->elevation(lat - resolution, lon + resolution);
 
-					dimensionless dz_dx((c + 2 * f + i - (a + 2 * d + g)) / (8 * cellSize));
-					dimensionless dz_dy((g + 2 * h + i - (a + 2 * b + c)) / (8 * cellSize));
-
-					dimensionless slope  = atan(sqrt(std::pow(dz_dx, 2.0) + std::pow(dz_dy, 2.0)));
-					dimensionless aspect = 0;
-					if (dz_dx != 0)
-					{
-						aspect = atan2(dz_dy.value(), -1.0 * dz_dx.value());
-						if (aspect < 0)
-							aspect = aspect + pi * 2;
-					}
-					else if (dz_dx == 0)
-					{
-						if (dz_dy > 0)
-						{
-							aspect = pi / 2;
-						}
-						else if (dz_dy < 0)
-						{
-							aspect = 2 * pi - pi / 2;
-						}
-						else
-						{
-							aspect = 0;
-						}
-					}
-
-					shade[row][col] =
-					        static_cast<uint8_t>(abs(255.0 * ((cos(zenith_r.value()) * cos(slope.value())) +
-					                                          (sin(zenith_r.value()) * sin(slope.value()) * cos(azimuth_r.value() - aspect.value())))));
+					shade[row][col] = hillshadeCell(za, zb, zc, zd, zf, zg, zh, zi, cellSize, zenith_r, azimuth_r);
 				}
 				return row;
 			};

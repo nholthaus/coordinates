@@ -541,16 +541,12 @@ namespace
 
 	TEST_F(PositionGeodeticTest, isSame)
 	{
-		using LLA_ft = PositionGeodetic<datums::WGS84_G1674, units::length::feet>;
-		using LLA_nm = PositionGeodetic<datums::WGS84_G1674, units::length::nanometers>;
-
 		LLA lla(42.3601_deg, -71.0589_deg, 0.0_m);
 		LLA exactlySame(42.3601_deg, -71.0589_deg, 0.0_m);
 		LLA close(42.36011_deg, -71.05891_deg, 0.0_m);
 		LLA closeButNoCigar(42.36012_deg, -71.05892_deg, 0.0_m);
 
 		LLA  angleTolerance(0.00001_deg, 0.00001_deg, 0.0_m);
-		ECEF meterTolerance(1.0_m, 1.0_m, 1.0_m);
 
 		// exactly same, default tolerance
 		EXPECT_TRUE(lla.isSame(exactlySame));
@@ -576,22 +572,44 @@ namespace
 		EXPECT_UNITS_NEAR(3900253.57184229_m, NYC.distance(LA), 5.0e-9_m);
 	}
 
+	// The directional two-point measurement family (a.measureTo(b)): each returns its distinctly-tagged
+	// kind and agrees with the existing accessor / free function it forwards to.
+	TEST_F(PositionGeodeticTest, measurementMembers)
+	{
+		LLA NYC(40.7128_deg, -74.0059_deg, 30.0_km);
+		LLA LA(34.0522_deg, -118.2437_deg, 30.0_km);
+
+		// euclidean and slant range are the same straight-line magnitude, differently tagged.
+		static_assert(std::is_same_v<decltype(NYC.euclideanDistanceTo(LA)), ranges::Euclidean>);
+		static_assert(std::is_same_v<decltype(NYC.slantRangeTo(LA)), ranges::Euclidean>);
+		EXPECT_UNITS_NEAR(NYC.distance(LA), NYC.euclideanDistanceTo(LA), 5.0e-9_m);
+		EXPECT_UNITS_NEAR(NYC.euclideanDistanceTo(LA), NYC.slantRangeTo(LA), 5.0e-9_m);
+
+		// geodesicDistanceTo is the uniform-named companion to distanceTo (surface distance).
+		static_assert(std::is_same_v<decltype(NYC.geodesicDistanceTo(LA)), ranges::Geodesic>);
+		EXPECT_UNITS_NEAR(NYC.distanceTo(LA), NYC.geodesicDistanceTo(LA), 5.0e-9_m);
+
+		// bearingTo is the initial bearing.
+		static_assert(std::is_same_v<decltype(NYC.bearingTo(LA)), angles::Azimuth>);
+		EXPECT_UNITS_NEAR(NYC.initialBearingTo(LA), NYC.bearingTo(LA), 1.0e-9_deg);
+	}
+
 	TEST_F(PositionGeodeticTest, latitude)
 	{
 		LLA NYC(40.7128_deg, -74.0059_deg, 30.0_km);
-		EXPECT_EQ(40.7128_deg, NYC.latitude());
+		EXPECT_UNITS_EQ(40.7128_deg, NYC.latitude());
 	}
 
 	TEST_F(PositionGeodeticTest, longitude)
 	{
 		LLA NYC(40.7128_deg, -74.0059_deg, 30.0_km);
-		EXPECT_EQ(-74.0059_deg, NYC.longitude());
+		EXPECT_UNITS_EQ(-74.0059_deg, NYC.longitude());
 	}
 
 	TEST_F(PositionGeodeticTest, altitude)
 	{
 		LLA NYC(40.7128_deg, -74.0059_deg, 30.0_km);
-		EXPECT_EQ(30000.0_m, NYC.altitude());
+		EXPECT_UNITS_EQ(30000.0_m, NYC.altitude());
 	}
 
 	TEST_F(PositionGeodeticTest, date)
@@ -605,9 +623,9 @@ namespace
 		LLA NYC;
 		NYC.setLatitude(40.7128_deg);
 
-		EXPECT_EQ(40.7128_deg, NYC.latitude());
-		EXPECT_EQ(0.0_deg, NYC.longitude());
-		EXPECT_EQ(0.0_m, NYC.altitude());
+		EXPECT_UNITS_EQ(40.7128_deg, NYC.latitude());
+		EXPECT_UNITS_EQ(0.0_deg, NYC.longitude());
+		EXPECT_UNITS_EQ(0.0_m, NYC.altitude());
 	}
 
 	TEST_F(PositionGeodeticTest, setLongitude)
@@ -615,9 +633,9 @@ namespace
 		LLA NYC;
 		NYC.setLongitude(-74.0059_deg);
 
-		EXPECT_EQ(0.0_deg, NYC.latitude());
-		EXPECT_EQ(-74.0059_deg, NYC.longitude());
-		EXPECT_EQ(0.0_m, NYC.altitude());
+		EXPECT_UNITS_EQ(0.0_deg, NYC.latitude());
+		EXPECT_UNITS_EQ(-74.0059_deg, NYC.longitude());
+		EXPECT_UNITS_EQ(0.0_m, NYC.altitude());
 	}
 
 	TEST_F(PositionGeodeticTest, setAltitude)
@@ -625,9 +643,9 @@ namespace
 		LLA NYC;
 		NYC.setAltitude(30.0_km);
 
-		EXPECT_EQ(0.0_deg, NYC.latitude());
-		EXPECT_EQ(0.0_deg, NYC.longitude());
-		EXPECT_EQ(30.0_km, NYC.altitude());
+		EXPECT_UNITS_EQ(0.0_deg, NYC.latitude());
+		EXPECT_UNITS_EQ(0.0_deg, NYC.longitude());
+		EXPECT_UNITS_EQ(30.0_km, NYC.altitude());
 	}
 
 	TEST_F(PositionGeodeticTest, ostream)

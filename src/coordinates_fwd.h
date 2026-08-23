@@ -31,16 +31,54 @@
 #define COORDINATES_FWD_H
 
 //------------------------
+//	INCLUDES
+//------------------------
+
+#include <tuple>
+
+#include <units.h>
+
+#include "frameOfReference.h"
+
+//------------------------
 //	FORWARD DECLARATIONS
 //------------------------
 
 inline namespace coordinates
 {
-	template<class Datum, template<class> class = degrees, template<class> class = meters, typename T = double>
-	class PositionGeodetic;
+	using namespace units::length;
+	using namespace units::angle;
 
-	template<class Datum, template<class> class Units = meters, typename T = double>
-	class PositionECEF;
+	// The one primary template every position type is an alias of. Forward-declared here so a consumer that
+	// only names a position by value (algorithm.h, the vectors, the tests) needs no definition; the body
+	// lives in coordinate.h. An alias template to a forward-declared class template is well-formed C++.
+	template<class Frame, class Tuple, class FrameDataType = FrameData>
+	class Coordinate;
+
+	/// A geodetic (latitude, longitude, altitude) position in `Datum`, stored in the chosen angle/length units.
+	template<class Datum, template<class> class AngleUnits = degrees, template<class> class HeightUnits = meters>
+	using PositionGeodetic =
+	        Coordinate<coordinateFrames::Geodetic3DFrame<Datum>, std::tuple<AngleUnits<double>, AngleUnits<double>, HeightUnits<double>>, FrameData>;
+
+	/// An Earth-centered, Earth-fixed (x, y, z) position in `Datum`, stored in the chosen length unit.
+	template<class Datum, template<class> class Units = meters>
+	using PositionECEF =
+	        Coordinate<coordinateFrames::ECEFFrame<typename traits::datum_traits<Datum>::horizontal_datum>, std::tuple<Units<double>, Units<double>, Units<double>>, FrameData>;
+
+	/// A locally-level East-North-Up position in `Datum`, pinned to a geodetic origin, in the chosen length unit.
+	template<class Datum, template<class> class DistanceUnits = meters>
+	using PositionENU =
+	        Coordinate<coordinateFrames::ENUFrame<Datum>, std::tuple<DistanceUnits<double>, DistanceUnits<double>, DistanceUnits<double>>, FrameData>;
+
+	/// A locally-level North-East-Down position in `Datum`, pinned to a geodetic origin, in the chosen length unit.
+	template<class Datum, template<class> class DistanceUnits = meters>
+	using PositionNED =
+	        Coordinate<coordinateFrames::NEDFrame<Datum>, std::tuple<DistanceUnits<double>, DistanceUnits<double>, DistanceUnits<double>>, FrameData>;
+
+	/// A locally-level azimuth-elevation-range look-angle position in `Datum`, pinned to a geodetic origin.
+	template<class Datum, template<class> class AzElUnits = degrees, template<class> class RangeUnits = meters>
+	using PositionAER =
+	        Coordinate<coordinateFrames::AERFrame<Datum>, std::tuple<AzElUnits<double>, AzElUnits<double>, RangeUnits<double>>, FrameData>;
 }    // namespace coordinates
 
 #endif    // COORDINATES_FWD_H

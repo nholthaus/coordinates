@@ -1,12 +1,32 @@
-// ---------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 //
-/// @file       cacheTest.h
-/// @author     Nic Holthaus
-/// @date       1/9/2026
-/// @copyright  (c) 2026 STR. The use of this software is subject to the terms and conditions outlined
-///             in the LICENSE file. By using this software, the user agrees to be bound by the terms and
-///             conditions set forth in the LICENSE file.
+//	Coordinates: A compile-time c++23 coordinate conversion library based on `units`
 //
+//--------------------------------------------------------------------------------------------------
+//
+// The MIT License (MIT)
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+// and associated documentation files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+// BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+//--------------------------------------------------------------------------------------------------
+//
+// Copyright (c) 2016 Nic Holthaus
+//
+//--------------------------------------------------------------------------------------------------
+
 // ---------------------------------------------------------------------------------------------------------------------
 //
 /// @brief      
@@ -522,7 +542,7 @@ namespace
 				TestCache test(vec.begin(), vec.end());
 
 				EXPECT_EQ(4, test.size());
-				for (int i = 0; i < test.size(); ++i)
+				for (std::size_t i = 0; i < test.size(); ++i)
 				{
 					EXPECT_STREQ(vec[i].getString().c_str(), (std::next(test.begin(),i))->getString().c_str());
 				}
@@ -543,7 +563,7 @@ namespace
 				TestCache test(vec.begin(), vec.end(), 2);
 
 				EXPECT_EQ(2, test.size());
-				for (int i = 0; i < test.size(); ++i)
+				for (std::size_t i = 0; i < test.size(); ++i)
 				{
 					EXPECT_STREQ(vec[i].getString().c_str(), (std::next(test.begin(), i))->getString().c_str());
 				}
@@ -713,7 +733,7 @@ namespace
 			TestCache test{ { 0, 'a' }, { 1, 'b' }, { 2, 'c' }, { 3, 'd' }, { 4, 'e' } };
 			EXPECT_EQ(5, test.size());
 			char ch = 'a';
-			for (int i = 0; i < test.size(); ++i)
+			for (std::size_t i = 0; i < test.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 			}
@@ -736,7 +756,7 @@ namespace
 
 			EXPECT_EQ(2, test.size());
 			char ch = 'a';
-			for (int i = 0; i < test.size(); ++i)
+			for (std::size_t i = 0; i < test.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 			}
@@ -1511,7 +1531,6 @@ namespace
 	{
 		TestObject::clearfunctioncalls();
 		{
-			int i = 0;
 			TestCache test{ { 0, 'a' }, { 1, 'b' }, { 2, 'c' }, { 3, 'd' } };
 			EXPECT_EQ(4, test.capacity());
 
@@ -1910,7 +1929,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -1920,7 +1939,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -1932,7 +1951,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -1942,7 +1961,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -1953,7 +1972,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -1963,7 +1982,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -2257,7 +2276,6 @@ namespace
 	{
 		TestObject::clearfunctioncalls();
 		using emplaceRetVal_t = ::std::pair<TestCache::iterator, bool>;
-		using cacheEntry = TestCache::value_type;
 		emplaceRetVal_t ret;
 
 		{
@@ -2398,7 +2416,7 @@ namespace
 			EXPECT_EQ(4, c2.size());
 
 			// order should be preserved
-			for (int i = 0; i < c2.size(); ++i)
+			for (std::size_t i = 0; i < c2.size(); ++i)
 			{
 				EXPECT_STREQ(std::next(c.begin(), i)->getString().c_str(), std::next(c2.begin(), i)->getString().c_str());
 			}
@@ -2422,7 +2440,7 @@ namespace
 
 			// order should be preserved
 			char ch = 'a';
-			for (int i = 0; i < c2.size(); ++i)
+			for (std::size_t i = 0; i < c2.size(); ++i)
 			{
 				EXPECT_EQ((char)(ch + i), (char)c2[i].getString().c_str()[0]);
 			}
@@ -2442,7 +2460,7 @@ namespace
 
 			EXPECT_EQ(10, c2.size());
 			ch = 'a';
-			for (int i = 0; i < c2.size(); ++i)
+			for (std::size_t i = 0; i < c2.size(); ++i)
 			{
 				EXPECT_EQ((char)(ch + i), (char)c2[i].getString().c_str()[0]);
 			}
@@ -2579,7 +2597,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -2589,7 +2607,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -2600,7 +2618,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -2610,7 +2628,7 @@ namespace
 
 		EXPECT_EQ(3, test.size());
 		ch = 'a';
-		for (int i = 0; i < test.size(); ++i)
+		for (std::size_t i = 0; i < test.size(); ++i)
 		{
 			EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 		}
@@ -2747,7 +2765,7 @@ namespace
 			EXPECT_EQ(4, test.capacity());
 
 			char ch = 'a';
-			for (int i = 0; i < test.size(); ++i)
+			for (std::size_t i = 0; i < test.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 			}
@@ -2758,7 +2776,7 @@ namespace
 			EXPECT_EQ(2, test.capacity());
 
 			ch = 'a';
-			for (int i = 0; i < test.size(); ++i)
+			for (std::size_t i = 0; i < test.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(test.begin(), i))->getString().c_str()[0]);
 			}
@@ -2913,19 +2931,19 @@ namespace
 
 			// verify cache order was not affected
 			ch = 'a';
-			for (int i = 0; i < c1.size(); ++i)
+			for (std::size_t i = 0; i < c1.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(c1.begin(), i))->getString().c_str()[0]);
 			}
 
 			ch = 'a';
-			for (int i = 0; i < c2.size(); ++i)
+			for (std::size_t i = 0; i < c2.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(c2.begin(), i))->getString().c_str()[0]);
 			}
 
 			ch = 'd';
-			for (int i = 0; i < c3.size(); ++i)
+			for (std::size_t i = 0; i < c3.size(); ++i)
 			{
 				EXPECT_EQ(char(ch + i), (char)(std::next(c3.begin(), i))->getString().c_str()[0]);
 			}

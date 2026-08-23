@@ -262,6 +262,36 @@ namespace
 		EXPECT_TRUE((std::is_same<Geodetic2DFrame<horizontalDatums::WGS84_G1674>, typename coordinates::traits::least_common_ancestor<Geodetic3DFrame<datums::WGS84_G1674_MSL>, Geodetic3DFrame<datums::WGS84_G1674_AGL>>::type>::value));
 	}
 
+	// The depth/LCA machinery is generic over ANY single-parent graph, not just the frame graph: it takes a
+	// `Parent` accessor supplying each node's parent edge. This proves it routes over a synthetic node graph
+	// (Leaf -> Mid -> Root, Root its own parent) with a custom accessor -- the same algorithm the frame graph
+	// and, in future, a same-dimension kind graph both use.
+	struct GraphRoot;
+	struct GraphMid;
+	struct GraphLeaf;
+	template<class N> struct testParent { using type = N; };            // default: node is its own root
+	template<> struct testParent<GraphLeaf> { using type = GraphMid; };
+	template<> struct testParent<GraphMid>  { using type = GraphRoot; };
+	template<> struct testParent<GraphRoot> { using type = GraphRoot; };
+	template<class N> struct alwaysAncestor : std::true_type {};        // any node is an accepted ancestor
+
+	TEST_F(FrameOfReferenceTest, least_common_ancestor_generic_graph)
+	{
+		using coordinates::traits::detail::depth;
+		using coordinates::traits::detail::least_common_ancestor;
+
+		// depth counts hops to the root over the custom parent accessor.
+		EXPECT_EQ(0, (depth<GraphRoot, testParent>::value));
+		EXPECT_EQ(1, (depth<GraphMid, testParent>::value));
+		EXPECT_EQ(2, (depth<GraphLeaf, testParent>::value));
+
+		// LCA over the synthetic graph: Leaf & Mid meet at Mid; Leaf & Root meet at Root; a node with itself
+		// is itself.
+		EXPECT_TRUE((std::is_same_v<GraphMid, typename least_common_ancestor<GraphLeaf, GraphMid, alwaysAncestor, testParent>::type>));
+		EXPECT_TRUE((std::is_same_v<GraphRoot, typename least_common_ancestor<GraphLeaf, GraphRoot, alwaysAncestor, testParent>::type>));
+		EXPECT_TRUE((std::is_same_v<GraphLeaf, typename least_common_ancestor<GraphLeaf, GraphLeaf, alwaysAncestor, testParent>::type>));
+	}
+
 	TEST_F(FrameOfReferenceTest, least_common_cartesian_ancestor)
 	{
 		EXPECT_TRUE((std::is_same<ECEFFrame<horizontalDatums::ITRF2008>, typename coordinates::traits::least_common_cartesian_ancestor<Geodetic3DFrame<datums::NAD83>, Geodetic3DFrame<datums::WGS84_G1674>>::type>::value));

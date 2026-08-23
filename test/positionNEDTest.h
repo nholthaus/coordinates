@@ -69,8 +69,6 @@ namespace
 
 		void SetUp() override
 		{
-			auto result = std::setprecision(15);
-
 			// Code here will be called immediately after the constructor (right
 			// before each test).
 			Boston.setPoint(42.3601_deg, -71.0589_deg, 0.0_m);
@@ -518,8 +516,6 @@ TEST_F(PositionNEDTest, implicitConversionConstructor_fromNEDsameOrigin)
 
 	TEST_F(PositionNEDTest, distance)
 	{
-		auto result = std::setprecision(16);
-
 		LLA origin1(42.0_deg, -71.0_deg, 0.0_m);	// Boston-ish
 		LLA origin2(34.0_deg, -118.0_deg, 0.0_m);	// LA-ish
 
@@ -530,10 +526,10 @@ TEST_F(PositionNEDTest, implicitConversionConstructor_fromNEDsameOrigin)
 		NED nedl1(1.0_m, 1.0_m, 1.0_m, origin2);
 
 		// same origin
-		EXPECT_EQ(meters(sqrt(3.0)), nedb0.distance(nedb1));
-		EXPECT_EQ(meters(sqrt(3.0)), nedb1.distance(nedb0));
-		EXPECT_EQ(meters(sqrt(3.0)), nedl0.distance(nedl1));
-		EXPECT_EQ(meters(sqrt(3.0)), nedl1.distance(nedl0));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), nedb0.distance(nedb1));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), nedb1.distance(nedb0));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), nedl0.distance(nedl1));
+		EXPECT_UNITS_EQ(meters(sqrt(3.0)), nedl1.distance(nedl0));
 
 		// different point types
 		EXPECT_UNITS_NEAR(meters(sqrt(3.0)), nedb1.distance(origin1), 5.0e-10_m);
@@ -546,8 +542,6 @@ TEST_F(PositionNEDTest, implicitConversionConstructor_fromNEDsameOrigin)
 
 	TEST_F(PositionNEDTest, dotProduct)
 	{
-		auto result = std::setprecision(16);
-
 		LLA origin1(42.0_deg, -71.0_deg, 0.0_m);	// Boston-ish
 		LLA origin2(34.0_deg, -118.0_deg, 0.0_m);	// LA-ish
 
@@ -760,7 +754,6 @@ TEST_F(PositionNEDTest, implicitConversionConstructor_fromNEDsameOrigin)
 
 	TEST_F(PositionNEDTest, minusEqual)
 	{
-		NED zero;
 		NED ned1(12.0_m, 24.0_m, 36.0_m, Boston);
 		NED ned2(36.0_m, 24.0_m, 12.0_m, Boston);
 		NED ned3(1.0_m, 2.0_m, 3.0_m, Lexington);

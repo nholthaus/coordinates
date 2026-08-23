@@ -33,71 +33,6 @@ inline namespace coordinates
 {
 	namespace test
 	{
-		//--------------------------------------------------------------------------------
-		//  FUNCTION: parse_dted_cell_origin
-		//--------------------------------------------------------------------------------
-		/**
-		 * @brief Parse a DTED path like .../W122/N37.dt2 into the cell origin lat/lon.
-		 * @param[in] filePath DTED file path
-		 * @param[out] cellLatDeg integer cell latitude (southwest corner latitude)
-		 * @param[out] cellLonDeg integer cell longitude (southwest corner longitude)
-		 * @return True on success.
-		 */
-		static bool parse_dted_cell_origin(const std::filesystem::path& filePath, int& cellLatDeg, int& cellLonDeg)
-		{
-			// Match the same structure DTEDTileManager uses:
-			//   .../(W|E)###/(N|S)###.dt[0-2]
-			static const std::regex rx(R"(.*[/\\]([WwEe])(\d{1,3})[/\\_]([NnSs])(\d{1,3})\.dt([0-2]))");
-
-			std::smatch       m;
-			const std::string s = filePath.generic_string();
-			if (!std::regex_match(s, m, rx) || m.size() != 6)
-				return false;
-
-			int lon = std::stoi(m[2].str());
-			if (m[1].str() == "W" || m[1].str() == "w")
-				lon = -lon;
-
-			int lat = std::stoi(m[4].str());
-			if (m[3].str() == "S" || m[3].str() == "s")
-				lat = -lat;
-
-			cellLatDeg = lat;
-			cellLonDeg = lon;
-			return true;
-		}
-
-		//--------------------------------------------------------------------------------
-		//  FUNCTION: read_ppm_p6
-		//--------------------------------------------------------------------------------
-		/**
-		 * @brief Minimal PPM (P6) reader.
-		 */
-		static void read_ppm_p6(const std::filesystem::path& path, int& w, int& h, std::vector<std::uint8_t>& rgb)
-		{
-			std::ifstream in(path, std::ios::binary);
-			ASSERT_TRUE(in.is_open()) << "Failed to open PPM: " << path.string();
-
-			std::string magic;
-			in >> magic;
-			ASSERT_EQ(magic, "P6");
-
-			in >> w >> h;
-			ASSERT_GT(w, 0);
-			ASSERT_GT(h, 0);
-
-			int maxv = 0;
-			in >> maxv;
-			ASSERT_EQ(maxv, 255);
-
-			// Consume the single whitespace char after header.
-			in.get();
-
-			rgb.resize(static_cast<std::size_t>(w) * static_cast<std::size_t>(h) * 3);
-			in.read(reinterpret_cast<char*>(rgb.data()), static_cast<std::streamsize>(rgb.size()));
-			ASSERT_TRUE(in.good()) << "PPM pixel read failed (unexpected EOF?)";
-		}
-
 		/**
 		 * @brief Simple in-memory synthetic tile.
 		 *
@@ -253,7 +188,7 @@ inline namespace coordinates
 
 	}    // namespace test
 
-	TEST_F(LineOfSightTest, terrainLOS_and_viewshedOverlayPPM)
+	TEST(LineOfSightTerrain, terrainLOS_and_viewshedOverlayPPM)
 	{
 		using Datum = datums::WGS84_G1674;
 		using LOS   = LineOfSight<Datum, test::SyntheticTopography, double>;
@@ -278,7 +213,7 @@ inline namespace coordinates
 		opt.bracketGrowth      = 1.5;
 		opt.refineIterations   = 18;
 		opt.threadCount        = 1;        // deterministic
-		opt.useEarthCurvature  = false;    // keep TEST_F local/simple
+		opt.useEarthCurvature  = false;    // keep the test local/simple
 		opt.preferFastEarlyOut = false;
 		opt.overlayTint        = 0.40;
 
@@ -336,11 +271,9 @@ inline namespace coordinates
 		}
 	}
 
+#if defined(COORDINATES_ENABLE_DTED) && COORDINATES_ENABLE_DTED
 	TEST(LineOfSightDTED, Viewshed_w115_n37)
 	{
-		// const char* dtedRoot = std::getenv("DTED_ROOT_DIR");
-		// ASSERT_NE(dtedRoot, nullptr) << "DTED_ROOT_DIR must be set for this test";
-
 		// Fixed tile selection
 		constexpr degrees tileLat = 37.0566666667_deg;      // N37
 		constexpr degrees tileLon = -115.0_deg;    // W115
@@ -389,7 +322,6 @@ inline namespace coordinates
 		{
 			unsigned char r = pixels[i + 0];
 			unsigned char g = pixels[i + 1];
-			unsigned char b = pixels[i + 2];
 
 			if (g > r + 5)
 				sawGreenish = true;
@@ -403,4 +335,5 @@ inline namespace coordinates
 		EXPECT_TRUE(sawGreenish) << "Expected at least one visible (greenish) pixel";
 		EXPECT_TRUE(sawReddish) << "Expected at least one blocked (reddish) pixel";
 	}
+#endif    // COORDINATES_ENABLE_DTED
 }    // namespace coordinates

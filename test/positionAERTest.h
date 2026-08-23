@@ -71,8 +71,6 @@ namespace
 
 		void SetUp() override
 		{
-			auto result = std::setprecision(15);
-
 			// Code here will be called immediately after the constructor (right
 			// before each test).
 			Boston.setPoint(42_deg, -71_deg, 0_m);
@@ -151,6 +149,21 @@ TEST_F(PositionAERTest, prerequisites)
 		EXPECT_EQ(10_deg, std::get<1>(aer4.point()));
 		EXPECT_EQ(15000_m, std::get<2>(aer4.point()));
 		EXPECT_EQ(Boston.point(), aer4.frameData().origin);
+	}
+
+	TEST_F(PositionAERTest, scalarOriginConstructor)
+	{
+		// Origin supplied as raw latitude/longitude/altitude scalars (not a Position object).
+		AER aer(5_deg, 10_deg, 15000_m, 42_deg, -71_deg, 0_m);
+		EXPECT_EQ(5_deg, std::get<0>(aer.point()));
+		EXPECT_EQ(10_deg, std::get<1>(aer.point()));
+		EXPECT_EQ(15000_m, std::get<2>(aer.point()));
+		EXPECT_EQ(Boston.point(), aer.frameData().origin);
+
+		// with an explicit date of observation
+		AER aer2(5_deg, 10_deg, 15000_m, 42_deg, -71_deg, 0_m, 2016_yr);
+		EXPECT_EQ(Boston.point(), aer2.frameData().origin);
+		EXPECT_EQ(2016_yr, aer2.frameData().date);
 	}
 
 	TEST_F(PositionAERTest, tupleConstructor)
@@ -269,6 +282,25 @@ TEST_F(PositionAERTest, implicitConversionConstructor_fromGeo)
 	EXPECT_UNITS_NEAR(-18.698699777761998_deg,  std::get<1>(aer3.point()), 1.0e-8_deg);
 	EXPECT_UNITS_NEAR(4094891.087804174_m,      std::get<2>(aer3.point()), 1.0e-3_m);
 	EXPECT_UNITS_EQ(2005_yr, aer3.frameData().date);
+}
+
+// fromObserver(observer, target) is the observer-relative spelling of AER(target, observer): the look
+// angles of the target as seen from the observer. It must match the constructor's truth data, and the
+// az()/el()/range() accessors read the same values.
+TEST_F(PositionAERTest, fromObserver)
+{
+	// LA observing Boston: fromObserver(LA, Boston) == AER(Boston, LA) (== aer2 above).
+	AER aer = AER::fromObserver(LA, Boston);
+	EXPECT_UNITS_NEAR(63.522735932827878_deg,   aer.azimuth(),   1.0e-8_deg);
+	EXPECT_UNITS_NEAR(-18.707489622725706_deg,  aer.elevation(), 1.0e-8_deg);
+	EXPECT_UNITS_NEAR(4094891.087804174_m,      aer.range(),     1.0e-3_m);
+	EXPECT_UNITS_EQ(2005_yr, aer.frameData().date);
+
+	// An observer looking at itself has zero range and zero look angles.
+	AER self = AER::fromObserver(Boston, Boston);
+	EXPECT_UNITS_EQ(0_deg, self.azimuth());
+	EXPECT_UNITS_EQ(0_deg, self.elevation());
+	EXPECT_UNITS_EQ(0_m,   self.range());
 }
 
 
@@ -502,7 +534,6 @@ TEST_F(PositionAERTest, implicitConversionAssignment_fromAER)
 
 	TEST_F(PositionAERTest, isSame)
 	{
-		using AER_ft = PositionAER<datums::WGS84_G1674, units::length::feet>;
 		using ECEF_mm = PositionECEF<datums::WGS84_G1674, units::length::millimeters>;
 
 		AER aer1(5_deg, 10_deg, 15_km, Boston);
@@ -615,43 +646,43 @@ TEST_F(PositionAERTest, distance)
 	TEST_F(PositionAERTest, azimuth)
 	{
 		AER aer;
-		EXPECT_EQ(0_deg, aer.azimuth());
+		EXPECT_UNITS_EQ(0_deg, aer.azimuth());
 
 		AER aer1(5_deg, 6_deg, 7_km, LLA());
 
-		EXPECT_EQ(5_deg, aer1.azimuth());
+		EXPECT_UNITS_EQ(5_deg, aer1.azimuth());
 
 		AER aer2(radians(2.0), radians(3.0), 4_km, LLA());
 
-		EXPECT_EQ(radians(2.0), aer2.azimuth());
+		EXPECT_UNITS_EQ(radians(2.0), aer2.azimuth());
 	}
 
 	TEST_F(PositionAERTest, elevation)
 	{
 		AER aer;
-		EXPECT_EQ(0_deg, aer.elevation());
+		EXPECT_UNITS_EQ(0_deg, aer.elevation());
 
 		AER aer1(5_deg, 6_deg, 7_km, LLA());
 
-		EXPECT_EQ(6_deg, aer1.elevation());
+		EXPECT_UNITS_EQ(6_deg, aer1.elevation());
 
 		AER aer2(radians(2.0), radians(3.0), 4_km, LLA());
 
- 		EXPECT_EQ(radians(3.0), aer2.elevation());
+ 		EXPECT_UNITS_EQ(radians(3.0), aer2.elevation());
 	}
 
 	TEST_F(PositionAERTest, range)
 	{
 		AER aer;
-		EXPECT_EQ(0_m, aer.range());
+		EXPECT_UNITS_EQ(0_m, aer.range());
 
 		AER aer1(5_deg, 6_deg, 7_km, LLA());
 
-		EXPECT_EQ(7_km, aer1.range());
+		EXPECT_UNITS_EQ(7_km, aer1.range());
 
 		AER aer2(radians(2.0), radians(3.0), 4_km, LLA());
 
-		EXPECT_EQ(4_km, aer2.range());
+		EXPECT_UNITS_EQ(4_km, aer2.range());
 	}
 
 	TEST_F(PositionAERTest, origin)
@@ -713,17 +744,17 @@ TEST_F(PositionAERTest, setElevation)
 	TEST_F(PositionAERTest, setRange)
 	{
 		AER aer;
-		EXPECT_EQ(0_m, aer.range());
+		EXPECT_UNITS_EQ(0_m, aer.range());
 
 		aer.setRange(7_m);
-		EXPECT_EQ(0_deg, aer.azimuth());
-		EXPECT_EQ(0_deg, aer.elevation());
-		EXPECT_EQ(7_m, aer.range());
+		EXPECT_UNITS_EQ(0_deg, aer.azimuth());
+		EXPECT_UNITS_EQ(0_deg, aer.elevation());
+		EXPECT_UNITS_EQ(7_m, aer.range());
 
 		aer.setRange(7_mm);
-		EXPECT_EQ(0_deg, aer.azimuth());
-		EXPECT_EQ(0_deg, aer.elevation());
-		EXPECT_EQ(0.007_m, aer.range());
+		EXPECT_UNITS_EQ(0_deg, aer.azimuth());
+		EXPECT_UNITS_EQ(0_deg, aer.elevation());
+		EXPECT_UNITS_EQ(0.007_m, aer.range());
 	}
 
 

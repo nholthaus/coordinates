@@ -27,37 +27,15 @@
 //
 //--------------------------------------------------------------------------------------------------
 
+// The test suites live in per-suite translation units under test/suites/*.cpp (each includes one
+// *Test.h). GoogleTest registers tests via static initialization across all those TUs, so this file
+// only needs to provide the entry point. Splitting the suites into separate TUs lets them compile in
+// parallel and rebuild incrementally, instead of one monolithic translation unit.
+
 #include <gtest/gtest.h>
-#include <gtest_units.h>
-
-#include "cacheTest.h"
- 
-#include "ellipsoidTest.h"
-#include "geoidTest.h"
-
-#include "helmertTest.h"
-#include "topographyTest.h"
-#include "horizontalDatumTest.h"
-#include "verticalDatumTest.h"
-#include "datumTest.h"
-
-#include "frameOfReferenceTest.h"
-#include "pointTest.h"
-#include "positionECEFTest.h"
-#include "positionGeodeticTest.h"
-#include "positionENUTest.h"
-#include "positionNEDTest.h"
-#include "positionAERTest.h"
-
-#include "vectorTest.h"
-
-#include "geodesicTest.h"
-#include "intersectionTest.h"
-// #include "losTest.h"	///< LINE OF SIGHT ISN'T WORKING YET
-// #include "lineOfSightTest.h"
 
 int main(int argc, char* argv[])
 {
-     ::testing::InitGoogleTest(&argc, argv);
-     return RUN_ALL_TESTS();
+	::testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
 }

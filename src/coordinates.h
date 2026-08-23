@@ -27,10 +27,12 @@
 //
 //--------------------------------------------------------------------------------------------------
 
-#ifndef coordinate_h
-#define coordinate_h
+#ifndef coordinates_h
+#define coordinates_h
 
+#if defined(_MSC_VER)
 #pragma warning(disable : 4503)    // decorated name length exceeded, name was truncated. This only affects debugging.
+#endif
 
 //------------------------
 //	INCLUDES
@@ -42,9 +44,15 @@
 #include <abstractTile.h>
 #include <abstractTileManager.h>
 #include <algorithm.h>
+#include <angles.h>
 
+#include <coordinate.h>
 #include <datum.h>
+#include <frameAxes.h>
 #include <frameOfReference.h>
+#include <heights.h>
+#include <latitudeConversion.h>
+#include <ranges.h>
 #include <topography.h>
 
 #include <point.h>
@@ -53,11 +61,30 @@
 #include <positionENU.h>
 #include <positionGeodetic.h>
 #include <positionNED.h>
-#include <positionXYZ.h>
 
+#include <vector.h>
 #include <vectorECEF.h>
 #include <vectorENU.h>
 #include <vectorNED.h>
+
+#include <kinematics.h>
+
+#include <bodyFrame.h>
+#include <pose.h>
+
+#include <ray.h>
+#include <fieldOfView.h>
+#include <entity.h>
+
+#include <camera.h>
+#include <simplify.h>
+#include <view.h>
+#include <wireframe.h>
+#include <hillshadeCanvas.h>
+
+#if defined(COORDINATES_ENABLE_LOS) && COORDINATES_ENABLE_LOS
+#include <lineOfSight.h>
+#endif
 
 inline namespace coordinates
 {
@@ -75,4 +102,4 @@ inline namespace coordinates
 	using VecNED  = VectorNED<WGS84_G1674>;
 }    // namespace coordinates
 
-#endif    // coordinate_h
+#endif    // coordinates_h
